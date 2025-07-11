@@ -11,15 +11,18 @@ class Keluar extends Model
 
     protected $table = 'transaksis';
 
+    protected $primaryKey = 'id_transaksi';
+
+    public $incrementing = true; // kalau auto increment
+    protected $keyType = 'int';
+
     protected $fillable = ['id_barang','jumlah_barang','tujuan','keterangan'];
 
     const CREATED_AT = 'created_at';
-    const UPDATE_AT = 'updated_at';
+    const UPDATED_AT = 'updated_at';
 
     public function barang()
     {
-        // Asumsi foreign key di tabel ini adalah 'id_barang' dan primary key di tabel 'barangs' adalah 'id_barang'
-        // Sesuaikan jika nama kolom atau model berbeda
         return $this->belongsTo(Barang::class, 'id_barang', 'id_barang');
     }
 }

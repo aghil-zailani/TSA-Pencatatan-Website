@@ -9,14 +9,26 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(){
-    Schema::create('barangs', function (Blueprint $table) {
-        $table->id();
-        $table->string('nama_barang');
-        $table->string('tipe_barang');
-        $table->integer('jumlah');
-        $table->timestamps(); // created_at, updated_at
-    });
+    public function up(): void
+    {
+        Schema::create('barangs', function (Blueprint $table) {
+            // PK: id_barang
+            $table->id('id_barang');
+
+            // Kolom-kolom sesuai ERD dan input form
+            $table->string('nama_barang');
+            $table->integer('jumlah_barang')->default(0);
+            $table->string('tipe_barang'); // Untuk membedakan, misal: 'Barang Jadi', 'Sparepart'
+            $table->decimal('berat_barang', 8, 2)->nullable();
+            $table->string('satuan');
+            $table->string('kondisi');
+            $table->decimal('harga_beli', 15, 2)->nullable();
+            $table->decimal('harga_jual', 15, 2)->nullable();
+            $table->string('ukuran_barang')->nullable();
+            $table->string('merek_barang')->nullable();
+            
+            $table->timestamps(); // created_at dan updated_at
+        });
     }
 
     /**

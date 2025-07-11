@@ -19,7 +19,7 @@ return new class extends Migration
             // Foreign Key ke tabel 'barangs' (asumsi nama tabel barang adalah 'barangs')
             // Pastikan tipe data foreign key sama dengan primary key di tabel 'barangs'
             $table->unsignedBigInteger('id_barang'); // Kolom di tabel transaksis
-            $table->foreign('id_barang')->references('id')->on('barangs')->onDelete('cascade');
+            $table->foreign('id_barang')->references('id_barang')->on('barangs')->onDelete('cascade');
 //                                        ^^^--- Merujuk ke kolom 'id' di tabel 'barangs'
             // Jika nama primary key di tabel barang adalah 'id', gunakan:
             // $table->foreign('id_barang')->references('id')->on('barangs')->onDelete('cascade');

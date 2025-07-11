@@ -3,6 +3,139 @@
 @section('container')
     <!DOCTYPE html>
     <html lang="en">
+        <style>
+            .list-item-custom {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.8rem 0.5rem;
+                border-bottom: 1px solid #f0f0f0; /* Garis pemisah tipis */
+            }
+            .list-item-custom:last-child {
+                border-bottom: none; /* Hilangkan border untuk item terakhir */
+            }
+            .list-item-custom .icon-link {
+                font-size: 1.2rem;
+                color: #6c757d; /* Warna ikon abu-abu */
+                text-decoration: none;
+                transition: color 0.3s;
+            }
+            .list-item-custom .icon-link:hover {
+                color: #435ebe; /* Warna ikon saat di-hover */
+            }
+            .time-badge {
+                background-color: #eef2f7; /* Warna abu-abu muda */
+                color: #474747; /* Warna teks gelap */
+                padding: 0.25rem 0.6rem;
+                border-radius: 0.5rem; /* Sedikit lebih rounded */
+                font-size: 0.8em;
+                font-weight: 500;
+            }
+            .card-scrollable .card-body {
+                /* Tentukan tinggi maksimal untuk area konten */
+                max-height: 250px; /* Anda bisa menyesuaikan tinggi ini sesuai kebutuhan */
+
+                /* Tambahkan scrollbar vertikal hanya jika konten melebihi max-height */
+                overflow-y: auto;
+            }
+
+            /* Styling tambahan untuk scrollbar agar lebih modern (opsional) */
+            .card-scrollable .card-body::-webkit-scrollbar {
+                width: 6px;
+            }
+            .card-scrollable .card-body::-webkit-scrollbar-thumb {
+                background-color: #c5c5c5;
+                border-radius: 10px;
+            }
+            .card-scrollable .card-body::-webkit-scrollbar-track {
+                background-color: #f1f1f1;
+            }
+
+            .modal-backdrop.show {
+                opacity: 0.5 !important; /* Membuat overlay lebih gelap */
+            }
+
+            .modal-content {
+                border-radius: 1rem;
+                box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            }
+
+            .modal-header {
+                background-color: #f8d7da; /* Warna latar belakang header merah muda */
+                color: #721c24; /* Warna teks merah gelap */
+                border-bottom: none;
+                border-top-left-radius: 1rem;
+                border-top-right-radius: 1rem;
+                padding: 1.5rem;
+                font-family: 'Poppins', sans-serif; /* Menggunakan Poppins jika tersedia */
+            }
+
+            .modal-title {
+                font-weight: bold;
+                display: flex; /* Menggunakan flexbox untuk ikon dan teks */
+                align-items: center; /* Menyelaraskan ikon dan teks secara vertikal */
+            }
+
+            .modal-title i {
+                font-size: 1.5rem; /* Ukuran ikon peringatan lebih besar */
+                margin-right: 0.75rem; /* Jarak antara ikon dan teks */
+                color: #dc3545; /* Warna ikon peringatan yang jelas */
+            }
+
+            .modal-header .btn-close {
+                filter: invert(30%) sepia(100%) saturate(7000%) hue-rotate(330deg) brightness(90%) contrast(80%); /* Mengubah warna ikon silang menjadi merah gelap */
+            }
+
+            .modal-body {
+                padding: 1.5rem;
+                font-family: 'Poppins', sans-serif;
+            }
+
+            .list-group-item-stock {
+                font-family: 'Poppins', sans-serif;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.75rem 1.25rem;
+                border: none; /* Hilangkan border item default */
+                border-bottom: 1px solid #eee; /* Garis pemisah antar item */
+                font-size: 0.95rem; /* Ukuran font sedikit lebih besar */
+                color: #343a40; /* Warna teks yang lebih gelap */
+            }
+            .list-group-item-stock:last-child {
+                border-bottom: none;
+            }
+
+            /* Badge Stok yang Lebih Estetik */
+            .list-group-item-stock .badge-stock {
+                background-color: #ffc107; /* Warna kuning Bootstrap default */
+                color: #212529; /* Teks hitam atau gelap */
+                padding: 0.4em 0.8em; /* Padding badge lebih baik */
+                border-radius: 0.5rem; /* Rounded corner */
+                font-weight: bold;
+                min-width: 60px; /* Lebar minimum agar konsisten */
+                text-align: center; /* Teks di tengah badge */
+                box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); /* Shadow tipis */
+            }
+
+            .modal-footer {
+                border-top: none;
+                padding: 1rem 1.5rem 1.5rem;
+                color:white;
+            }
+            .btn-primary-stock-modal {
+                background-color: #435ebe; /* Warna biru konsisten dengan tema Mazer */
+                border-color: #435ebe;
+                font-family: 'Poppins', sans-serif;
+                border-radius: 0.5rem;
+                padding: 0.6rem 1.2rem;
+                color: white;
+            }
+            .btn-primary-stock-modal:hover {
+                background-color: #394f99;
+                border-color: #394f99;
+            }
+        </style>
 
     <body>
         <div id="main">
@@ -15,37 +148,45 @@
             <div class="page-heading">
                 <h3>Dashboard</h3>
             </div>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item active" aria-current="page">Dashboard</li>
-                </ol>
-            </nav>
             <div class="page-content">
                 <section class="row">
                     <div class="col-12 col-lg-12">
                         <div class="row">
-                            <div class="col-6 col-lg-4 col-md-6">
-                                <div class="card shadow h-md-50">
-                                    <div class="card-body px-4 py-4-5">
-                                        <div class="row">
-                                            <div class="d-flex align-items-center justify-content-start">
-                                                <div class="stats-icon purple mb-2">
-                                                    <i class="iconly-boldShow"></i>
-                                                </div>
-                                                <div class="mx-4">
-                                                    <h6 class="text-muted font-semibold">Manajement Barang</h6>
-                                                    <a href="stokBarang" class="btn btn-success" style="margin-right:5px;">
-                                                        <i class="bi bi-clipboard-plus-fill"></i> Stok Barang
-                                                    </a>
-                                                    <a href="barangKeluar" class="btn btn-danger">
-                                                        <i class="bi bi-clipboard-minus-fill"></i> Barang Keluar
-                                                    </a>
-                                                </div>
+                            <div class="row">
+                            <div class="col-4 col-lg-3 col-md-3">
+                            <div class="card">
+                                <div class="card-body px-4 py-4-5">
+                                    <div class="row">
+                                        <div class="col-md-4 col-lg-12 col-xl-12 col-xxl-5 d-flex justify-content-start">
+                                            <div class="stats-icon purple mb-2">
+                                                <i class="iconly-boldArrow---Down-Square"></i>
                                             </div>
+                                        </div>
+                                        <div class="col-md-8 col-lg-12 col-xl-12 col-xxl-7">
+                                            <h6 class="text-muted font-semibold">Barang Masuk</h6>
+                                            <h6 class="font-extrabold mb-0">{{ $barangMasukBulanIni ?? 0 }}</h6>
                                         </div>
                                     </div>
                                 </div>
-                            </div>                            
+                            </div>
+                        </div>
+                        <div class="col-4 col-lg-3 col-md-3">
+                            <div class="card">
+                                <div class="card-body px-4 py-4-5">
+                                    <div class="row">
+                                        <div class="col-md-4 col-lg-12 col-xl-12 col-xxl-5 d-flex justify-content-start">
+                                            <div class="stats-icon blue mb-2">
+                                                <i class="iconly-boldArrow---Up-Square"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-8 col-lg-12 col-xl-12 col-xxl-7">
+                                            <h6 class="text-muted font-semibold">Barang Keluar</h6>
+                                            <h6 class="font-extrabold mb-0">{{ $barangKeluarBulanIni ?? 0 }}</h6>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>                            
                             <div class="row">
                                 <div class="col-12 col-lg-9">
                                     <div class="card shadow h-md-50">
@@ -55,44 +196,77 @@
                                             </h4>
                                         </div>
                                         <div class="card-body">
-                                            <div id="chartdiv"></div>
+                                            <div id="chartdiv" style="width: 100%; height: 350px;"></div>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-12 col-lg-3">
                                     <div class="card shadow h-md-50">
                                         <div class="card-header">
-                                            <h4>Presentase Penjualan Type</h4>
+                                            <h4>Presentase Stok Type Barang</h4>
                                         </div>
                                         <div class="card-body">
-                                            <div id="piechartdiv"></div>
+                                            <div id="piechartdiv" style="width: 100%; height: 350px;"></div>
                                         </div>
                                     </div>
                                 </div>
-                                {{-- <div class="col-12 col-lg-4">
-                                <div class="card shadow h-95">
-                                    <div class="card-header">
-                                        <h4>Kotak Pesan</h4>
-                                    </div>
-                                    <div class="card-body mb-2 overflow-auto">
-                                        <div class="overflow" style="max-height: 160px; overflow: auto;">
-                                            
-                                            <div class="d-flex align-items-center mb-2">
-                                                <span class="bullet bullet-vertical h-40px bg-primary"></span>
-                                                <div class="flex-grow-1 mx-5">
-                                                    <h3 class="text-gray-800 text-hover-primary fw-bolder fs-6">Pesan Masuk
-                                                    </h3>
-                                                    <span class="text-muted fw-bold d-block">T.Said Aghil Zailani melakukan
-                                                        pengiriman pesan </span>
+                            </div>
+                            <div class="row">
+                                <div class="col-12 col-lg-7">
+                                    <div class="card card-scrollable">
+                                        <div class="card-header">
+                                            <h4>Riwayat Laporan</h4>
+                                        </div>
+                                        <div class="card-body">
+                                            @forelse ($laporanGabungan as $laporan)
+                                                <div class="list-item-custom">
+                                                    <div>
+                                                        @if($laporan->nama_laporan)
+                                                        <strong>{{ $laporan->nama_laporan }}</strong>
+                                                        @elseif($laporan->nama_laporan != 'Laporan Barang Masuk') 
+                                                        <strong>Laporan Barang Keluar</strong>
+                                                        @endif
+                                                        <br>
+                                                    </div>
+                                                    <span class="time-badge">{{ $laporan->created_at }}</span>
+                                                    <span class="{{ $laporan->badge_class }}">{{ $laporan->display_status }}</span>
                                                 </div>
-                                                <span class="badge badge-secondary fs-8 fw-bolder fst-italic"
-                                                    style="color: grey;">21-August-2023 16:21:32</span>
-                                            </div>
-                                            
+                                            @empty
+                                                <p class="text-center text-muted">Belum ada riwayat laporan validasi.</p>
+                                            @endforelse
                                         </div>
                                     </div>
                                 </div>
-                            </div>                             --}}                                                            
+                                <div class="col-12 col-lg-5">
+                                <div class="card card-scrollable">
+                                    <div class="card-header">
+                                        <h4>Riwayat Login</h4>
+                                    </div>
+                                    <div class="card-body">
+                                        @forelse ($riwayatLogin as $history)
+                                            <div class="list-item-custom">
+                                                {{-- Bagian teks di sebelah kiri --}}
+                                                <div class="text-wrapper">
+                                                    <span class="fw-bold d-block">
+                                                        Login
+                                                    </span>
+                                                    <span class="text-muted small">
+                                                        {{ $history->user->username ?? '' }} Melakukan Login Pada
+                                                    </span>
+                                                </div>
+
+                                                {{-- Bagian tanggal di sebelah kanan --}}
+                                                <span class="time-badge">
+                                                    {{-- Format tanggal dan waktu sesuai gambar --}}
+                                                    {{ $history->login_at->format('d M Y H:i:s') }}
+                                                </span>
+                                            </div>
+                                        @empty
+                                            <p class="text-center text-muted">Belum ada riwayat login.</p>
+                                        @endforelse
+                                    </div>
+                                </div>
+                            </div>                                                                                  
                         </div>
                     </div>
                 </section>
@@ -103,6 +277,26 @@
                     <p>Tunas Siak Anugrah &copy; | 2023</p>
                 </div>
             </footer>
+        </div>
+
+        <div class="modal fade" id="stockNotificationModal" tabindex="-1" aria-labelledby="stockNotificationModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="stockNotificationModalLabel"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>Notifikasi Stok Minimum!</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Barang-barang berikut memiliki stok di bawah batas minimum (10 unit):</p>
+                        <ul class="list-group list-group-flush" id="lowStockItemsList">
+                            {{-- Items will be appended here by JavaScript --}}
+                        </ul>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary-stock-modal" data-bs-dismiss="modal">Oke, Mengerti</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
 
@@ -226,8 +420,8 @@
                 var data = [];
                 @foreach($chart as $item)
                 data.push({
-                    country: "{{ $item->namaBarang }}",
-                    value: {{ $item->stokBarang }}
+                    country: "{{ $item['country'] }}",
+                    value: {{ $item['value'] }}
                 });
                 @endforeach
 
@@ -261,7 +455,7 @@
 
                 var series = chart.series.push(am5percent.PieSeries.new(root, {
                     valueField: "value",
-                    categoryField: "category",
+                    categoryField: "tipe_barang",
                     alignLabels: false
                 }));
 
@@ -274,11 +468,11 @@
                 // isi data chart
                 series.data.setAll([{
                         value: {{ $rs }},
-                        category: "Racking System"
+                        category: "Sparepart"
                     },
                     {
                         value: {{ $fp }},
-                        category: "Fire Protection"
+                        category: "Barang Jadi"
                     },
                 ]);
 
@@ -296,6 +490,45 @@
             });
         </script>
         <!-- styling pie chart -->
+
+        <!-- Script untuk Notifikasi Stok Minimum -->
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const LOW_STOCK_THRESHOLD = 10; // Batas stok minimum
+                // allStockItems sekarang akan berisi data dari database Anda
+                const allStockItems = @json($dataStokBarang ?? []); 
+
+                let lowStockItems = [];
+
+                // Filter barang dengan stok di bawah ambang batas
+                allStockItems.forEach(item => {
+                    // Pastikan item.stok adalah angka untuk perbandingan
+                    if (parseInt(item.stok) < LOW_STOCK_THRESHOLD) { 
+                        lowStockItems.push(item);
+                    }
+                });
+
+                if (lowStockItems.length > 0) {
+                    const listContainer = document.getElementById('lowStockItemsList');
+                    listContainer.innerHTML = ''; 
+
+                    lowStockItems.forEach(item => {
+                        const listItem = document.createElement('li');
+                        listItem.className = 'list-group-item-stock'; 
+                        listItem.innerHTML = `
+                            <span>${item.nama}</span>
+                            <span class="badge-stock">Stok: ${item.stok}</span>
+                        `; 
+                        listContainer.appendChild(listItem);
+                    });
+
+                    // Tampilkan Modal Notifikasi
+                    var stockModal = new bootstrap.Modal(document.getElementById('stockNotificationModal'));
+                    stockModal.show();
+                }
+            });
+        </script>
+        <!-- Akhir Script Notifikasi Stok Minimum -->
     </body>
 
     </html>

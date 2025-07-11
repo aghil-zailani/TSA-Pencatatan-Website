@@ -20,18 +20,21 @@ class LoginController extends Controller
     /**
      * Menangani proses login dari form web.
      */
+    // di App\Http\Controllers\LoginController.php
+
     public function login(Request $request)
     {
+        // Validasi input dari form. 'login_id' adalah nama input di form Anda.
         $request->validate([
-            'login_id' => 'required|string', // Atau 'login_id' sesuai name di form Anda
+            'login_id' => 'required|string', // Pastikan input name di form adalah 'id'
             'password' => 'required|string',
         ]);
 
-        $loginField = 'id'; // Sesuaikan dengan nama kolom di DB untuk ID Perusahaan Anda
-                                  // (misalnya 'username', 'id_perusahaan', atau 'id' jika itu string PK)
-
+        // Menyiapkan kredensial untuk dicocokkan.
+        // Kita memberitahu Auth untuk mencocokkan kolom 'id' di database
+        // dengan input 'id' dari form.
         $credentials = [
-            $loginField => $request->login_id, // Atau $request->login_id
+            'id' => $request->login_id,
             'password' => $request->password,
         ];
 
@@ -39,21 +42,20 @@ class LoginController extends Controller
             $request->session()->regenerate();
             $user = Auth::user();
 
-            // Logika redirect berdasarkan role untuk WEB
+            // Logika redirect berdasarkan role
             if ($user->role == 'supervisor') {
-                return redirect()->intended(route('supervisor.dashboard'))
-                                 ->with('loginBerhasil', 'Berhasil Login sebagai Supervisor!');
+                return redirect()->intended(route('supervisor.dashboard'));
             } elseif ($user->role == 'staff_gudang') {
-                return redirect()->intended(route('staff_gudang.dashboard'))
-                                 ->with('loginBerhasil', 'Berhasil Login sebagai Staff Gudang!');
+                return redirect()->intended(route('staff_gudang.dashboard'));
             }
-            // Default redirect jika peran tidak spesifik
-            return redirect()->intended(route('home'))
-                             ->with('loginBerhasil', 'Berhasil Login!');
+            
+            // Fallback jika tidak ada role spesifik
+            return redirect()->intended(route('home'));
         }
 
-        return back()->withInput($request->only('username')) // Atau $request->only('login_id')
-                     ->with('loginError', 'Login Gagal! Periksa kembali ID Perusahaan dan Password Anda.');
+        // Jika gagal, kembali ke halaman login dengan pesan error.
+        return back()->withInput($request->only('id'))
+                    ->with('loginError', 'ID atau Password salah.');
     }
 
     /**
@@ -64,6 +66,6 @@ class LoginController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect(route('login')); // Mengarahkan kembali ke halaman login web
+        return redirect(route('login'));
     }
 }
