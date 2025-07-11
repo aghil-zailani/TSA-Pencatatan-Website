@@ -143,6 +143,7 @@
                                             @if(in_array('harga_jual', $selectedColumns))
                                                 <th>Harga Jual</th>
                                             @endif
+                                            <th>Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -168,6 +169,19 @@
                                                 @if(in_array('harga_jual', $selectedColumns))
                                                     <td>{{ number_format($item->harga_jual, 2) }}</td>
                                                 @endif
+                                                <td>
+                                                    <button
+                                                        class="btn btn-primary edit-price-btn"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#editPriceModal"
+                                                        data-nama-barang="{{ $item->nama_barang }}"
+                                                        data-tipe-barang="{{ $item->tipe_barang }}"
+                                                        data-berat-barang="{{ $item->berat_barang }}"
+                                                        data-harga-beli="{{ $item->harga_beli }}"
+                                                        data-harga-jual="{{ $item->harga_jual }}">
+                                                        Edit Harga
+                                                    </button>
+                                                </td>
                                             </tr>
                                         @endforeach
                                     </tbody>
