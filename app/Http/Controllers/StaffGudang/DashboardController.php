@@ -196,7 +196,7 @@ class DashboardController extends Controller
             'description' => 'Staff melihat daftar barang masuk yang diterima.'
         ]);
 
-        $barangDiterima = Barang::orderBy('created_at', 'asc')->get();
+        $barangDiterima = Barang::orderBy('created_at', 'desc')->get();
         $judul = 'Data Barang Diterima';
 
         return view('staff_gudang.data_barang', compact('barangDiterima', 'judul'));
@@ -301,8 +301,8 @@ class DashboardController extends Controller
         // Ambil barang-barang yang kondisinya selain 'Bagus'
         $barangTidakBagus = Barang::where('kondisi', '!=', 'Bagus')
                                   ->where('status', 'pengajuan')
-                                  ->orderBy('kondisi', 'asc') // Urutkan berdasarkan kondisi
-                                  ->orderBy('nama_barang', 'asc')
+                                  ->orderBy('kondisi', 'desc') // Urutkan berdasarkan kondisi
+                                  ->orderBy('nama_barang', 'desc')
                                   ->get();
         $judul = 'Form Pengajuan';
 
@@ -385,10 +385,10 @@ class DashboardController extends Controller
 
     public function riwayat()
     {
-        $logs = ActivityLog::with('user')->orderBy('created_at', 'desc')->paginate(10);
+        $logs = ActivityLog::with('user')->orderBy('created_at', 'desc')->paginate(100);
         $laporan = PengajuanBarang::whereIn('status', ['diterima', 'ditolak'])
                         ->orderBy('created_at', 'desc')
-                        ->paginate(10);
+                        ->paginate(100);
         $judul = 'Riwayat';
 
         return view('staff_gudang.riwayat', compact('logs', 'laporan', 'judul'));

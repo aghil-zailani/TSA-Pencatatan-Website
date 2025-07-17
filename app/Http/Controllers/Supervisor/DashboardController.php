@@ -58,7 +58,7 @@ class DashboardController extends Controller
 
         $fp = Barang::where('tipe_barang', 'Barang Jadi')->count();
 
-        $pengajuan = PengajuanBarang::orderBy('created_at', 'asc')->get();
+        $pengajuan = PengajuanBarang::orderBy('created_at', 'desc')->get();
 
         $riwayatLoginData = LoginHistory::where('user_id', Auth::id())
                                         ->latest('login_at') // Urutkan dari yang terbaru
@@ -194,20 +194,28 @@ class DashboardController extends Controller
     public function getMasterDataByCategory($category_name)
     {
         try {
+            if ($category_name === 'category_name') {
+                // Khusus endpoint untuk ambil LIST KATEGORI
+                $categories = MasterData::select('category')->distinct()->pluck('category');
+                return response()->json(['categories' => $categories]);
+            }
+
             $data = MasterData::where('category', $category_name)
-                              ->where('is_active', true)
-                              ->pluck('value');
+                            ->where('is_active', true)
+                            ->pluck('value');
+
             return response()->json($data);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             \Log::error("Error fetching master data for category $category_name: " . $e->getMessage(), [
                 'exception' => $e, 'request_url' => request()->fullUrl()
             ]);
             return response()->json([
-                'message' => 'Terjadi kesalahan saat mengambil opsi dropdown.',
+                'message' => 'Terjadi kesalahan saat mengambil master data.',
                 'error' => $e->getMessage()
             ], 500);
         }
     }
+
 
     public function updateHarga(Request $request){
         $request->validate([
@@ -240,7 +248,6 @@ class DashboardController extends Controller
                 $q->whereNull('berat_barang')->orWhere('berat_barang', '');
             });
         }
-
 
         $updatedCount = $query->update([
             'harga_beli' => $hargaBeli
@@ -401,10 +408,8 @@ class DashboardController extends Controller
         return view('supervisor.master_data', compact('judul', 'cards', 'uniqueCategories'));
     }
 
-
-    // Metode untuk halaman manajemen Master Data spesifik
     // Parameter diubah dari $tipe_barang_name menjadi $category_name
-     public function manageSpecificMaster($form_config_category) // Ubah parameter menjadi $form_config_category
+    public function manageSpecificMaster($form_config_category) // Ubah parameter menjadi $form_config_category
     {
         // Ambil konfigurasi field untuk form_type ini
         $masterData = MasterData::where('category', $form_config_category)
@@ -421,7 +426,6 @@ class DashboardController extends Controller
             'form_config_barang_jadi' => 'Konfigurasi Form: Barang Jadi',
             'form_config_hydrant_barang_jadi' => 'Konfigurasi Form: Hydrant Barang Jadi', // Tambahkan jika ada
             'form_config_barang_keluar' => 'Konfigurasi Form: Barang Keluar', // Tambahkan jika ada
-            // ... tambahkan mapping lain sesuai dengan kategori form_config yang Anda buat
         ];
         $judul = $displayTitleMap[$form_config_category] ?? 'Konfigurasi Form: ' . ucfirst(str_replace('_', ' ', str_replace('form_config_', '', $form_config_category)));
         
@@ -436,35 +440,46 @@ class DashboardController extends Controller
     // Metode untuk menyimpan data master (Store) - TETAP SAMA
     public function storeMasterData(Request $request)
     {
-        // Validasi untuk kategori dan nilai field, bukan nilai master biasa
         $request->validate([
-            'category' => 'required|string|max:50', // Akan menjadi 'form_config_APAR', 'form_config_Hydrant'
-            'value' => 'required|string|max:255', // Akan menjadi 'nama_barang', 'berat', 'satuan' (field_name)
+            'category' => 'required|string|max:50',
+            'value' => 'required|string|max:255',
             'label_display' => 'required|string|max:255',
             'input_type' => 'required|string|in:text,number,dropdown,date',
             'field_order' => 'required|integer',
             'is_required' => 'boolean',
-
         ]);
 
-        // Pastikan kombinasi category dan value (field_name) unik
         $existing = MasterData::where('category', $request->category)
-                                ->where('value', $request->value)
-                                ->first();
+                            ->where('value', $request->value)
+                            ->first();
         if ($existing) {
-            return redirect()->back()->with('error', 'Field "' . $request->value . '" sudah ada untuk kategori "' . $request->category . '".');
+            if ($request->ajax()) {
+                return response()->json([
+                    'message' => 'Field "' . $request->value . '" sudah ada untuk kategori "' . $request->category . '".',
+                    'errors' => ['category' => ['Kategori sudah ada']]
+                ], 422);
+            } else {
+                return redirect()->back()->with('error', 'Field "' . $request->value . '" sudah ada untuk kategori "' . $request->category . '".');
+            }
         }
 
         MasterData::create([
             'category' => $request->category,
-            'value' => $request->value, // value = field_name
+            'value' => $request->value,
             'label_display' => $request->label_display,
-            'input_type' => $request->input_type,
+            'input_type' => 'text',
             'field_order' => $request->field_order,
             'is_required' => $request->has('is_required'),
-            'is_active' => true, // Konfigurasi field biasanya selalu aktif
+            'is_active' => true,
         ]);
-        return redirect()->back()->with('message', 'Konfigurasi field berhasil ditambahkan!');
+
+        if ($request->ajax()) {
+            return response()->json([
+                'message' => 'Kategori berhasil ditambahkan!'
+            ]);
+        } else {
+            return redirect()->back()->with('message', 'Konfigurasi field berhasil ditambahkan!');
+        }
     }
 
     // Metode untuk update data master (Update) - Akan mengupdate konfigurasi field
@@ -541,7 +556,7 @@ class DashboardController extends Controller
         $pengajuanPending = PengajuanBarang::select('report_id', 'nama_laporan','status', \DB::raw('COUNT(*) as total_items'), \DB::raw('MIN(created_at) as created_at'))
                                           ->where('status', 'sent_to_supervisor')
                                           ->groupBy('report_id', 'status', 'nama_laporan')
-                                          ->orderBy('created_at', 'asc')
+                                          ->orderBy('created_at', 'desc')
                                           ->get();
 
         $judul = 'Pemeliharaan';
@@ -555,7 +570,7 @@ class DashboardController extends Controller
         $pengajuanPending = PengajuanBarang::select('report_id', 'nama_laporan','status', \DB::raw('COUNT(*) as total_items'), \DB::raw('MIN(created_at) as created_at'))
                                           ->where('status', 'sent_to_supervisor')
                                           ->groupBy('report_id', 'status', 'nama_laporan')
-                                          ->orderBy('created_at', 'asc')
+                                          ->orderBy('created_at', 'desc')
                                           ->get();
 
         $judul = 'Validasi Laporan Masuk';
@@ -578,10 +593,14 @@ class DashboardController extends Controller
         $keluar = Keluar::findOrFail($id);
 
         $keluar->status = 'diterima';
+        $keluar->created_at = now();
+        $keluar->updated_at = now();
         $keluar->save();
 
         $barang = $keluar->barang;
         $barang->jumlah_barang -= $keluar->jumlah_barang;
+        $barang->created_at = now();
+        $barang->updated_at = now();
         $barang->save();
 
         return redirect()->route('supervisor.validasi.barang_keluar')
@@ -593,7 +612,9 @@ class DashboardController extends Controller
         $transaksi = Transaksi::findOrFail($id);
 
         $transaksi->status = 'rejected';
-        $transaksi->catatan = $request->catatan_penolakan; // Catatan dari form
+        $transaksi->catatan = $request->catatan_penolakan;
+        $transaksi->created_at = now();
+        $transaksi->updated_at = now();
         $transaksi->save();
 
         return redirect()->route('supervisor.validasi.barang_keluar')
@@ -664,7 +685,11 @@ class DashboardController extends Controller
                     Barang::create($barangData);
                 }
 
-                $pengajuanToValidate->update(['status' => 'diterima']);
+                $pengajuanToValidate->update([
+                    'status' => 'diterima',
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
 
                 DB::commit();
                 return redirect()->route('supervisor.validasi.barang_masuk')
@@ -676,7 +701,9 @@ class DashboardController extends Controller
 
                 $pengajuanToValidate->update([
                     'status' => 'ditolak',
-                    'catatan_penolakan' => $catatan
+                    'catatan_penolakan' => $catatan,
+                    'created_at' => now(),
+                    'updated_at' => now()
                 ]);
 
                 DB::commit();

@@ -11,7 +11,7 @@ use Maatwebsite\Excel\Concerns\WithDrawings;
 use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 use Maatwebsite\Excel\Events\AfterSheet;
 
-class ExcelExport implements FromCollection, WithHeadings, WithEvents, ShouldAutoSize, WithDrawings
+class ExcelExport implements FromCollection, WithHeadings, WithEvents, ShouldAutoSize
 {
     public function collection()
     {
