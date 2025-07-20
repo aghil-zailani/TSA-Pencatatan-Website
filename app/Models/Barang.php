@@ -9,9 +9,14 @@ class Barang extends Model
 {
     use HasFactory;
 
+    protected $table = 'barangs';
+
     protected $primaryKey = 'id_barang';
+    public $incrementing = false;
+    protected $keyType = 'string';
 
     protected $fillable = [
+        'id_barang',
         'nama_barang',
         'jumlah_barang',
         'tipe_barang',
@@ -41,5 +46,4 @@ class Barang extends Model
     {
         return $this->hasMany(QrCode::class, 'id_barang', 'id_barang');
     }
-
 }

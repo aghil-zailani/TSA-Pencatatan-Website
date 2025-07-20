@@ -55,4 +55,42 @@ class LoginController extends Controller
             'message' => 'Berhasil logout dari API'
         ], 200);
     }
+
+    public function loginAndroid(Request $request)
+    {
+        // PERUBAHAN: Validasi sekarang untuk field 'username'
+        $request->validate([
+            'username' => 'required|string', // Validasi untuk username
+            'password' => 'required|string',
+        ]);
+
+        // PERUBAHAN: Cari user berdasarkan kolom 'username' di database
+        $user = User::where('username', $request->username)->first(); // Cari berdasarkan username
+
+        // Cek apakah user ditemukan dan password cocok
+        if (! $user || ! Hash::check($request->password, $user->password)) {
+            // PERUBAHAN: Pesan error merujuk ke 'username'
+            throw ValidationException::withMessages([
+                'username' => ['Username atau Password salah.'],
+            ]);
+        }
+
+        // Buat nama token menggunakan user->id
+        $token = $user->createToken('api-token-'.$user->id)->plainTextToken;
+
+        // Sesuaikan data user yang dikembalikan
+        $userData = [
+            'id' => $user->id,
+            'username' => $user->username,
+            'email' => $user->email,
+            'role' => $user->role,
+        ];
+
+        return response()->json([
+            'message' => 'Login berhasil',
+            'user' => $userData,
+            'token_type' => 'Bearer',
+            'access_token' => $token,
+        ],200);
+    }
 }

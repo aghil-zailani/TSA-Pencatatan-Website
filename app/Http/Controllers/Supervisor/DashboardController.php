@@ -23,6 +23,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Throwable;
 use App\Models\PengajuanBarang;
 use App\Models\Transaksi;
+use Illuminate\Support\Facades\Validator;
 
 class DashboardController extends Controller
 {
@@ -554,7 +555,7 @@ class DashboardController extends Controller
     public function pemeliharaan()
     {
         $pengajuanPending = PengajuanBarang::select('report_id', 'nama_laporan','status', \DB::raw('COUNT(*) as total_items'), \DB::raw('MIN(created_at) as created_at'))
-                                          ->where('status', 'sent_to_supervisor')
+                                          ->where('status', 'proses')
                                           ->groupBy('report_id', 'status', 'nama_laporan')
                                           ->orderBy('created_at', 'desc')
                                           ->get();
@@ -568,7 +569,7 @@ class DashboardController extends Controller
     public function validasiBarangMasuk()
     {
         $pengajuanPending = PengajuanBarang::select('report_id', 'nama_laporan','status', \DB::raw('COUNT(*) as total_items'), \DB::raw('MIN(created_at) as created_at'))
-                                          ->where('status', 'sent_to_supervisor')
+                                          ->where('status', 'proses')
                                           ->groupBy('report_id', 'status', 'nama_laporan')
                                           ->orderBy('created_at', 'desc')
                                           ->get();
@@ -611,7 +612,7 @@ class DashboardController extends Controller
     {
         $transaksi = Transaksi::findOrFail($id);
 
-        $transaksi->status = 'rejected';
+        $transaksi->status = 'ditolak';
         $transaksi->catatan = $request->catatan_penolakan;
         $transaksi->created_at = now();
         $transaksi->updated_at = now();
@@ -765,6 +766,91 @@ class DashboardController extends Controller
         return view('supervisor.riwayat', compact('judul', 'riwayatGabung'));
     }
 
+    public function pengajuanBarangs(Request $request)
+    {
+        // 1. Dapatkan kategori dari request
+        $category = $request->input('tipe_barang_kategori');
+        if (!$category) {
+            return response()->json(['message' => 'Tipe barang kategori wajib diisi.'], 422);
+        }
+
+        // 2. Ambil konfigurasi form dari tabel master_data berdasarkan kategori
+        // Kita gunakan 'name' untuk mencocokkan kategori 'APAR', 'Hydrant', dll.
+        $formConfigs = \App\Models\FormConfig::where('category', $category)->get();
+        if ($formConfigs->isEmpty()) {
+            return response()->json(['message' => "Konfigurasi form untuk kategori '{$category}' tidak ditemukan."], 404);
+        }
+
+        // 3. Bangun aturan validasi secara dinamis
+        $validationRules = [];
+        foreach ($formConfigs as $config) {
+            $rules = [];
+            if ($config->is_required) {
+                $rules[] = 'required';
+            } else {
+                $rules[] = 'nullable';
+            }
+
+            if ($config->input_type === 'number') {
+                $rules[] = 'numeric';
+            } else {
+                $rules[] = 'string';
+                $rules[] = 'max:255';
+            }
+            
+            // --- INILAH PERBAIKANNYA ---
+            // Gunakan $config->value, bukan $config->field_name
+            $validationRules[$config->value] = implode('|', $rules);
+        }
+        
+        // Tambahkan validasi untuk field yang selalu ada
+        $validationRules['tipe_barang_kategori'] = 'required|string';
+        // 'jumlah_barang' sudah dihandle oleh loop dinamis, jadi tidak perlu ditambahkan manual lagi.
+
+        // 4. Jalankan validasi
+        $validator = Validator::make($request->all(), $validationRules);
+        if ($validator->fails()) {
+            return response()->json(['message' => 'Data tidak valid', 'errors' => $validator->errors()], 422);
+        }
+        $validatedData = $validator->validated();
+
+        // 5. Pemetaan dari 'value' config ke kolom database
+        $columnMapping = [
+            'kondisi' => 'kondisi_barang',
+            // 'nama_field_di_kolom_value' => 'nama_kolom_di_tabel_pengajuan_barangs'
+        ];
+        
+        $dataToSave = [];
+        $pengajuanModel = new \App\Models\PengajuanBarang();
+        foreach ($validatedData as $key => $value) {
+            $dbColumn = $columnMapping[$key] ?? $key;
+            if (in_array($dbColumn, $pengajuanModel->getFillable())) {
+                $dataToSave[$dbColumn] = ($value === null || $value === '') ? '-' : $value;
+            }
+        }
+
+        // 6. Tambahkan data yang di-generate oleh server
+        $dataToSave['nama_laporan'] = 'Laporan Barang Masuk';
+        $dataToSave['status'] = 'proses';
+        $dataToSave['catatan_penolakan'] = '-';
+        
+        // Generate report_id
+        $prefix = strtoupper(substr($validatedData['tipe_barang_kategori'], 0, 3));
+        $product = isset($validatedData['tipe_barang']) ? strtoupper(substr($validatedData['tipe_barang'], 0, 3)) : 'GEN';
+        $monthYear = date('my');
+        $count = PengajuanBarang::where('report_id', 'LIKE', "{$prefix}{$product}-{$monthYear}-%")->count() + 1;
+        $increment = str_pad($count, 3, '0', STR_PAD_LEFT);
+        $dataToSave['id_barang'] = "{$prefix}{$product}-{$monthYear}-{$increment}";
+        $dataToSave['report_id'] = "{$prefix}{$product}-{$monthYear}-{$increment}";
+
+        // 7. Simpan ke database
+        try {
+            $pengajuan = PengajuanBarang::create($dataToSave);
+            return response()->json(['message' => 'Pengajuan barang berhasil!', 'data' => $pengajuan], 201);
+        } catch (\Throwable $e) {
+            return response()->json(['message' => 'Terjadi kesalahan saat menyimpan data.', 'error' => $e->getMessage()], 500);
+        }
+    }
 
     /**
      * Display the specified resource.

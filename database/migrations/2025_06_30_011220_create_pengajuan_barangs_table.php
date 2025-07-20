@@ -10,9 +10,10 @@ class CreatePengajuanBarangsTable extends Migration
     {
         Schema::create('pengajuan_barangs', function (Blueprint $table) {
             $table->id();
+            $table->string('report_id')->unique(); // WAJIB ADA!
             $table->string('nama_barang')->nullable();
-            $table->string('tipe_barang_kategori')->nullable(); // 'APAR', 'Hydrant', dll.
-            $table->string('tipe_barang')->nullable(); // 'ABC Powder', 'Pilar', dll.
+            $table->string('tipe_barang_kategori')->nullable();
+            $table->string('tipe_barang')->nullable();
             $table->integer('jumlah_barang')->nullable();
             $table->string('satuan')->nullable();
             $table->string('kondisi_barang')->nullable();
@@ -23,7 +24,7 @@ class CreatePengajuanBarangsTable extends Migration
             $table->string('lebar')->nullable();
             $table->string('tinggi')->nullable();
             $table->string('merek')->nullable();
-            $table->string('status')->default('pending'); // Status validasi
+            $table->string('status')->default('pending');
             $table->timestamps();
         });
     }

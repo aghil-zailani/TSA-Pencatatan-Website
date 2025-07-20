@@ -7,12 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 class PengajuanBarang extends Model
 {
     protected $table = 'pengajuan_barangs';
-
     protected $primaryKey = 'id';
 
-    public $timestamps = true; 
-
     protected $fillable = [
+        'report_id',
+        'id_barang',
+        'nama_laporan',
         'nama_barang',
         'tipe_barang_kategori',
         'tipe_barang',
@@ -27,13 +27,10 @@ class PengajuanBarang extends Model
         'tinggi',
         'merek',
         'status',
-        'report_id',
-        'created_at',
-        'updated_at'
+        'catatan_penolakan'
     ];
 
     public function barang() {
-        return $this->belongsTo(Barang::class, 'id_barang');
+        return $this->belongsTo(Barang::class, 'id_barang', 'id_barang');
     }
-
 }
