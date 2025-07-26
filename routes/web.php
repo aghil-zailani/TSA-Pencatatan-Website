@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LoginController as WebLoginController; // Alias untuk kejelasan
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\Supervisor\Pemeliharaan;
 use App\Http\Controllers\Supervisor\DashboardController as SupervisorDashboardController;
 use App\Http\Controllers\StaffGudang\DashboardController as StaffGudangDashboardController;
 
@@ -27,20 +28,21 @@ Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->name('supe
     Route::delete('/master-data/category/{category_name}', [SupervisorDashboardController::class, 'destroyMasterCategory'])->name('master.data.destroy_category');
     Route::get('/api/master-data/{category}', [SupervisorDashboardController::class, 'getMasterDataByCategory']);
     Route::delete('/master-data/category/{category_name}', [SupervisorDashboardController::class, 'destroyMasterCategory'])->name('master.data.destroy_category');
+
     Route::get('/validasi-barang-masuk', [SupervisorDashboardController::class, 'validasiBarangMasuk'])->name('validasi.barang_masuk'); // Halaman Supervisor
     Route::get('/validasi-laporan/{reportId}', [SupervisorDashboardController::class, 'lihatDetailLaporan'])->name('validasi.laporan_detail');
-    Route::get('/validasi/barang-keluar', [SupervisorDashboardController::class, 'validasiBarangKeluar'])->name('validasi.barang_keluar');
-
-    Route::get('/validasi/barang-keluar/{id}', [SupervisorDashboardController::class, 'showKeluarDetail'])->name('validasi.keluar.detail');
-
-    Route::post('/validasi/barang-keluar/{id}/detail', [SupervisorDashboardController::class, 'validasiKeluar'])->name('validasi.keluar.validasi');
-    Route::post('/validasi/barang-keluar/{id}/terima', [SupervisorDashboardController::class, 'terimaKeluar'])->name('validasi.keluar.terima');
-    Route::post('/validasi/barang-keluar/{id}/tolak', [SupervisorDashboardController::class, 'tolakKeluar'])->name('validasi.keluar.tolak');
-
     Route::post('/validasi-pengajuan', [SupervisorDashboardController::class, 'validasiPengajuan'])->name('validasi.pengajuan');
-    Route::get('/pemeliharaan', [SupervisorDashboardController::class, 'pemeliharaan'])->name('pemeliharaan');
+
+    Route::get('/validasi/barang-keluar', [SupervisorDashboardController::class, 'validasiBarangKeluar'])->name('validasi.barang_keluar');
+    Route::get('/validasi/barang-keluar/{reportId}', [SupervisorDashboardController::class, 'showKeluarDetail'])->name('validasi.keluar_detail');
+    Route::post('/validasi-pengajuan-keluar', [SupervisorDashboardController::class, 'validasiPengajuanKeluar'])->name('validasi.pengajuan.keluar');
+    
+    Route::get('/pemeliharaan-riwayat', [Pemeliharaan::class, 'pemeliharaanRiwayat'])->name('pemeliharaan.riwayat');
+    Route::get('/pemeliharaan-validasi', [Pemeliharaan::class, 'pemeliharaanValidasi'])->name('pemeliharaan.validasi');
+
     Route::get('/riwayat', [SupervisorDashboardController::class, 'riwayat'])->name('riwayat');
     Route::get('/log-aktivitas', [SupervisorDashboardController::class, 'logAktivitas'])->name('log.aktivitas');
+    
 });
 
 Route::middleware(['auth', 'role:staff_gudang'])->prefix('staff-gudang')->name('staff_gudang.')->group(function () {

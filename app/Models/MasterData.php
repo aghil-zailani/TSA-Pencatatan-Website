@@ -16,11 +16,17 @@ class MasterData extends Model
     protected $fillable = [
         'category',
         'value',
+        'label_display',
+        'input_type',
+        'field_order',
+        'is_required',
         'is_active',
     ];
 
     // Tentukan tipe data untuk kolom-kolom tertentu (opsional, tapi bagus untuk boolean)
     protected $casts = [
+        'is_required' => 'boolean',
         'is_active' => 'boolean',
+        'field_order' => 'integer',
     ];
 }

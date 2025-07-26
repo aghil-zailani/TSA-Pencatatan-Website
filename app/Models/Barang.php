@@ -21,6 +21,8 @@ class Barang extends Model
         'jumlah_barang',
         'tipe_barang',
         'tipe_barang_kategori',
+        'jenis_barang',
+        'media',
         'berat_barang',
         'satuan',
         'kondisi',
@@ -31,7 +33,6 @@ class Barang extends Model
         'panjang',
         'lebar',
         'tinggi',
-        'tanggal_kadaluarsa',
         'merek_barang',
     ];
 
@@ -44,6 +45,6 @@ class Barang extends Model
 
     public function qrCodes()
     {
-        return $this->hasMany(QrCode::class, 'id_barang', 'id_barang');
+        return $this->hasOne(QrCode::class, 'id_barang', 'id_barang');
     }
 }

@@ -17,19 +17,19 @@
         .table thead th { font-family: 'Poppins', sans-serif; font-weight: 600; background-color: #e9ecef; color: #495057; text-align: center; }
         .table tbody td { font-family: 'Poppins', sans-serif; color: #495057; vertical-align: middle; }
 
-        /* Styling tombol Kirim Laporan Kondisi */
         .btn-send-report {
-            background-color: #ffc107; /* Kuning */
-            border-color: #ffc107;
-            color: #212529; /* Teks gelap */
+            background-color: #007bff;
+            border-color: #007bff;
+            color: #fff;
             font-family: 'Poppins', sans-serif;
             font-weight: 500;
             border-radius: 0.5rem;
             padding: 0.75rem 1.5rem;
         }
         .btn-send-report:hover {
-            background-color: #e0a800;
-            border-color: #d39e00;
+            background-color: #0056b3;
+            border-color: #0056b3;
+            color: #fff;
         }
     </style>
 </head>
@@ -56,7 +56,7 @@
                 <section class="section">
                     <div class="card shadow h-md-50">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <h4 class="card-title mb-0">Daftar Barang Kondisi</h4>
+                            <h4 class="card-title mb-0">Daftar Barang Pemeliharaan</h4>
                             <form id="sendConditionReportForm" action="{{ route('staff_gudang.kirim_laporan') }}" method="POST">
                                 @csrf
                                 <input type="hidden" name="jenis_laporan" value="Laporan Kondisi Barang">

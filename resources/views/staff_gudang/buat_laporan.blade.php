@@ -28,6 +28,7 @@
         .btn-send-report:hover {
             background-color: #0056b3;
             border-color: #0056b3;
+            color: #fff;
         }
         .input-report-name {
             font-family: 'Poppins', sans-serif;
@@ -64,9 +65,8 @@
                             <h4 class="card-title mb-3 mb-md-0">Daftar Barang Masuk Menunggu Laporan</h4>
                             <form id="sendReportForm" action="{{ route('staff_gudang.kirim_laporan') }}" method="POST" class="d-flex align-items-center">
                                 @csrf
-                                <input type="text" name="nama_laporan" class="input-report-name" value="Laporan Barang Masuk" required>
                                 <button type="submit" class="btn btn-send-report">
-                                    <i class="bi bi-send-fill me-2"></i> Kirim Laporan untuk Validasi
+                                    <i class="bi bi-send-fill me-2"></i> Kirim Laporan
                                 </button>
                             </form>
                         </div>
@@ -163,7 +163,7 @@
                 var form = $(this);
                 Swal.fire({
                     title: 'Konfirmasi Pengiriman Laporan',
-                    text: 'Apakah Anda yakin ingin mengirim semua laporan pending ke Supervisor?',
+                    text: 'Apakah Anda ingin mengirim laporan ke Supervisor?',
                     icon: 'question',
                     showCancelButton: true,
                     confirmButtonColor: '#007bff',

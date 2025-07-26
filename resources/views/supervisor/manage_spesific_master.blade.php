@@ -68,9 +68,9 @@
                             <input type="text" class="form-control" name="value" required>
                         </div>
 
-                        <div class="mb-3">
+                        <!-- <div class="mb-3">
                             <input type="text" class="form-control" id="value" name="value" hidden>
-                        </div>
+                        </div> -->
 
                         <div class="mb-3">
                             <label class="form-label">Urutan Field</label>
@@ -189,12 +189,7 @@
 
                         <div class="mb-3">
                             <label>Input Type</label>
-                            <select class="form-select" name="input_type" id="edit_input_type" required>
-                                <option value="text">Text</option>
-                                <option value="number">Number</option>
-                                <option value="dropdown">Dropdown</option>
-                                <option value="date">Date</option>
-                            </select>
+                            <input type="text" class="form-control" name="category" id="edit_input_type" value="text" readonly>
                         </div>
 
                         <div class="mb-3">

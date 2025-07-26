@@ -109,12 +109,21 @@
                                         </li>
                                     </ul>
                                 </li>
-                                <li class="sidebar-item {{ request()->is('supervisor/pemeliharaan*') ? 'active' : '' }}">
-                                    <a href="{{ route('supervisor.pemeliharaan') }}" class='sidebar-link'>
+                                <li class="sidebar-item has-sub {{ request()->is('supervisor/pemeliharaan*') ? 'active' : '' }}">
+                                    <a href="#" class='sidebar-link'>
                                         <i class="bi bi-tools"></i>
                                         <span>Pemeliharaan</span>
                                     </a>
+                                    <ul class="submenu {{ request()->is('supervisor/pemeliharaan*') ? 'active' : '' }}">
+                                        <li class="submenu-item {{ request()->is('supervisor/pemeliharaan-validasi') ? 'active' : '' }}">
+                                            <a href="{{ route('supervisor.pemeliharaan.validasi') }}">Validasi</a>
+                                        </li>
+                                        <li class="submenu-item {{ request()->is('supervisor/pemeliharaan-riwayat') ? 'active' : '' }}">
+                                            <a href="{{ route('supervisor.pemeliharaan.riwayat') }}">Riwayat</a>
+                                        </li>
+                                    </ul>
                                 </li>
+
                                 <li class="sidebar-item {{ request()->is('supervisor/riwayat*') ? 'active' : '' }}">
                                     <a href="{{ route('supervisor.riwayat') }}" class='sidebar-link'>
                                         <i class="bi bi-clock-history"></i>

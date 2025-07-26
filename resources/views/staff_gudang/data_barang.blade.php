@@ -67,16 +67,28 @@
                                                     <td><?= $i++ ?></td>
                                                     <td>{{ $item->nama_barang }}</td>
                                                     <td>{{ $item->tipe_barang }}</td>
-                                                    <td>{{ $item->kondisi ?? 'N/A' }}</td> {{-- Kolom Kondisi --}}
-                                                    <td>{{ $item->created_at ? $item->created_at->format('d M Y H:i') : 'N/A' }}</td>
+                                                    <td>{{ $item->kondisi ?? '-' }}</td> {{-- Kolom Kondisi --}}
+                                                    <td>{{ $item->created_at ? $item->created_at->format('d M Y H:i') : '-' }}</td>
                                                     <td class="text-center">
-                                                        <button type="button" class="btn btn-generate-qr btn-success btn-sm"
-                                                            data-bs-toggle="modal"
-                                                            data-bs-target="#qrCodeModal"
-                                                            data-item-id="{{ $item->id_barang }}"
-                                                            data-item-nama="{{ $item->nama_barang }}">
-                                                            <i class="bi bi-qr-code"></i> Generate QR
-                                                        </button>
+                                                        @if ($item->qrCode && $item->qrCode->qr_code_path)
+                                                            <!-- Tombol nonaktif jika QR sudah ada -->
+                                                            <button type="button" class="btn btn-secondary btn-sm" disabled>
+                                                                <i class="bi bi-check-circle"></i> QR Sudah Ada
+                                                            </button>
+
+                                                            <!-- Tampilkan gambar QR jika mau -->
+                                                            <br>
+                                                            <img src="{{ asset('storage/' . $item->qrCode->qr_code_path) }}" alt="QR Code" width="80">
+                                                        @else
+                                                            <!-- Tombol aktif jika QR belum ada -->
+                                                            <button type="button" class="btn btn-generate-qr btn-success btn-sm"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#qrCodeModal"
+                                                                data-item-id="{{ $item->id_barang }}"
+                                                                data-item-nama="{{ $item->nama_barang }}">
+                                                                <i class="bi bi-qr-code"></i> Generate QR
+                                                            </button>
+                                                        @endif
                                                     </td>
                                                 </tr>
                                             @endfor
@@ -199,7 +211,7 @@
 
                         // Ganti tombol download ke direct URL PNG
                         $('#downloadQrBtn').attr('href', data.url);
-                        $('#downloadQrBtn').attr('download', 'qrcode.png');
+                        $('#downloadQrBtn').attr('download', data.fileName);
                     },
                     error: function(xhr) {
                         $('#qrCodeContainer').html('<p class="text-danger">Gagal memuat QR Code.</p>');

@@ -53,9 +53,9 @@
                                             <th>Nama Barang</th>
                                             <th>Jenis Barang</th>
                                             <th>Total Stok</th>
-                                            <th>Berat</th>
-                                            <th>Harga Beli</th>
-                                            <th>Harga Jual</th>   
+                                            <th>Kategori</th>
+                                            <th>Media</th>
+                                            <th>Berat</th>  
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -66,9 +66,9 @@
                                                 <td>{{ $item->nama_barang }}</td>
                                                 <td>{{ $item->tipe_barang }}</td>
                                                 <td class="text-center">{{ $item->total_stok }}</td>
-                                                <td>{{ $item->berat_display_formatted }}</td>
-                                                <td>{{ $item->harga_beli ?? 'N/A' }}</td>
-                                                <td>{{ $item->harga_jual ?? 'N/A' }}</td>
+                                                <td>{{ $item->tipe_barang_kategori ?? '-' }}</td>
+                                                <td>{{ $item->media ?? '-' }}</td>
+                                                <td>{{ $item->berat_display_formatted }}</td>                                               
                                             </tr>
                                         @endforeach
                                     </tbody>

@@ -18,9 +18,9 @@
         .table thead th { font-family: 'Poppins', sans-serif; font-weight: 600; background-color: #e9ecef; color: #495057; text-align: center; }
         .table tbody td { font-family: 'Poppins', sans-serif; color: #495057; vertical-align: middle; }
         .btn-success-custom { background-color: #28a745; border-color: #28a745; color: #fff; }
-        .btn-success-custom:hover { background-color: #218838; border-color: #1e7e34; }
+        .btn-success-custom:hover { background-color: #218838; border-color: #1e7e34; color: #fff; }
         .btn-danger-custom { background-color: #dc3545; border-color: #dc3545; color: #fff; }
-        .btn-danger-custom:hover { background-color: #c82333; border-color: #c82333; }
+        .btn-danger-custom:hover { background-color: #c82333; border-color: #c82333; color: #fff; }
         .btn-detail-info {
             background-color: #007bff; /* Biru */
             border-color: #007bff;
@@ -135,7 +135,7 @@
                                             <th>Satuan</th>
                                             <th>Kondisi</th>
                                             <th>Berat</th>
-                                            <th>Tanggal Kadaluarsa</th>
+                                            <th>Media</th>
                                             <th>Merek</th>
                                             <th>Ukuran</th>
                                             <th>Panjang</th>
@@ -155,7 +155,7 @@
                                                 <td>{{ $item->satuan ?? 'N/A' }}</td>
                                                 <td>{{ $item->kondisi_barang ?? 'N/A' }}</td>
                                                 <td>{{ $item->berat ?? 'N/A' }}</td>
-                                                <td>{{ $item->tanggal_kadaluarsa ?? 'N/A' }}</td>
+                                                <td>{{ $item->media ?? 'N/A' }}</td>
                                                 <td>{{ $item->merek ?? 'N/A' }}</td>
                                                 <td>{{ $item->ukuran_barang ?? 'N/A' }}</td>
                                                 <td>{{ $item->panjang ?? 'N/A' }}</td>

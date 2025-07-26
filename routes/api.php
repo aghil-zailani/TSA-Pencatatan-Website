@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\Auth\LoginController as ApiLoginController;
 use App\Http\Controllers\Api\BarangController;
 // use App\Http\Controllers\Api\LaporanAPKController;
 use App\Http\Controllers\Supervisor\DashboardController as SupervisorDashboardController;
+use App\Http\Controllers\StaffGudang\DashboardController as StaffDashboardController;
 
 Route::middleware(['api'])->group(function(){
     Route::post('/login', [ApiLoginController::class, 'login']);
@@ -34,7 +35,8 @@ Route::middleware(['api'])->group(function(){
 
     Route::get('/form-configs/{form_type}', [SupervisorDashboardController::class, 'getFormConfigsForMobile']);
     Route::get('/master-data/{category_name}', [SupervisorDashboardController::class, 'getMasterDataByCategory']);
-    Route::post('/pengajuan-barangs', [SupervisorDashboardController::class, 'pengajuanBarangs']);
+    Route::post('/pengajuan-barangs', [StaffDashboardController::class, 'pengajuanBarangs']);
+    Route::post('/transaksi/barang-keluar', [StaffDashboardController::class, 'catatBarangKeluar']);
 
     Route::get('/test', function () {
         return response()->json(['message' => 'API Test Berhasil!']);

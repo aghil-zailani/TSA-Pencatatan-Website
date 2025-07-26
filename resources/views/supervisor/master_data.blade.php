@@ -46,11 +46,6 @@
         .master-data-card i { font-size: 3.5rem; margin-bottom: 0.75rem; }
         .master-data-card h5 { font-family: 'Poppins', sans-serif; font-weight: 600; margin-bottom: 0; color: #343a40; }
 
-        /* Warna Ikon Spesifik */
-        .icon-danger { color: #dc3545; } .icon-primary { color: #007bff; } .icon-success { color: #28a745; }
-        .icon-info { color: #17a2b8; } .icon-warning { color: #ffc107; } .icon-secondary { color: #6c757d; }
-        .icon-dark { color: #343a40; }
-
         /* Styling untuk kartu tambah baru */
         .master-data-card.add-new {
             border: 2px dashed #adb5bd;
@@ -75,15 +70,13 @@
             gap: 0.5rem;
             transition: background-color 0.2s ease;
         }
+
         .delete-category-button:hover { background-color: #c82333; }
 
         /* Styling untuk modal hapus/tambah kategori */
         #deleteCategoryModal .modal-header, #addCategoryModal .modal-header {
             background-color: #007bff; /* Biru default, sesuaikan jika ingin warna berbeda per modal */
             color: white;
-        }
-        #deleteCategoryModal .modal-header .btn-close, #addCategoryModal .modal-header .btn-close {
-            filter: invert(100%) grayscale(100%) brightness(200%);
         }
         #deleteCategoryModal .modal-body label, #addCategoryModal .modal-body label {
             font-family: 'Poppins', sans-serif;
