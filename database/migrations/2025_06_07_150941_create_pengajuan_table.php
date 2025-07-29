@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('pengajuan', function (Blueprint $table) {
@@ -19,13 +16,11 @@ return new class extends Migration
             $table->integer('jumlah_diperbaiki')->nullable();
             $table->date('tanggal_mulai')->nullable();
             $table->date('tanggal_selesai')->nullable();
+            $table->string('nama_laporan')->default('Laporan Barang Masuk'); // ✅ Tambahkan ini
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('pengajuan');

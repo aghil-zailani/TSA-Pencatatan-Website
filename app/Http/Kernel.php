@@ -43,6 +43,7 @@ class Kernel extends HttpKernel
             // \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class, // Uncomment jika menggunakan Sanctum SPA auth
             'throttle:api', // Middleware untuk rate limiting API
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\Cors::class,
         ],
     ];
 

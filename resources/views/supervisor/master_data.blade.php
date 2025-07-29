@@ -23,6 +23,7 @@
             text-decoration: none;
             color: inherit;
         }
+        
         .master-data-card {
             min-height: 150px;
             display: flex;
@@ -38,6 +39,7 @@
             border: 1px solid #e9ecef;
             position: relative; /* Penting untuk posisi tombol hapus */
         }
+
         .master-data-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
@@ -54,38 +56,7 @@
         }
         .master-data-card.add-new i { color: #6c757d; }
         .master-data-card.add-new:hover { background-color: #e9ecef; border-color: #6c757d; }
-
-        /* Styling untuk tombol Hapus Kategori */
-        .delete-category-button {
-            font-family: 'Poppins', sans-serif;
-            font-weight: 600;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            background-color: #dc3545;
-            color: white;
-            border: none;
-            margin-bottom: 1.5rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: background-color 0.2s ease;
-        }
-
-        .delete-category-button:hover { background-color: #c82333; }
-
-        /* Styling untuk modal hapus/tambah kategori */
-        #deleteCategoryModal .modal-header, #addCategoryModal .modal-header {
-            background-color: #007bff; /* Biru default, sesuaikan jika ingin warna berbeda per modal */
-            color: white;
-        }
-        #deleteCategoryModal .modal-body label, #addCategoryModal .modal-body label {
-            font-family: 'Poppins', sans-serif;
-            font-weight: 600;
-        }
-        #deleteCategoryModal .form-select, #addCategoryModal .form-control {
-            font-family: 'Poppins', sans-serif;
-            border-radius: 0.5rem;
-        }
+        
     </style>
 </head>
 <body>
@@ -115,7 +86,7 @@
                     </div>
 
                     {{-- Tombol Hapus Kategori (di luar grid) --}}
-                    <button type="button" class="delete-category-button" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal">
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal">
                         <i class="bi bi-trash"></i> Hapus Kategori
                     </button>
 
@@ -156,20 +127,20 @@
     @endif
 
     {{-- MODAL HAPUS KATEGORI --}}
-    <div class="modal fade" id="deleteCategoryModal" tabindex="-1" aria-labelledby="deleteCategoryModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+    <div class="modal fade" id="deleteCategoryModal" tabindex="-1" role="dialog" aria-labelledby="deleteCategoryModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <form id="deleteCategoryForm" method="POST">
                     @csrf
                     @method('DELETE')
-                    <div class="modal-header bg-danger text-white">
-                        <h5 class="modal-title" id="deleteCategoryModalLabel">Hapus Kategori Konfigurasi</h5> {{-- Ubah teks --}}
+                    <div class="modal-header bg-danger">
+                        <h5 class="modal-title text-white" id="deleteCategoryModalLabel">Hapus Kategori Konfigurasi</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <p>Pilih kategori konfigurasi yang ingin Anda hapus. **Perhatian: Semua field di bawah kategori ini akan ikut terhapus!**</p> {{-- Ubah teks --}}
+                        <p>Pilih kategori konfigurasi yang ingin Anda hapus. **Perhatian: Semua field di bawah kategori ini akan ikut terhapus!**</p>
                         <div class="mb-3">
-                            <label for="categoryToDelete" class="form-label">Pilih Kategori Konfigurasi</label> {{-- Ubah teks --}}
+                            <label for="categoryToDelete" class="form-label">Pilih Kategori Konfigurasi</label>
                             <select class="form-select" id="categoryToDelete" name="category_name" required>
                                 <option value="">-- Pilih Kategori Konfigurasi --</option>
                                 @foreach($uniqueCategories as $cat) {{-- Ini harus uniqueCategories dari MasterData.category --}}
@@ -180,7 +151,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-danger-custom">Hapus Kategori Konfigurasi</button> {{-- Ubah teks --}}
+                        <button type="submit" class="btn btn-danger">Hapus Kategori Konfigurasi</button>
                     </div>
                 </form>
             </div>
@@ -188,19 +159,19 @@
     </div>
 
     {{-- MODAL TAMBAH KATEGORI BARU --}}
-    <div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+    <div class="modal fade" id="addCategoryModal" tabindex="-1" role="dialog" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <form id="addCategoryForm" action="{{ route('supervisor.master.data.store') }}" method="POST">
                     @csrf
-                    <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title" id="addCategoryModalLabel">Tambah Kategori Konfigurasi Baru</h5> {{-- Ubah teks --}}
+                    <div class="modal-header bg-primary">
+                        <h5 class="modal-title text-white" id="addCategoryModalLabel">Tambah Kategori Konfigurasi Baru</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label for="new_category_name" class="form-label">Nama Kategori Konfigurasi Baru</label> {{-- Ubah teks --}}
-                            <input type="text" class="form-control" id="new_category_name" name="category" placeholder="Contoh: form_config_tipe_baru" required>
+                            <label for="new_category_name" class="form-label">Nama Kategori Konfigurasi Baru</label>
+                            <input type="text" class="form-control" id="new_category_name" name="category" placeholder="Contoh: APAR, Hydrant" required>
                             {{-- Input value awal untuk kategori baru (sebagai field_name default) --}}
                             <input type="hidden" name="value" value="default_field_name"> {{-- field_name awal --}}
                             <input type="hidden" name="label_display" value="Default Label"> {{-- label_display awal --}}
@@ -212,7 +183,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-primary-custom">Simpan Kategori Konfigurasi</button> {{-- Ubah teks --}}
+                        <button type="submit" class="btn btn-primary">Simpan Kategori</button>
                     </div>
                 </form>
             </div>

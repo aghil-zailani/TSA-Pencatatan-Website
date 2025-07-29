@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
+use App\Models\QrCode;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller;
 use App\Models\Barang; // Pastikan model Barang sudah diimport
 use Illuminate\Support\Facades\Validator; // Untuk validasi manual
 
@@ -54,20 +56,66 @@ class BarangController extends Controller
 
     public function ringkasan()
     {
-        // Ringkasan total alat
-        $total = Barang::sum('jumlah_barang');
-        $baik = Barang::where('kondisi', 'baik')->sum('jumlah_barang');
-        $perluCek = Barang::where('kondisi', 'perlu_cek')->sum('jumlah_barang');
+        $kondisiBaik = ['baik', 'bagus', 'oke', 'good', 'Baik', 'Bagus', 'Oke', 'Good'];
 
-        // Ringkasan APAR
-        $aparTotal = Barang::where('tipe_barang', 'apar')->sum('jumlah_barang');
-        $aparBaik = Barang::where('tipe_barang', 'apar')->where('kondisi', 'baik')->sum('jumlah_barang');
-        $aparPerluCek = Barang::where('tipe_barang', 'apar')->where('kondisi', 'perlu_cek')->sum('jumlah_barang');
+        // Ambil semua barang
+        $barangs = Barang::all();
 
-        // Ringkasan Hydrant
-        $hydrantTotal = Barang::where('tipe_barang', 'hydrant')->sum('jumlah_barang');
-        $hydrantBaik = Barang::where('tipe_barang', 'hydrant')->where('kondisi', 'baik')->sum('jumlah_barang');
-        $hydrantPerluCek = Barang::where('tipe_barang', 'hydrant')->where('kondisi', 'perlu_cek')->sum('jumlah_barang');
+        // Subquery: ambil laporan terakhir (berdasarkan ID terbesar per barang)
+       $latestReports = DB::table('laporan_apk as l1')
+        ->select('l1.id_barang', 'l1.kondisi_fisik')
+        ->join(DB::raw('
+            (SELECT id_barang, MAX(id_laporan_pemeliharaan) as max_id
+            FROM laporan_apk
+            GROUP BY id_barang) as l2
+        '), function($join) {
+            $join->on('l1.id_barang', '=', 'l2.id_barang')
+                ->on('l1.id_laporan_pemeliharaan', '=', 'l2.max_id');
+        });
+
+        // Gabungkan ke data barang
+        $dataGabungan = DB::table('barangs as b')
+            ->leftJoinSub($latestReports, 'laporan', function($join) {
+                $join->on('b.id_barang', '=', 'laporan.id_barang');
+            })
+            ->select(
+                'b.id_barang',
+                'b.tipe_barang',
+                DB::raw('LOWER(COALESCE(laporan.kondisi_fisik, b.kondisi)) as kondisi_terakhir')
+            )
+            ->get();
+
+        // Hitung total dari tabel barangs (bukan dari hasil join laporan)
+        $total = $barangs->count();
+
+        // Ringkasan umum
+        $baik = $dataGabungan->whereIn('kondisi_terakhir', $kondisiBaik)->count();
+        $perluCek = $dataGabungan->whereNotIn('kondisi_terakhir', $kondisiBaik)->count();
+
+        // Ringkasan khusus per tipe
+        $apar = $dataGabungan->filter(function ($item) {
+            return strtolower($item->tipe_barang) === 'apar';
+        });
+
+        $hydrant = $dataGabungan->filter(function ($item) {
+            return strtolower($item->tipe_barang) === 'hydrant';
+        });
+
+
+        $aparTotal = $barangs->filter(function ($item) {
+            return strtolower($item->tipe_barang) === 'apar';
+        })->count();
+
+        $hydrantTotal = $barangs->filter(function ($item) {
+            return strtolower($item->tipe_barang) === 'hydrant';
+        })->count();
+
+
+        $aparBaik = $apar->whereIn('kondisi_terakhir', $kondisiBaik)->count();
+        $aparPerluCek = $apar->whereNotIn('kondisi_terakhir', $kondisiBaik)->count();
+
+        $hydrantBaik = $hydrant->whereIn('kondisi_terakhir', $kondisiBaik)->count();
+        $hydrantPerluCek = $hydrant->whereNotIn('kondisi_terakhir', $kondisiBaik)->count();
 
         return response()->json([
             'total' => $total,

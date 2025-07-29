@@ -224,13 +224,13 @@
     </html>
 
     {{-- MODAL EDIT HARGA BARANG --}}
-    <div class="modal fade" id="editPriceModal" tabindex="-1" aria-labelledby="editPriceModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+    <div class="modal fade" id="editPriceModal" tabindex="-1" role="dialog" aria-labelledby="editPriceModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <form id="updatePriceForm" method="POST" action="{{ route('supervisor.updateHarga') }}">
                     @csrf
-                    <div class="modal-header bg-primary text-white"> {{-- Gunakan class Bootstrap --}}
-                        <h5 class="modal-title" id="editPriceModalLabel">Edit Harga Beli Barang</h5>
+                    <div class="modal-header bg-primary ">
+                        <h5 class="modal-title text-white" id="editPriceModalLabel">Edit Harga Beli Barang</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button> {{-- btn-close-white --}}
                     </div>
                     <div class="modal-body">

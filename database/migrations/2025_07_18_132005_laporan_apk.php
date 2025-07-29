@@ -32,9 +32,9 @@ return new class extends Migration
             $table->string('lokasi_alat');
             $table->string('foto')->nullable();
             $table->string('kondisi_fisik');
-            $table->string('selang');
-            $table->string('pressure_gauge');
-            $table->string('safety_pin');
+            $table->string('selang')->nullable();
+            $table->string('pressure_gauge')->nullable();
+            $table->string('safety_pin')->nullable();
             $table->string('tindakan');
             $table->string('status')->default('Pending');
 

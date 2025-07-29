@@ -13,7 +13,11 @@ return new class extends Migration
     {
         Schema::table('transaksis', function (Blueprint $table) {
             if (!Schema::hasColumn('transaksis', 'catatan_penolakan')) {
-                $table->text('catatan_penolakan')->nullable()->after('status');
+                if (Schema::hasColumn('transaksis', 'status')) {
+                    $table->text('catatan_penolakan')->nullable()->after('status');
+                } else {
+                    $table->text('catatan_penolakan')->nullable();
+                }
             }
         });
     }

@@ -14,9 +14,11 @@ class AddReportIdToPengajuanBarangsTable extends Migration
     public function up()
     {
         Schema::table('pengajuan_barangs', function (Blueprint $table) {
-            $table->uuid('report_id')->nullable()->after('id'); // Tambahkan kolom UUID
-            // Anda bisa tambahkan index untuk pencarian yang lebih cepat
-            $table->index('report_id');
+            // Cek apakah kolom belum ada sebelum menambahkan
+            if (!Schema::hasColumn('pengajuan_barangs', 'report_id')) {
+                $table->uuid('report_id')->nullable()->after('id');
+                $table->index('report_id');
+            }
         });
     }
 

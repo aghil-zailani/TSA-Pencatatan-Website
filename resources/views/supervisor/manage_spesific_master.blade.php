@@ -16,9 +16,9 @@
         .table thead th { font-weight: 600; background-color: #e9ecef; text-align: center; }
         .table tbody td { vertical-align: middle; }
         .btn-primary-custom { background-color: #007bff; border-color: #007bff; color: #fff; border-radius: 0.5rem; }
-        .btn-primary-custom:hover { background-color: #0056b3; }
+        .btn-primary-custom:hover { background-color: #0056b3; color: #fff;}
         .btn-danger-custom { background-color: #dc3545; border-color: #dc3545; color: #fff; border-radius: 0.5rem; }
-        .btn-danger-custom:hover { background-color: #c82333; }
+        .btn-danger-custom:hover { background-color: #c82333; color: #fff;}
         .btn-warning { font-family: 'Poppins', sans-serif; }
         .form-select, .form-control { font-family: 'Poppins', sans-serif; }
     </style>
@@ -53,33 +53,43 @@
                     <h4 class="card-title">Tambah Kolom Baru</h4>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('supervisor.master.data.store') }}" method="POST">
+                    <form id="addMasterDataForm" action="{{ route('supervisor.master.data.store') }}" method="POST">
                         @csrf
                         <input type="hidden" name="category" value="{{ $category_name }}">
 
+                        <input type="hidden" name="input_type" value="text"> {{-- Input Type Hidden --}}
+
                         <div class="mb-3">
                             <label class="form-label">Label Display</label>
-                            <input type="text" class="form-control" name="label_display" required>
+                            <input type="text" class="form-control" name="label_display" value="{{ old('label_display') }}" required>
+                            @error('label_display')
+                                <div class="text-danger small">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Nilai</label>
-                            <p>*jika lebih dari 2 kata maka bisa menggunakan, contoh: (nama_barang) atau (namaBarang)</p>
-                            <input type="text" class="form-control" name="value" required>
+                            <label class="form-label">Nilai (Nama Field)</label>
+                            <p class="text-muted small">*gunakan format camelCase/snake_case, contoh: `namaBarang` atau `nama_barang`</p>
+                            <input type="text" class="form-control" name="value" value="{{ old('value') }}" required>
+                            @error('value')
+                                <div class="text-danger small">{{ $message }}</div>
+                            @enderror
                         </div>
-
-                        <!-- <div class="mb-3">
-                            <input type="text" class="form-control" id="value" name="value" hidden>
-                        </div> -->
 
                         <div class="mb-3">
                             <label class="form-label">Urutan Field</label>
-                            <input type="number" class="form-control" name="field_order" min="1" required>
+                            <input type="number" class="form-control" name="field_order" value="{{ old('field_order') }}" min="1" required>
+                            @error('field_order')
+                                <div class="text-danger small">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <div class="form-check mb-3">
-                            <input class="form-check-input" type="checkbox" name="is_required" value="1" id="is_required">
+                            <input class="form-check-input" type="checkbox" name="is_required" value="1" id="is_required" {{ old('is_required') == '1' ? 'checked' : '' }}>
                             <label class="form-check-label" for="is_required">Required?</label>
+                            @error('is_required')
+                                <div class="text-danger small">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <button type="submit" class="btn btn-primary-custom">Tambah Data</button>
@@ -98,10 +108,10 @@
                         <tr class="text-center">
                             <th>No</th>
                             <th>Label</th>
-                            <th>Nilai</th>
+                            <th>Nilai (Field Name)</th>
                             <th>Input Tipe</th>
                             <th>Urutan</th>
-                            <th>Status</th>
+                            <th>Status Aktif</th>
                             <th>Aksi</th>
                         </tr>
                         </thead>
@@ -131,10 +141,11 @@
                                             data-is-active="{{ $data->is_active ? '1' : '0' }}"
                                             data-label-display="{{ $data->label_display }}"
                                             data-input-type="{{ $data->input_type }}"
-                                            data-field-order="{{ $data->field_order }}">
+                                            data-field-order="{{ $data->field_order }}"
+                                            data-is-required="{{ $data->is_required ? '1' : '0' }}">
                                         Edit
                                     </button>
-                                    <form action="{{ route('supervisor.master.data.destroy', $data->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus?');">
+                                    <form action="{{ route('supervisor.master.data.destroy', $data->id) }}" method="POST" class="d-inline delete-item-confirm">
                                         @csrf @method('DELETE')
                                         <button type="submit" class="btn btn-danger-custom btn-sm">Hapus</button>
                                     </form>
@@ -188,8 +199,14 @@
                         </div>
 
                         <div class="mb-3">
-                            <label>Input Type</label>
-                            <input type="text" class="form-control" name="category" id="edit_input_type" value="text" readonly>
+                            <label>Input Tipe</label>
+                            <select class="form-select" name="input_type" id="edit_input_type" required>
+                                <option value="text">Text</option>
+                                <option value="number">Number</option>
+                                <option value="dropdown">Dropdown</option>
+                                <option value="date">Date</option>
+                                <option value="gambar">Gambar (Image Picker)</option>
+                            </select>
                         </div>
 
                         <div class="mb-3">
@@ -198,8 +215,12 @@
                         </div>
 
                         <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" name="is_active" id="edit_master_is_active" value="1">
-                            <label class="form-check-label" for="edit_master_is_active">Aktif</label>
+                            <input class="form-check-input" type="checkbox" name="is_required" value="1" id="edit_is_required">
+                            <label class="form-check-label" for="edit_is_required">Required?</label>
+                        </div>
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" name="is_active" value="1" id="edit_is_active">
+                            <label class="form-check-label" for="edit_is_active">Aktif?</label>
                         </div>
 
                     </div>
@@ -217,22 +238,172 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         $(function () {
+            // Edit modal data population
             $('.edit-master-btn').on('click', function () {
-                $('#edit_master_id').val($(this).data('id'));
-                $('#edit_master_category').val($(this).data('category'));
-                $('#edit_master_value').val($(this).data('value'));
-                $('#edit_label_display').val($(this).data('label-display'));
-                $('#edit_input_type').val($(this).data('input-type'));
-                $('#edit_field_order').val($(this).data('field-order'));
-                $('#edit_master_is_active').prop('checked', $(this).data('is-active') == 1);
+                var data = $(this).data(); // Get all data-attributes
+
+                $('#edit_master_id').val(data.id);
+                $('#edit_master_category').val(data.category);
+                $('#edit_label_display').val(data.labelDisplay);
+                $('#edit_master_value').val(data.value);
+                $('#edit_input_type').val(data.inputType); // Set value for select
+                $('#edit_field_order').val(data.fieldOrder);
+                $('#edit_is_required').prop('checked', data.isRequired == 1); // For is_required
+                $('#edit_is_active').prop('checked', data.isActive == 1); // For is_active
 
                 var url = "{{ route('supervisor.master.data.update', ':id') }}";
-                url = url.replace(':id', $(this).data('id'));
+                url = url.replace(':id', data.id);
                 $('#updateMasterForm').attr('action', url);
+            });
+
+            // Form submission for update (using AJAX)
+            $('#updateMasterForm').on('submit', function(e) {
+                e.preventDefault();
+                var form = $(this);
+                var url = form.attr('action');
+                var method = form.find('input[name="_method"]').val() || form.attr('method');
+                var formData = form.serialize();
+
+                $.ajax({
+                    url: url,
+                    type: method,
+                    data: formData,
+                    dataType: 'json',
+                    success: function(response) {
+                        var masterModal = bootstrap.Modal.getInstance(document.getElementById('editMasterModal'));
+                        if (masterModal) { masterModal.hide(); }
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil!',
+                            text: response.message || 'Data master berhasil diperbarui.',
+                            timer: 2500,
+                            showConfirmButton: false
+                        }).then(() => {
+                            location.reload();
+                        });
+                    },
+                    error: function(xhr) {
+                        var masterModal = bootstrap.Modal.getInstance(document.getElementById('editMasterModal'));
+                        if (masterModal) { masterModal.hide(); }
+                        var errorMessage = 'Terjadi kesalahan. Mohon coba lagi.';
+                        if (xhr.responseJSON && xhr.responseJSON.error) {
+                            errorMessage = xhr.responseJSON.error;
+                        } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: errorMessage,
+                            timer: 3000,
+                            showConfirmButton: false
+                        });
+                    }
+                });
+            });
+
+            // Form submission for add (using AJAX)
+            $('#addMasterDataForm').on('submit', function(e) {
+                e.preventDefault();
+                var form = $(this);
+                var url = form.attr('action');
+                var method = form.attr('method');
+                var formData = form.serialize();
+
+                $.ajax({
+                    url: url,
+                    type: method,
+                    data: formData,
+                    dataType: 'json',
+                    success: function(response) {
+                        var addModal = bootstrap.Modal.getInstance(document.getElementById('addCategoryModal'));
+                        if (addModal) { addModal.hide(); }
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil!',
+                            text: response.message || 'Kategori berhasil ditambahkan.',
+                            timer: 2500,
+                            showConfirmButton: false
+                        }).then(() => {
+                            location.reload();
+                        });
+                    },
+                    error: function(xhr) {
+                        var addModal = bootstrap.Modal.getInstance(document.getElementById('addCategoryModal'));
+                        if (addModal) { addModal.hide(); }
+                        var errorMessage = 'Terjadi kesalahan. Mohon coba lagi.';
+                        if (xhr.responseJSON && xhr.responseJSON.error) {
+                            errorMessage = xhr.responseJSON.error;
+                        } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: errorMessage,
+                            timer: 3000,
+                            showConfirmButton: false
+                        });
+                    }
+                });
+            });
+
+            // LOGIKA KONFIRMASI HAPUS DENGAN SWEETALERT
+            $('.delete-item-confirm').on('submit', function(e) {
+                e.preventDefault();
+                var form = $(this);
+                var message = 'Apakah Anda yakin ingin menghapus data master ini?';
+
+                Swal.fire({
+                    title: 'Apakah Anda Yakin?',
+                    text: message,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Ya, Hapus!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        var url = form.attr('action');
+                        var method = form.find('input[name="_method"]').val() || 'POST';
+                        var formData = form.serialize();
+                        
+                        $.ajax({
+                            url: url,
+                            type: 'POST',
+                            data: formData,
+                            dataType: 'json',
+                            success: function(response) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Berhasil!',
+                                    text: response.message || 'Data berhasil dihapus.',
+                                    timer: 2500,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            },
+                            error: function(xhr) {
+                                var errorMessage = 'Terjadi kesalahan. Mohon coba lagi.';
+                                if (xhr.responseJSON && xhr.responseJSON.error) {
+                                    errorMessage = xhr.responseJSON.error;
+                                } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                                    errorMessage = xhr.responseJSON.message;
+                                }
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error!',
+                                    text: errorMessage,
+                                    timer: 3000,
+                                    showConfirmButton: false
+                                });
+                            }
+                        });
+                    }
+                });
             });
         });
     </script>
-</div>
-</body>
-</html>
 @endsection

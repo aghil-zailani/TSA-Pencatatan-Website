@@ -11,6 +11,7 @@ class CreatePengajuanBarangsTable extends Migration
         Schema::create('pengajuan_barangs', function (Blueprint $table) {
             $table->id();
             $table->string('report_id')->unique(); // WAJIB ADA!
+            $table->string('nama_laporan')->nullable();
             $table->string('nama_barang')->nullable();
             $table->string('tipe_barang_kategori')->nullable();
             $table->string('tipe_barang')->nullable();

@@ -195,7 +195,7 @@ class DashboardController extends Controller
     {
         ActivityLog::create([
             'user_id' => auth()->id(),
-            'page_accessed' => 'Data Barang Diterima',
+            'page_accessed' => 'Data Barang',
             'feature_used' => 'Halaman daftar barang',
             'action' => 'View',
             'description' => 'Staff melihat daftar barang masuk yang diterima.'
@@ -203,7 +203,7 @@ class DashboardController extends Controller
 
         // Ambil relasi dengan qrCode
         $barangDiterima = Barang::with('qrCodes')->orderBy('created_at', 'desc')->get();
-        $judul = 'Data Barang Diterima';
+        $judul = 'Data Barang';
 
         return view('staff_gudang.data_barang', compact('barangDiterima', 'judul'));
     }
@@ -252,7 +252,8 @@ class DashboardController extends Controller
         // PERBAIKAN: Tambahkan fallback jika nama barang kosong untuk mencegah nama file yang aneh
         $namaUntukFile = !empty($barang->nama_barang) ? $barang->nama_barang : 'tanpa-nama';
         $safeNamaBarang = Str::slug($namaUntukFile, '_');
-        $fileName = $barang->id_barang . '_' . $safeNamaBarang . '.png';
+        $timestamp = now()->format('YmdHis');
+        $fileName = $timestamp . '_' . $barang->id_barang . '_' . $safeNamaBarang . '.png';
         $path = 'qrcodes/' . $fileName;
 
         // 3. Siapkan konten yang akan dimasukkan ke dalam QR code
@@ -291,7 +292,13 @@ class DashboardController extends Controller
         // 8. Kembalikan URL publik dari gambar QR code
         $url = asset('storage/' . $path);
 
-        return response()->json(['url' => $url], 200);
+        return response()->json([
+            'url' => $url,
+            'fileName' => $fileName,
+            'id' => $barang->id_barang,
+            'nama' => $barang->nama_barang,
+        ], 200);
+
     }
 
     public function formPengajuan()

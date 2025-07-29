@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LoginController as WebLoginController; // Alias untuk kejelasan
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Supervisor\Pemeliharaan;
+use App\Http\Controllers\Supervisor\MasterDataController;
 use App\Http\Controllers\Supervisor\DashboardController as SupervisorDashboardController;
 use App\Http\Controllers\StaffGudang\DashboardController as StaffGudangDashboardController;
 
@@ -20,14 +21,17 @@ Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->name('supe
     Route::post('/monitoring-stok/update-harga', [SupervisorDashboardController::class, 'updateHarga'])->name('updateHarga');
     Route::get('/exportcsv', [SupervisorDashboardController::class, 'exportExcel'])->name('exportExcel');
     Route::get('/export-pdf', [SupervisorDashboardController::class, 'exportPdf'])->name('exportPdf');
-    Route::get('/master-data', [SupervisorDashboardController::class, 'manageMasterData'])->name('master.data');
-    Route::get('/master-data/{form_config_category}', [SupervisorDashboardController::class, 'manageSpecificMaster'])->name('master.data.specific');
-    Route::post('/master-data-store', [SupervisorDashboardController::class, 'storeMasterData'])->name('master.data.store');
-    Route::put('/master-data/{masterData}', [SupervisorDashboardController::class, 'updateMasterData'])->name('master.data.update');
-    Route::delete('/master-data/{masterData}', [SupervisorDashboardController::class, 'destroyMasterData'])->name('master.data.destroy');
-    Route::delete('/master-data/category/{category_name}', [SupervisorDashboardController::class, 'destroyMasterCategory'])->name('master.data.destroy_category');
-    Route::get('/api/master-data/{category}', [SupervisorDashboardController::class, 'getMasterDataByCategory']);
-    Route::delete('/master-data/category/{category_name}', [SupervisorDashboardController::class, 'destroyMasterCategory'])->name('master.data.destroy_category');
+
+    //Master Data
+    Route::get('/master-data', [MasterDataController::class, 'manageMasterData'])->name('master.data');
+    Route::get('/master-data/{form_config_category}', [MasterDataController::class, 'manageSpecificMaster'])->name('master.data.specific');
+    Route::post('/master-data-store', [MasterDataController::class, 'storeMasterData'])->name('master.data.store');
+    Route::put('/master-data/{masterData}', [MasterDataController::class, 'updateMasterData'])->name('master.data.update');
+    Route::delete('/master-data/{masterData}', [MasterDataController::class, 'destroyMasterData'])->name('master.data.destroy');
+    Route::delete('/master-data/category/{category_name}', [MasterDataController::class, 'destroyMasterCategory'])->name('master.data.destroy_category');
+    Route::get('/api/master-data/{category}', [MasterDataController::class, 'getMasterDataByCategory']);
+    Route::delete('/master-data/category/{category_name}', [MasterDataController::class, 'destroyMasterCategory'])->name('master.data.destroy_category');
+    //Master Data
 
     Route::get('/validasi-barang-masuk', [SupervisorDashboardController::class, 'validasiBarangMasuk'])->name('validasi.barang_masuk'); // Halaman Supervisor
     Route::get('/validasi-laporan/{reportId}', [SupervisorDashboardController::class, 'lihatDetailLaporan'])->name('validasi.laporan_detail');
@@ -37,12 +41,20 @@ Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->name('supe
     Route::get('/validasi/barang-keluar/{reportId}', [SupervisorDashboardController::class, 'showKeluarDetail'])->name('validasi.keluar_detail');
     Route::post('/validasi-pengajuan-keluar', [SupervisorDashboardController::class, 'validasiPengajuanKeluar'])->name('validasi.pengajuan.keluar');
     
+    // MODUL PEMELIHARAAN AWAL
     Route::get('/pemeliharaan-riwayat', [Pemeliharaan::class, 'pemeliharaanRiwayat'])->name('pemeliharaan.riwayat');
     Route::get('/pemeliharaan-validasi', [Pemeliharaan::class, 'pemeliharaanValidasi'])->name('pemeliharaan.validasi');
+    Route::post('/pemeliharaan-validasi/{id}', [Pemeliharaan::class, 'submitValidasi'])->name('pemeliharaan.validasi.submit');
+    Route::get('/laporan/{id}', [Pemeliharaan::class, 'getLaporanDetail']);
+    // MODUL PEMELIHARAAN AKHIR
 
     Route::get('/riwayat', [SupervisorDashboardController::class, 'riwayat'])->name('riwayat');
     Route::get('/log-aktivitas', [SupervisorDashboardController::class, 'logAktivitas'])->name('log.aktivitas');
     
+});
+
+Route::middleware(['auth', 'role:supervisor_umum'])->prefix('supervisor-umum')->name('supervisor_umum.')->group(function () {
+    //
 });
 
 Route::middleware(['auth', 'role:staff_gudang'])->prefix('staff-gudang')->name('staff_gudang.')->group(function () {
