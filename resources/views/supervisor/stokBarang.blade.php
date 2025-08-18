@@ -56,6 +56,63 @@
             </nav>
             <div class="page-content">
                 <section class="section">      
+                    <div class="card shadow-sm mb-4 border-warning">
+                        <div class="card-header bg-warning bg-opacity-10">
+                            <h4 class="card-title mb-0">
+                                <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
+                                Barang dengan Stok di Bawah Minimum (10 Unit)
+                            </h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                @forelse ($lowStockItems as $item)
+                                    <div class="col-md-2 col-lg-2"> {{-- Dibuat lebih responsif --}}
+                                        <div class="card border-0 shadow-sm h-100">
+                                            <div class="card-body p-2">
+                                                <div class="d-flex justify-content-between align-items-start">
+                                                    <div class="flex-grow-1">
+                                                        <h6 class="card-title mb-2 fw-semibold">
+                                                            {{ $item->nama_barang ?? 'Nama tidak tersedia' }}
+                                                        </h6>
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="bi bi-box-seam text-muted me-2"></i>
+                                                            <span class="text-muted small">Stok tersisa:</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="text-end">
+                                                        @php
+                                                            // Gunakan $item->total_stok sesuai controller
+                                                            $stockLevel = $item->total_stok;
+                                                            $badgeClass = $stockLevel <= 2 ? 'bg-danger' : ($stockLevel <= 5 ? 'bg-warning text-dark' : 'bg-info');
+                                                        @endphp
+                                                        <span class="badge {{ $badgeClass }} px-3 py-2 rounded-pill fs-6">
+                                                            {{ $stockLevel }} unit
+                                                        </span>
+                                                        @if($stockLevel <= 2)
+                                                            <div class="text-danger small mt-1">
+                                                                <i class="bi bi-exclamation-circle-fill me-1"></i>Kritis
+                                                            </div>
+                                                        @elseif($stockLevel <= 5)
+                                                            <div class="text-warning small mt-1">
+                                                                <i class="bi bi-exclamation-triangle-fill me-1"></i>Rendah
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <div class="col-12">
+                                        <div class="text-center text-muted py-3">
+                                            <i class="bi bi-check-circle-fill text-success fs-4"></i>
+                                            <p class="mb-0 mt-2">Semua stok barang dalam kondisi aman.</p>
+                                        </div>
+                                    </div>
+                                @endforelse
+                            </div>
+                        </div>
+                    </div>
                     <div class="card shadow h-md-50">
                         <div class="card-header">
                             <div class="row align-items-center g-3">

@@ -35,11 +35,12 @@ class DashboardController extends Controller
     // Dashboard Staff Gudang
     public function index()
     {
-
         $awalBulan = Carbon::now()->startOfMonth();
         $akhirBulan = Carbon::now()->endOfMonth();
         $barangMasukCount = Barang::whereBetween('created_at', [$awalBulan, $akhirBulan])->sum('jumlah_barang');
-        $barangKeluarCount = Keluar::whereBetween('created_at', [$awalBulan, $akhirBulan])->sum('jumlah_barang');
+        $barangKeluarCount = Transaksi::where('status', 'diterima') // hanya yang sudah divalidasi supervisor
+            ->whereBetween('created_at', [$awalBulan, $akhirBulan])
+            ->sum('jumlah_barang');
 
         $chartData = Barang::select(
                 'nama_barang',
@@ -59,28 +60,68 @@ class DashboardController extends Controller
                                         ->take(10)
                                         ->get();
         $dataStokBarang = Barang::select(
-            'nama_barang',
-            \DB::raw('SUM(jumlah_barang) as stok')
-        )
-        ->groupBy('nama_barang')
-        ->get()
-        ->map(function($item) {
-            return ['nama' => $item->nama_barang, 'stok' => $item->stok];
-        })
-        ->toArray();
+                'nama_barang',
+                \DB::raw('SUM(jumlah_barang) as stok')
+            )
+            ->groupBy('nama_barang')
+            ->get();
 
-        $laporanKeluarTerbaru = Transaksi::select(
-                                    'id_transaksi',
+        $lowStockItems = $dataStokBarang->filter(function ($item) {
+            return $item->stok < 10;
+        });
+
+        if (!session()->has('lowStockShown')) {
+            // Ambil data yang sama untuk dikirim ke session flash
+            $lowStockItemsForModal = $lowStockItems->take(6);
+
+            // Simpan ke session flash biar cuma sekali muncul
+            session()->flash('lowStockItems', $lowStockItemsForModal);
+            session()->put('lowStockShown', true); // Tandai sudah pernah muncul
+        }
+
+            $laporanKeluarTerbaru = Transaksi::select(
+                                        'id_transaksi',
+                                        'status',
+                                        \DB::raw('1 as total_items_in_report'),
+                                        'created_at'
+                                    )
+                                    ->whereIn('status', ['diterima', 'ditolak', 'proses'])
+                                    ->orderBy('created_at', 'desc')
+                                    ->take(10)
+                                    ->get()
+                                    ->map(function ($laporan) {
+                                        if ($laporan->status === 'proses') {
+                                            $laporan->display_status = 'Proses';
+                                            $laporan->badge_class = 'badge bg-warning';
+                                        } elseif ($laporan->status === 'diterima') {
+                                            $laporan->display_status = 'Diterima';
+                                            $laporan->badge_class = 'badge bg-success';
+                                        } elseif ($laporan->status === 'ditolak') {
+                                            $laporan->display_status = 'Ditolak';
+                                            $laporan->badge_class = 'badge bg-danger';
+                                        } else {
+                                            $laporan->display_status = ucfirst($laporan->status);
+                                            $laporan->badge_class = 'badge bg-secondary';
+                                        }
+                                        $laporan->title = 'Barang Keluar ID: ' . $laporan->id_transaksi;
+                                        $laporan->link_type = 'keluar';
+                                        return $laporan;
+                                    });
+
+            $laporanValidasiTerbaru = PengajuanBarang::select(
+                                    'report_id',
+                                    'nama_laporan',
                                     'status',
-                                    \DB::raw('1 as total_items_in_report'),
-                                    'created_at'
+                                    \DB::raw('COUNT(*) as total_items_in_report'),
+                                    \DB::raw('MIN(created_at) as created_at')
                                 )
                                 ->whereIn('status', ['diterima', 'ditolak', 'proses'])
+                                ->groupBy('report_id', 'nama_laporan', 'status')
                                 ->orderBy('created_at', 'desc')
                                 ->take(10)
                                 ->get()
-                                ->map(function ($laporan) {
-                                    if ($laporan->status === 'proses') {
+                                ->map(function($laporan) {
+                                    if ($laporan->status === 'sent_to_supervisor') {
                                         $laporan->display_status = 'Proses';
                                         $laporan->badge_class = 'badge bg-warning';
                                     } elseif ($laporan->status === 'diterima') {
@@ -93,58 +134,30 @@ class DashboardController extends Controller
                                         $laporan->display_status = ucfirst($laporan->status);
                                         $laporan->badge_class = 'badge bg-secondary';
                                     }
-                                    $laporan->title = 'Barang Keluar ID: ' . $laporan->id_transaksi;
-                                    $laporan->link_type = 'keluar';
+                                    $laporan->title = 'Barang Masuk ID: ' . substr($laporan->report_id, 0, 8) . '...';
+                                    $laporan->link_type = 'masuk';
                                     return $laporan;
                                 });
 
-        $laporanValidasiTerbaru = PengajuanBarang::select(
-                                'report_id',
-                                'nama_laporan',
-                                'status',
-                                \DB::raw('COUNT(*) as total_items_in_report'),
-                                \DB::raw('MIN(created_at) as created_at')
-                            )
-                            ->whereIn('status', ['diterima', 'ditolak', 'proses'])
-                            ->groupBy('report_id', 'nama_laporan', 'status')
-                            ->orderBy('created_at', 'desc')
-                            ->take(10)
-                            ->get()
-                            ->map(function($laporan) {
-                                if ($laporan->status === 'sent_to_supervisor') {
-                                    $laporan->display_status = 'Proses';
-                                    $laporan->badge_class = 'badge bg-warning';
-                                } elseif ($laporan->status === 'diterima') {
-                                    $laporan->display_status = 'Diterima';
-                                    $laporan->badge_class = 'badge bg-success';
-                                } elseif ($laporan->status === 'ditolak') {
-                                    $laporan->display_status = 'Ditolak';
-                                    $laporan->badge_class = 'badge bg-danger';
-                                } else {
-                                    $laporan->display_status = ucfirst($laporan->status);
-                                    $laporan->badge_class = 'badge bg-secondary';
-                                }
-                                $laporan->title = 'Barang Masuk ID: ' . substr($laporan->report_id, 0, 8) . '...';
-                                $laporan->link_type = 'masuk';
-                                return $laporan;
-                            });
+            $laporanGabungan = $laporanValidasiTerbaru->merge($laporanKeluarTerbaru)
+                                            ->sortByDesc('created_at')
+                                            ->take(10); // Maksimal 10 terbaru   
 
-        $laporanGabungan = $laporanValidasiTerbaru->merge($laporanKeluarTerbaru)
-                                          ->sortByDesc('created_at')
-                                          ->take(10); // Maksimal 10 terbaru                   
+            $data = array(
+                'judul' => 'Dashboard',
+                'barang' => Barang::all(),
+                'barangMasukBulanIni' => $barangMasukCount,
+                'barangKeluarBulanIni' => $barangKeluarCount,
+                'chart' => $chartData,
+                'laporanGabungan' => $laporanGabungan,
+                'riwayatLogin' => $riwayatLoginData,
+                'lowStockItems' => $lowStockItems,
+            );
 
-        $data = array(
-            'judul' => 'Dashboard',
-            'barang' => Barang::all(),
-            'barangMasukBulanIni' => $barangMasukCount,
-            'barangKeluarBulanIni' => $barangKeluarCount,
-            'chart' => $chartData,
-            'laporanGabungan' => $laporanGabungan,
-            'riwayatLogin' => $riwayatLoginData,
-        );
-        
-        return view('staff_gudang.index', $data, compact('rs', 'fp', 'dataStokBarang'));
-    }
+            $totalKeseluruhanBarang = Barang::sum('jumlah_barang');
+            
+            return view('staff_gudang.index', $data, compact('rs', 'fp', 'dataStokBarang', 'totalKeseluruhanBarang'));
+        }
 
     // Monitoring Stok Barang (Tampil)
     public function tampil()
@@ -183,12 +196,17 @@ class DashboardController extends Controller
             $item->berat_display_formatted = ($item->berat_barang !== null && $item->berat_barang !== '') ? $item->berat_barang . ' Kg' : 'N/A';
             return $item;
         });
+
+        $lowStockItems = $barangAggregated->filter(function ($item) {
+            // Ambil semua item yang total_stok nya kurang dari 10
+            return $item->total_stok < 10;
+        });
         
         $totalKeseluruhanBarang = Barang::sum('jumlah_barang');
 
         $judul = 'Monitoring Stok Barang';
 
-        return view('staff_gudang.stokBarang', compact('barangAggregated','judul','totalKeseluruhanBarang'));
+        return view('staff_gudang.stokBarang', compact('barangAggregated','judul','totalKeseluruhanBarang','lowStockItems'));
     }
 
     public function barangDiterima()
@@ -243,165 +261,110 @@ class DashboardController extends Controller
         return view('input', $data);
     }
 
-    public function generateQrCode($id)
+    public function generateQrCode(Request $request, $id)
     {
-        // 1. Cari data barang di database
+        $forceGenerate = $request->input('force_generate', false); // default false
         $barang = Barang::findOrFail($id);
 
-        // 2. Buat nama file yang aman dari nama barang
-        // PERBAIKAN: Tambahkan fallback jika nama barang kosong untuk mencegah nama file yang aneh
+        // Cek QR code sudah ada
+        $existingQr = QrCodeModel::where('id_barang', $id)->first();
+
+        if ($existingQr && Storage::disk('public')->exists($existingQr->qr_code_path)) {
+            if (!$forceGenerate) {
+                // Hanya kirim data tanpa generate ulang
+                return response()->json([
+                    'status' => 'exists',
+                    'message' => 'QR Code untuk barang ini sudah pernah digenerate.',
+                    'url' => asset('storage/' . $existingQr->qr_code_path),
+                    'fileName' => basename($existingQr->qr_code_path),
+                    'id' => $barang->id_barang,
+                    'nama' => $barang->nama_barang,
+                    'qr_status' => $existingQr->status
+                ], 200);
+            }
+        }
+
+        // Proses generate QR baru
         $namaUntukFile = !empty($barang->nama_barang) ? $barang->nama_barang : 'tanpa-nama';
         $safeNamaBarang = Str::slug($namaUntukFile, '_');
         $timestamp = now()->format('YmdHis');
         $fileName = $timestamp . '_' . $barang->id_barang . '_' . $safeNamaBarang . '.png';
         $path = 'qrcodes/' . $fileName;
 
-        // 3. Siapkan konten yang akan dimasukkan ke dalam QR code
         $qrContentArray = [
             'ID Barang: ' . $barang->id_barang,
-            'Nama Barang: ' . ($barang->nama_barang ?? 'N/A'), // PERBAIKAN: Handle jika nama barang null
+            'Nama Barang: ' . ($barang->nama_barang ?? 'N/A'),
             'Nomor Identifikasi: ' . 'QR-' . $barang->id_barang,
             'Tanggal Pembuatan: ' . now()->format('d-m-Y H:i:s'),
         ];
         $qrContent = implode("\n", $qrContentArray);
 
-        // 4. Buat direktori jika belum ada
         Storage::disk('public')->makeDirectory('qrcodes');
 
-        // 5. Generate gambar QR code
         $result = Builder::create()
             ->writer(new PngWriter())
             ->data($qrContent)
             ->size(300)
-            ->margin(10) // Tambahkan sedikit margin
+            ->margin(10)
             ->build();
 
-        // 6. Simpan file gambar QR code
         Storage::disk('public')->put($path, $result->getString());
 
-        // 7. Simpan atau perbarui path QR code di database
-        QrCodeModel::updateOrCreate(
+        $qrCode = QrCodeModel::updateOrCreate(
             ['id_barang' => $id],
             [
                 'nomor_identifikasi' => 'QR-' . $id,
                 'qr_code_path' => $path,
-                'tanggal_pembuatan' => now()
+                'tanggal_pembuatan' => now(),
+                'status' => 'baru'
             ]
         );
 
-        // 8. Kembalikan URL publik dari gambar QR code
         $url = asset('storage/' . $path);
 
         return response()->json([
+            'status' => 'success',
+            'message' => $forceGenerate ? 'QR Code berhasil diperbarui.' : 'QR Code berhasil dibuat.',
             'url' => $url,
             'fileName' => $fileName,
             'id' => $barang->id_barang,
             'nama' => $barang->nama_barang,
+            'qr_status' => $qrCode->status
         ], 200);
-
     }
 
-    public function formPengajuan()
-    {
-        // Ambil barang-barang yang kondisinya selain 'Bagus'
-        $barangTidakBagus = Barang::where('kondisi', '!=', 'Bagus')
-                                  ->orderBy('kondisi', 'desc') // Urutkan berdasarkan kondisi
-                                  ->orderBy('nama_barang', 'desc')
-                                  ->get();
-        $judul = 'Halaman Pengajuan Pemeliharaan';
 
-        return view('staff_gudang.pengajuan', compact('barangTidakBagus', 'judul'));
-    }
-
-    // Modifikasi metode kirimLaporan untuk bisa mengirim berbagai jenis laporan
-    public function kirimLaporan(Request $request)
-    {
-        ActivityLog::create([
-            'user_id' => auth()->id(),
-            'page_accessed' => 'Halaman Pengajuan',
-            'feature_used' => 'Kirim Laporan',
-            'action' => 'View',
-            'description' => 'Staff melakukan kirim laporan.'
-        ]);
-
-        DB::beginTransaction();
-        try {
-            $jenisLaporan = $request->input('jenis_laporan', 'Barang Masuk');
-            $itemsToProcess = collect();
-
-            // --- LOGIKA UTAMA YANG DIPERBAIKI ---
-            if ($jenisLaporan === 'Laporan Kondisi Barang') {
-                // Blok ini untuk menangani laporan barang rusak/expired
-                $barangRusak = Barang::where('kondisi', '!=', 'Bagus')
-                                     ->whereNull('status') // Hanya ambil yang belum pernah diproses
-                                     ->get();
-
-                foreach ($barangRusak as $barangItem) {
-                    // Buat entri pengajuan baru untuk setiap barang rusak
-                    $pengajuan = PengajuanBarang::create([
-                        'nama_barang' => $barangItem->nama_barang ?? 'N/A',
-                        'tipe_barang_kategori' => $barangItem->tipe_barang_kategori ?? 'N/A',
-                        'tipe_barang' => $barangItem->tipe_barang ?? 'N/A',
-                        'jenis_barang' => $barangItem->jenis_barang ?? 'N/A',
-                        'jumlah_barang' => $barangItem->jumlah_barang ?? 1,
-                        'satuan' => $barangItem->satuan ?? 'N/A',
-                        'kondisi_barang' => $barangItem->kondisi ?? 'Rusak',
-                        'status' => 'pending', // Status awal
-                        'catatan_penolakan' => '-',
-                        'nama_laporan' => 'Laporan Kondisi Barang',
-                    ]);
-                    $itemsToProcess->push($pengajuan);
-
-                    // Tandai barang asli sebagai sedang diproses
-                    $barangItem->status = 'pengajuan';
-                    $barangItem->save();
-                }
-
-            } else { // Ini adalah blok untuk "Barang Masuk"
-                // Ambil semua pengajuan barang masuk yang statusnya '-' (menunggu dikelompokkan)
-                $itemsToProcess = PengajuanBarang::where('status', '-')
-                                                 ->get();
-            }
-
-            // Jika tidak ada item sama sekali untuk diproses
-            if ($itemsToProcess->isEmpty()) {
-                DB::rollBack();
-                return redirect()->back()->with('error', 'Tidak ada item yang perlu dilaporkan.');
-            }
-
-            // Generate satu ID unik untuk laporan ini
-            $reportId = 'LBM-' . date('ymd') . '-' . strtoupper(Str::random(4));
-
-            foreach ($itemsToProcess as $item) {
-                $item->report_id = $reportId;
-                $item->status = 'proses';
-                if ($item->tipe_barang_kategori === 'Sparepart') {
-                    $item->nama_laporan = 'Laporan Sparepart Masuk';
-                } else {
-                    $item->nama_laporan = 'Laporan Barang Masuk';
-                }
-                $item->save();
-            }
-
-            DB::commit();
-            return redirect()->back()->with('message', count($itemsToProcess) . ' item dari "' . $jenisLaporan . '" berhasil dikirim untuk validasi!');
-
-        } catch (Throwable $e) {
-            DB::rollBack();
-            Log::error('Error saat mengirim laporan: ' . $e->getMessage() . ' di baris ' . $e->getLine());
-            return redirect()->back()->with('error', 'Gagal mengirim laporan. Silakan hubungi administrator.');
-        }
-    }
-
-    public function riwayat()
+    public function riwayat(Request $request)
     {
         $logs = ActivityLog::with('user')->orderBy('created_at', 'desc')->paginate(100);
-        $laporan = PengajuanBarang::whereIn('status', ['diterima', 'ditolak'])
-                        ->orderBy('created_at', 'desc')
-                        ->paginate(100);
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        $transaksis = Transaksi::where('status', '!=', 'proses')
+            ->where('status', '!=', 'keluar')
+            ->with('barang');
+
+        $pengajuans = PengajuanBarang::where('status', '!=', 'proses')
+            ->with('barang');
+
+        if ($startDate) {
+            $transaksis = $transaksis->where('created_at', '>=', $startDate);
+            $pengajuans = $pengajuans->where('created_at', '>=', $startDate);
+        }
+        if ($endDate) {
+            $transaksis = $transaksis->where('created_at', '<=', $endDate);
+            $pengajuans = $pengajuans->where('created_at', '<=', $endDate);
+        }
+
+        $transaksis = $transaksis->get();
+        $pengajuans = $pengajuans->get();
+
+        // Gabungkan lalu urutkan terbaru
+        $riwayatGabung = $transaksis->merge($pengajuans)->sortByDesc('created_at');
         $judul = 'Riwayat';
 
-        return view('staff_gudang.riwayat', compact('logs', 'laporan', 'judul'));
+        // FIX: Nama variabel diperbaiki menjadi 'riwayatGabung'
+        return view('staff_gudang.riwayat', compact('logs', 'riwayatGabung', 'judul'));
     }
 
     public function pengajuanBarangs(Request $request)
@@ -417,6 +380,15 @@ class DashboardController extends Controller
         if ($formConfigs->isEmpty()) {
             return response()->json(['message' => "Konfigurasi form untuk kategori '{$category}' tidak ditemukan."], 404);
         }
+
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized.'], 401);
+        }
+        
+        // Asumsikan role disimpan di kolom 'role' pada model User
+        $created_by_role = $user->role;
+        $created_by_id = $user->id;
 
         // 3️⃣ Validasi dinamis
         $validationRules = [];
@@ -434,8 +406,9 @@ class DashboardController extends Controller
             $validationRules[$config->value] = implode('|', $rules);
         }
 
+
         $validationRules['tipe_barang_kategori'] = 'required|string';
-        $validationRules['jenis_barang'] = 'required|string|max:255';
+        
 
         $validator = Validator::make($request->all(), $validationRules);
         if ($validator->fails()) {
@@ -483,6 +456,9 @@ class DashboardController extends Controller
         $dataToSave['id_barang'] = $idBarang;
         $dataToSave['report_id'] = $idBarang;
 
+        $dataToSave['created_by_role'] = $created_by_role;
+        $dataToSave['created_by_id'] = $created_by_id;
+
         // 6️⃣ Data meta
         $dataToSave['nama_laporan'] = 'Laporan Barang Masuk';
         $dataToSave['status'] = '-';
@@ -500,14 +476,10 @@ class DashboardController extends Controller
 
     public function catatBarangKeluar(Request $request)
     {
-        // 1. Validasi data yang masuk dari Flutter
         $validator = Validator::make($request->all(), [
-            // Memastikan 'items' adalah array dan tidak kosong
             'items' => 'required|array|min:1',
-            // Memastikan setiap item di dalam array memiliki id_barang dan jumlah_barang
             'items.*.id_barang' => 'required|string|exists:barangs,id_barang',
             'items.*.jumlah_barang' => 'required|integer|min:1',
-            // Validasi untuk field dinamis lainnya
             'tujuan' => 'required|string|max:255',
             'keterangan' => 'nullable|string',
         ]);
@@ -519,62 +491,41 @@ class DashboardController extends Controller
         $items = $request->input('items');
         $commonData = $request->except('items');
 
-        // 2. Gunakan transaction untuk memastikan integritas data
         DB::beginTransaction();
         try {
+            $reportId = 'PBK-' . date('ymd') . '-' . strtoupper(Str::random(4)); // PBK = Pengajuan Barang Keluar
+
             foreach ($items as $item) {
-                $barang = Barang::where('id_barang', $item['id_barang'])->first();
-
-                if (!$barang || $barang->jumlah_barang < $item['jumlah_barang']) {
-                    DB::rollBack();
-                    return response()->json([
-                        'message' => 'Stok untuk barang ' . ($barang->nama_barang ?? $item['id_barang']) . ' tidak mencukupi.'
-                    ], 409);
-                }
-
-                $reportId = 'LBM-' . date('ymd') . '-' . strtoupper(Str::random(4));
-
-                Transaksi::create([
+                PengajuanBarang::create([
                     'report_id' => $reportId,
                     'id_barang' => $item['id_barang'],
                     'jumlah_barang' => $item['jumlah_barang'],
                     'tujuan' => $commonData['tujuan'] ?? null,
                     'keterangan' => $commonData['keterangan'] ?? null,
-                    'status' => 'keluar',
+                    'status' => 'proses', // default status sebelum supervisor validasi
                     'catatan_penolakan' => '-',
                 ]);
             }
 
-            // Jika semua item berhasil diproses, commit transaksi
-            DB::commit();
+            // Buat juga "header" transaksi di tabel Transaksi untuk supervisor validasi
+            Transaksi::create([
+                'report_id' => $reportId,
+                'id_barang' => $item['id_barang'],
+                'jumlah_barang' => $item['jumlah_barang'],
+                'tujuan' => $commonData['tujuan'] ?? null,
+                'keterangan' => $commonData['keterangan'] ?? null,
+                'status' => 'keluar',
+                'catatan_penolakan' => '-',
+            ]);
 
-            return response()->json(['message' => 'Barang keluar berhasil dicatat!'], 201);
+            DB::commit();
+            return response()->json(['message' => 'Pengajuan barang keluar berhasil dikirim ke supervisor!'], 201);
 
         } catch (Throwable $e) {
-            // Jika terjadi error lain, batalkan transaksi
             DB::rollBack();
-            Log::error('Gagal mencatat barang keluar: ' . $e->getMessage());
+            Log::error('Gagal membuat pengajuan barang keluar: ' . $e->getMessage());
             return response()->json(['message' => 'Terjadi kesalahan di server.'], 500);
         }
     }
 
-    public function show(Barang $Barang)
-    {
-        //
-    }
-
-    public function edit(Barang $Barang)
-    {
-        //
-    }
-
-    public function update(Request $request, Barang $Barang)
-    {
-        //
-    }
-
-    public function destroy(Barang $Barang, $id)
-    {
-
-    }
 }

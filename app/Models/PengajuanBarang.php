@@ -28,7 +28,9 @@ class PengajuanBarang extends Model
         'tinggi',
         'merek',
         'status',
-        'catatan_penolakan'
+        'catatan_penolakan',
+        'created_by_id', 
+        'created_by_role',
     ];
 
     public function barang() {

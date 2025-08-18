@@ -48,16 +48,25 @@
             </div>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="/home">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('supervisor.dashboard') }}">Dashboard</a></li>
                     <li class="breadcrumb-item active" aria-current="page">{{ $judul }}</li>
                 </ol>
             </nav>
             <div class="page-content">
+                @if($barangTidakBagus->isEmpty())
+                    <div class="alert alert-warning">
+                        Tidak ada barang yang memenuhi kriteria atau belum memiliki QR Code.
+                    </div>
+                @else
+                    <div class="alert alert-info">
+                        <strong>Info:</strong> Hanya barang yang memiliki QR Code yang dapat diproses di laporan ini.
+                    </div>
+                @endif
                 <section class="section">
                     <div class="card shadow h-md-50">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h4 class="card-title mb-0">Daftar Barang Pemeliharaan</h4>
-                            <form id="sendConditionReportForm" action="{{ route('staff_gudang.kirim_laporan') }}" method="POST">
+                            <form id="sendConditionReportForm" action="{{ route('staff_gudang.kirim_laporan_pengajuan') }}" method="POST">
                                 @csrf
                                 <input type="hidden" name="jenis_laporan" value="Laporan Kondisi Barang">
                                 <button type="submit" class="btn btn-send-report">

@@ -8,7 +8,7 @@
             </div>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="/home">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('supervisor.dashboard') }}">Dashboard</a></li>
                     <li class="breadcrumb-item active" aria-current="page">{{ $judul }}</li>
                 </ol>
             </nav>

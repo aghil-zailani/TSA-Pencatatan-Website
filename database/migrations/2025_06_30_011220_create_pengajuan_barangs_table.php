@@ -10,6 +10,10 @@ class CreatePengajuanBarangsTable extends Migration
     {
         Schema::create('pengajuan_barangs', function (Blueprint $table) {
             $table->id();
+            
+            $table->string('created_by_role')->nullable();
+            $table->unsignedBigInteger('created_by_id')->nullable();
+
             $table->string('report_id')->unique(); // WAJIB ADA!
             $table->string('nama_laporan')->nullable();
             $table->string('nama_barang')->nullable();

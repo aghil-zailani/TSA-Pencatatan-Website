@@ -163,6 +163,23 @@
                                             </div>
                                         </div>
                                         <div class="col-md-8 col-lg-12 col-xl-12 col-xxl-7">
+                                            <h6 class="text-muted font-semibold">Total Barang</h6>
+                                            <h6 class="font-extrabold mb-0">{{ $totalKeseluruhanBarang ?? 0 }}</h6>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>                        
+                        <div class="col-4 col-lg-3 col-md-3">
+                            <div class="card">
+                                <div class="card-body px-4 py-4-5">
+                                    <div class="row">
+                                        <div class="col-md-4 col-lg-12 col-xl-12 col-xxl-5 d-flex justify-content-start">
+                                            <div class="stats-icon purple mb-2">
+                                                <i class="iconly-boldArrow---Down-Square"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-8 col-lg-12 col-xl-12 col-xxl-7">
                                             <h6 class="text-muted font-semibold">Barang Masuk</h6>
                                             <h6 class="font-extrabold mb-0">{{ $barangMasukBulanIni ?? 0 }}</h6>
                                         </div>
@@ -186,6 +203,25 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                        <div class="col-6 col-lg-3 col-md-6">
+                            <a href="{{ route('supervisor.monitoring') }}">
+                            <div class="card">
+                                <div class="card-body px-4 py-4-5">
+                                    <div class="row">
+                                        <div class="col-md-4 col-lg-12 col-xl-12 col-xxl-5 d-flex justify-content-start">
+                                            <div class="stats-icon red mb-2">
+                                                <i class="iconly-boldDanger"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-8 col-lg-12 col-xl-12 col-xxl-7">
+                                            <h6 class="text-muted font-semibold">Stok Minimum</h6>
+                                            <h6 class="font-extrabold mb-0">{{ $lowStockItems->count() }}</h6>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            </a>
                         </div>                        
                             <div class="row">
                                 <div class="col-12 col-lg-9">
@@ -203,7 +239,7 @@
                                 <div class="col-12 col-lg-3">
                                     <div class="card shadow h-md-50">
                                         <div class="card-header">
-                                            <h4>Presentase Stok Type Barang</h4>
+                                            <h4>Presentase Stok Tipe Barang</h4>
                                         </div>
                                         <div class="card-body">
                                             <div id="piechartdiv" style="width: 100%; height: 350px;"></div>
@@ -279,26 +315,78 @@
             </footer>
         </div>
 
-        <div class="modal fade" id="stockNotificationModal" tabindex="-1" aria-labelledby="stockNotificationModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="stockNotificationModalLabel"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>Notifikasi Stok Minimum!</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p>Barang-barang berikut memiliki stok di bawah batas minimum (10 unit):</p>
-                        <ul class="list-group list-group-flush" id="lowStockItemsList">
-                            {{-- Items will be appended here by JavaScript --}}
-                        </ul>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-primary-stock-modal" data-bs-dismiss="modal">Oke, Mengerti</button>
+        @if(session('lowStockItems') && session('lowStockItems')->count())
+            <div class="modal fade" id="stockNotificationModal" tabindex="-1" aria-labelledby="stockNotificationModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="stockNotificationModalLabel"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>Notifikasi Stok Minimum!</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <div class="alert alert-warning border-0 bg-warning bg-opacity-10 mb-4">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-info-circle-fill text-warning me-2"></i>
+                                    <span>Barang-barang berikut memiliki stok di bawah batas minimum (10 unit)</span>
+                                </div>
+                            </div>
+
+                            <!-- Items List -->
+                            <div class="row g-3">
+                                @foreach(session('lowStockItems') as $item)
+                                <div class="col-md-6">
+                                    <div class="card border-0 shadow-sm h-100">
+                                        <div class="card-body p-3">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div class="flex-grow-1">
+                                                    <h6 class="card-title mb-2 fw-semibold">
+                                                        {{ $item->nama_barang ?? 'Nama tidak tersedia' }}
+                                                    </h6>
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-box-seam text-muted me-2"></i>
+                                                        <span class="text-muted small">Stok tersisa:</span>
+                                                    </div>
+                                                </div>
+                                                <div class="text-end">
+                                                    @php
+                                                        $stockLevel = $item->stok;
+                                                        $badgeClass = $stockLevel <= 2 ? 'bg-danger' : ($stockLevel <= 5 ? 'bg-warning text-dark' : 'bg-info');
+                                                    @endphp
+                                                    <span class="badge {{ $badgeClass }} px-3 py-2 rounded-pill fs-6">
+                                                        {{ $item->stok }} unit
+                                                    </span>
+                                                    @if($stockLevel <= 2)
+                                                        <div class="text-danger small mt-1">
+                                                            <i class="bi bi-exclamation-circle-fill me-1"></i>Kritis
+                                                        </div>
+                                                    @elseif($stockLevel <= 5)
+                                                        <div class="text-warning small mt-1">
+                                                            <i class="bi bi-exclamation-triangle-fill me-1"></i>Rendah
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                @endforeach
+                            </div>
+
+                            <!-- Action Suggestion -->
+                            <div class="mt-4 p-3 bg-light rounded-3">
+                                <div class="d-flex align-items-center text-muted">
+                                    <i class="bi bi-lightbulb-fill me-2"></i>
+                                    <small>
+                                        <strong>Saran:</strong> Data lebih lengkapnya dapat dilihat pada 
+                                        <a href="{{ route('supervisor.monitoring') }}">monitoring stok barang</a>.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-
+        @endif
 
         <!-- line chart css -->
         <style>
@@ -458,22 +546,20 @@
                     alignLabels: false
                 }));
 
+                // [UBAH] Atur format teks untuk label di potongan chart
                 series.labels.template.setAll({
                     textType: "circular",
                     centerX: 0,
-                    centerY: 0
+                    centerY: 0,
+                    // Tampilkan kategori dan jumlah aktualnya
+                    text: "{category}: {value}" 
                 });
 
-                // isi data chart
-                series.data.setAll([{
-                        value: {{ $rs }},
-                        category: "Sparepart"
-                    },
-                    {
-                        value: {{ $fp }},
-                        category: "Barang Jadi"
-                    },
-                ]);
+                // [BARU] Atur format teks untuk tooltip (saat di-hover)
+                series.set("tooltip", am5.Tooltip.new(root, {
+                    labelText: "{category}: {value} unit"
+                }));
+
 
                 // legend atau info kecil kecil dibawah chart
                 var legend = chart.children.push(am5.Legend.new(root, {
@@ -482,6 +568,24 @@
                     marginTop: 15,
                     marginBottom: 15,
                 }));
+                
+                // [BARU] Atur format teks untuk nilai di legenda
+                legend.valueLabels.template.setAll({
+                    // Tampilkan hanya jumlah aktualnya saja
+                    text: "{value}"
+                });
+
+                // isi data chart (TETAP SAMA)
+                series.data.setAll([{
+                        value: {{ $rs }},
+                        tipe_barang: "Sparepart" // 'category' diganti 'tipe_barang' agar konsisten
+                    },
+                    {
+                        value: {{ $fp }},
+                        tipe_barang: "Barang Jadi" // 'category' diganti 'tipe_barang'
+                    },
+                ]);
+
 
                 legend.data.setAll(series.dataItems);
 
@@ -493,36 +597,13 @@
         <!-- Script untuk Notifikasi Stok Minimum -->
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                const LOW_STOCK_THRESHOLD = 10; // Batas stok minimum
-                // allStockItems sekarang akan berisi data dari database Anda
-                const allStockItems = @json($dataStokBarang ?? []); 
+                // Cek apakah elemen modal ada di dalam HTML
+                const stockModalElement = document.getElementById('stockNotificationModal');
 
-                let lowStockItems = [];
-
-                // Filter barang dengan stok di bawah ambang batas
-                allStockItems.forEach(item => {
-                    // Pastikan item.stok adalah angka untuk perbandingan
-                    if (parseInt(item.stok) < LOW_STOCK_THRESHOLD) { 
-                        lowStockItems.push(item);
-                    }
-                });
-
-                if (lowStockItems.length > 0) {
-                    const listContainer = document.getElementById('lowStockItemsList');
-                    listContainer.innerHTML = ''; 
-
-                    lowStockItems.forEach(item => {
-                        const listItem = document.createElement('li');
-                        listItem.className = 'list-group-item-stock'; 
-                        listItem.innerHTML = `
-                            <span>${item.nama}</span>
-                            <span class="badge-stock">Stok: ${item.stok}</span>
-                        `; 
-                        listContainer.appendChild(listItem);
-                    });
-
-                    // Tampilkan Modal Notifikasi
-                    var stockModal = new bootstrap.Modal(document.getElementById('stockNotificationModal'));
+                // Jika elemennya ADA (artinya Blade merendernya karena session ada)
+                if (stockModalElement) {
+                    // Buat instance modal dan langsung tampilkan
+                    var stockModal = new bootstrap.Modal(stockModalElement);
                     stockModal.show();
                 }
             });

@@ -5,25 +5,18 @@ namespace App\Http\Controllers\Supervisor;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Barang;
-use App\Models\Stok;
 use App\Models\Keluar;
-use App\Models\BarangMasuk;
-use App\Models\Pengajuan;
 use App\Models\LoginHistory;
-use App\Models\MasterData;
-use App\Models\FormConfig;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use App\Models\ActivityLog;
 use Carbon\Carbon;     
 use App\Exports\ExcelExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Throwable;
 use App\Models\PengajuanBarang;
 use App\Models\Transaksi;
-use Illuminate\Support\Facades\Validator;
+
 
 class DashboardController extends Controller
 {
@@ -40,7 +33,9 @@ class DashboardController extends Controller
         
         // 2. Menghitung jumlah transaksi BARANG KELUAR bulan ini
         // Asumsi Anda punya tabel/model 'Transaksi' (yang sebelumnya Anda sebut 'Keluar')
-        $barangKeluarCount = Keluar::whereBetween('created_at', [$awalBulan, $akhirBulan])->sum('jumlah_barang');
+        $barangKeluarCount = Transaksi::where('status', 'diterima') // hanya yang sudah divalidasi supervisor
+            ->whereBetween('created_at', [$awalBulan, $akhirBulan])
+            ->sum('jumlah_barang');
 
         // Data lain untuk chart (jika masih diperlukan)
         $chartData = Barang::select(
@@ -63,7 +58,7 @@ class DashboardController extends Controller
 
         $riwayatLoginData = LoginHistory::where('user_id', Auth::id())
                                         ->latest('login_at') // Urutkan dari yang terbaru
-                                        ->take(10) // Ambil 5 data teratas
+                                        ->take(5) // Ambil 5 data teratas
                                         ->get();
 
         $dataStokBarang = Barang::select(
@@ -71,11 +66,7 @@ class DashboardController extends Controller
             \DB::raw('SUM(jumlah_barang) as stok')
         )
         ->groupBy('nama_barang')
-        ->get()
-        ->map(function($item) {
-            return ['nama' => $item->nama_barang, 'stok' => $item->stok];
-        })
-        ->toArray();
+        ->get();
 
         // Ini ambil transaksi barang keluar yang statusnya validasi
         $laporanKeluarTerbaru = Transaksi::select(
@@ -140,7 +131,21 @@ class DashboardController extends Controller
 
         $laporanGabungan = $laporanValidasiTerbaru->merge($laporanKeluarTerbaru)
                                           ->sortByDesc('created_at')
-                                          ->take(10); // Maksimal 10 terbaru                   
+                                          ->take(5);              
+        
+        $lowStockItems = $dataStokBarang->filter(function ($item) {
+            return $item->stok < 10;
+        });
+
+        if (!session()->has('lowStockShown')) {
+            // Ambil data yang sama untuk dikirim ke session flash
+            $lowStockItemsForModal = $lowStockItems->take(6);
+
+            // Simpan ke session flash biar cuma sekali muncul
+            session()->flash('lowStockItems', $lowStockItemsForModal);
+            session()->put('lowStockShown', true); // Tandai sudah pernah muncul
+        }
+
 
         $data = array(
             'judul' => 'Dashboard',
@@ -151,9 +156,12 @@ class DashboardController extends Controller
             'pengajuan' => $pengajuan,
             'riwayatLogin' => $riwayatLoginData,
             'laporanGabungan' => $laporanGabungan,
+            'lowStockItems' => $lowStockItems,
         );
+
+        $totalKeseluruhanBarang = Barang::sum('jumlah_barang');
         
-        return view('supervisor.index', $data, compact('rs', 'fp', 'dataStokBarang'));
+        return view('supervisor.index', $data, compact('rs', 'fp', 'dataStokBarang', 'totalKeseluruhanBarang'));
     }
 
     public function tampil(Request $request)
@@ -171,6 +179,11 @@ class DashboardController extends Controller
             ->get();
 
         $totalKeseluruhanBarang = $barangAggregated->sum('total_stok');
+        
+        $lowStockItems = $barangAggregated->filter(function ($item) {
+            // Ambil semua item yang total_stok nya kurang dari 10
+            return $item->total_stok < 10;
+        });
 
         // Ambil kolom terpilih dari query
         $selectedColumns = $request->input('columns', [
@@ -189,6 +202,7 @@ class DashboardController extends Controller
             'totalKeseluruhanBarang' => $totalKeseluruhanBarang,
             'selectedColumns' => $selectedColumns,
             'judul' => $judul,
+            'lowStockItems' => $lowStockItems,
         ]);
     }
 
@@ -366,285 +380,6 @@ class DashboardController extends Controller
         return view('supervisor.pemeliharaan.pemeliharaan', compact('pengajuanPending', 'judul'));
     }
 
-    // Validasi Barang Masuk (untuk halaman ringkasan laporan)
-    public function validasiBarangMasuk()
-    {
-        $pengajuanPending = PengajuanBarang::select('report_id', 'nama_laporan','status', \DB::raw('COUNT(*) as total_items'), \DB::raw('MIN(created_at) as created_at'))
-                                          ->where('status', 'proses')
-                                          ->groupBy('report_id', 'status', 'nama_laporan')
-                                          ->orderBy('created_at', 'asc')
-                                          ->get();
-
-        $judul = 'Validasi Laporan Masuk';
-
-        return view('supervisor.validasi_barang_masuk', compact('pengajuanPending', 'judul'));
-    }
-
-    public function validasiBarangKeluar()
-    {
-        $keluars = Transaksi::select(
-                'report_id',
-                'status',
-                DB::raw('COUNT(*) as total_items'),
-                DB::raw('MIN(created_at) as created_at')
-            )
-            ->where('status', 'keluar') // Status laporan yang baru dibuat dari mobile
-            ->whereNotNull('report_id')
-            ->groupBy('report_id', 'status')
-            ->orderBy('created_at', 'desc')
-            ->get();
-    
-        $judul = 'Validasi Laporan Keluar';
-    
-        return view('supervisor.validasi_barang_keluar', compact('keluars', 'judul'));
-    }
-
-    public function terimaKeluar($id)
-    {
-        $transaksi = Transaksi::findOrFail($id);
-
-        $barang = Barang::where('id_barang', $transaksi->id_barang)->first();
-
-        if (!$barang || $barang->jumlah_barang < $transaksi->jumlah_barang) {
-            return back()->with('error', 'Stok tidak mencukupi.');
-        }
-
-        // Kurangi stok
-        $barang->decrement('jumlah_barang', $transaksi->jumlah_barang);
-
-        $transaksi->status = 'diterima';
-        $transaksi->updated_at = now();
-        $transaksi->save();
-
-        return redirect()->route('supervisor.validasi.barang_keluar')
-            ->with('message', 'Laporan diterima.');
-    }
-
-    public function tolakKeluar(Request $request, $id)
-    {
-        $transaksi = Transaksi::findOrFail($id);
-
-        $transaksi->status = 'ditolak';
-        $transaksi->catatan = $request->catatan_penolakan;
-        $transaksi->created_at = now();
-        $transaksi->updated_at = now();
-        $transaksi->save();
-
-        return redirect()->route('supervisor.validasi.barang_keluar')
-            ->with('message', 'Laporan ditolak dengan catatan.');
-    }
-
-    public function showKeluarDetail($reportId) // Nama parameter diubah agar lebih jelas
-    {
-        // Ambil semua item transaksi yang memiliki report_id yang sama
-        $keluar = DB::table('transaksis')
-            ->join('barangs', 'transaksis.id_barang', '=', 'barangs.id_barang')
-            ->select('transaksis.*', 'barangs.nama_barang')
-            ->where('report_id', $reportId)
-            ->orderBy('id_transaksi')
-            ->get();
-
-        // PERBAIKAN: Tambahkan pengecekan jika laporan tidak ditemukan
-        if ($keluar->isEmpty()) {
-            // Jika tidak ada data, tampilkan halaman error 404
-            abort(404, 'Laporan barang keluar tidak ditemukan.');
-        }
-
-        $judul = 'Detail Laporan Barang Keluar';
-
-        // Kirim data ke view dengan nama variabel yang lebih jelas
-        return view('supervisor.validasi_barang_keluar_detail', compact('judul', 'keluar', 'reportId'));
-    }
-    
-    // Metode untuk menampilkan detail laporan yang akan divalidasi
-    public function lihatDetailLaporan($reportId)
-    {
-        $itemsInReport = PengajuanBarang::where('report_id', $reportId)->orderBy('id')->get();
-
-        if ($itemsInReport->isEmpty()) {
-            abort(404, 'Laporan tidak ditemukan.');
-        }
-
-        $judul = 'Detail Laporan Barang Masuk';
-
-        // Ambil nama_laporan dari item pertama
-        $nama_laporan = $itemsInReport->first()->nama_laporan ?? 'Laporan';
-
-        return view('supervisor.validasi_laporan_detail', compact('itemsInReport', 'judul', 'reportId', 'nama_laporan'));
-    }
-
-    // Metode untuk memvalidasi (menerima atau menolak) pengajuan
-    public function validasiPengajuan(Request $request)
-    {
-        $request->validate([
-            'report_id' => 'required|string',
-            'aksi' => 'required|in:terima,tolak',
-            'catatan_penolakan' => 'nullable|string'
-        ]);
-
-        $reportId = $request->input('report_id');
-        $aksi = $request->input('aksi');
-
-        DB::beginTransaction();
-        try {
-            if ($aksi == 'terima') {
-                $items = PengajuanBarang::where('report_id', $reportId)->get();
-                $barangModel = new Barang();
-                $fillableBarangColumns = $barangModel->getFillable();
-
-                $columnMapping = [
-                    'kondisi' => 'kondisi_barang',
-                    'berat_barang' => 'berat',
-                    'merek_barang' => 'merek',
-                    'media' => 'media',
-                ];
-
-                foreach ($items as $pengajuan) {
-                    $barangData = [];
-
-                    foreach ($fillableBarangColumns as $barangColumn) {
-                        $sumberColumn = $columnMapping[$barangColumn] ?? $barangColumn;
-                        if (isset($pengajuan->{$sumberColumn})) {
-                            $barangData[$barangColumn] = $pengajuan->{$sumberColumn};
-                        }
-                    }
-
-                    // Normalisasi teks (hindari duplikat karena beda kapitalisasi)
-                    if (isset($barangData['nama_barang'])) {
-                        $barangData['nama_barang'] = ucwords(strtolower($barangData['nama_barang']));
-                    }
-                    if (isset($barangData['merek_barang'])) {
-                        $barangData['merek_barang'] = ucwords(strtolower($barangData['merek_barang']));
-                    }
-                    if (isset($barangData['tipe_barang'])) {
-                        $barangData['tipe_barang'] = strtoupper($barangData['tipe_barang']);
-                    }
-
-                    // Cek apakah barang sudah ada dengan data yang sama (nama + merek + tipe + berat)
-                    $barangSudahAda = Barang::where('nama_barang', $barangData['nama_barang'] ?? '')
-                        ->where('merek_barang', $barangData['merek_barang'] ?? '')
-                        ->where('tipe_barang', $barangData['tipe_barang'] ?? '')
-                        ->where('berat_barang', $barangData['berat_barang'] ?? null)
-                        ->exists();
-
-                    if (!$barangSudahAda) {
-                        // Generate ID unik
-                        $prefix = strtoupper(substr(trim($pengajuan->tipe_barang_kategori), 0, 3));
-                        $product = 'GEN';
-                        if (!empty(trim($pengajuan->tipe_barang ?? ''))) {
-                            $product = strtoupper(substr(trim($pengajuan->tipe_barang), 0, 3));
-                        }
-                        $monthYear = date('my');
-                        $fullPrefix = "{$prefix}{$product}-{$monthYear}-";
-
-                        $count = Barang::where('id_barang', 'LIKE', "{$fullPrefix}%")->count() + 1;
-                        $increment = str_pad($count, 3, '0', STR_PAD_LEFT);
-                        $barangData['id_barang'] = "{$fullPrefix}{$increment}";
-
-                        // Simpan ke database
-                        Barang::create($barangData);
-                    }
-                }
-
-                PengajuanBarang::where('report_id', $reportId)->update(['status' => 'diterima']);
-
-                DB::commit();
-                return redirect()->route('supervisor.validasi.barang_masuk')
-                    ->with('message', 'Laporan berhasil diterima dan barang telah ditambahkan ke stok!');
-            }
-
-            if ($aksi == 'tolak') {
-                $catatan = $request->input('catatan_penolakan') ?: 'Laporan ditolak oleh Supervisor.';
-                PengajuanBarang::where('report_id', $reportId)->update([
-                    'status' => 'ditolak',
-                    'catatan_penolakan' => $catatan,
-                ]);
-
-                DB::commit();
-                return redirect()->route('supervisor.validasi.barang_masuk')
-                    ->with('message', 'Laporan berhasil ditolak!');
-            }
-
-        } catch (Throwable $e) {
-            DB::rollBack();
-            Log::error('Validasi Pengajuan Gagal: ' . $e->getMessage() . ' di baris ' . $e->getLine());
-            return redirect()->back()->with('error', 'Terjadi kesalahan. Silakan cek log untuk detail.');
-        }
-    }
-
-    public function validasiPengajuanKeluar(Request $request)
-    {
-        $request->validate([
-            'report_id' => 'required|string',
-            'aksi' => 'required|in:terima,tolak',
-            'catatan_penolakan' => 'nullable|string'
-        ]);
-
-        $reportId = $request->input('report_id');
-        $aksi = $request->input('aksi');
-
-        DB::beginTransaction();
-        try {
-            if ($aksi === 'terima') {
-
-                $items = PengajuanBarang::where('report_id', $reportId)->get();
-
-                // Pastikan ada Transaksi parent
-                $transaksi = Transaksi::firstOrCreate(
-                    ['report_id' => $reportId],
-                    ['status' => 'memproses']
-                );
-
-                foreach ($items as $item) {
-                    $barang = Barang::where('nama_barang', $item->nama_barang)->first();
-                    if ($barang) {
-                        $barang->jumlah_barang += $item->jumlah_barang;
-                        $barang->save();
-                    } else {
-                        $barang = Barang::create([
-                            'nama_barang' => $item->nama_barang,
-                            'jumlah_barang' => $item->jumlah_barang,
-                            // Tambahkan kolom lain sesuai keperluan
-                        ]);
-                    }
-
-                    // Hubungkan ke transaksi detail
-                    $transaksi->barangKeluar()->create([
-                        'barang_id' => $barang->id,
-                        'jumlah_keluar' => $item->jumlah_barang,
-                    ]);
-                }
-
-                PengajuanBarang::where('report_id', $reportId)
-                    ->update(['status' => 'diterima']);
-
-                $transaksi->update(['status' => 'diterima']);
-
-                DB::commit();
-                return redirect()->route('supervisor.validasi.barang_keluar')
-                    ->with('message', 'Laporan berhasil diterima & barang keluar dicatat ke transaksi.');
-            }
-
-            if ($aksi === 'tolak') {
-                $catatan = $request->input('catatan_penolakan') ?: 'Laporan ditolak.';
-                Transaksi::where('report_id', $reportId)
-                    ->update(['status' => 'ditolak', 'catatan_penolakan' => $catatan]);
-
-                PengajuanBarang::where('report_id', $reportId)
-                    ->update(['status' => 'ditolak']);
-
-                DB::commit();
-                return redirect()->route('supervisor.validasi.barang_keluar')
-                    ->with('message', 'Laporan berhasil ditolak.');
-            }
-
-        } catch (Throwable $e) {
-            DB::rollBack();
-            Log::error('Validasi Pengajuan Keluar Gagal: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Terjadi kesalahan.');
-        }
-    }
-
     public function logAktivitas(Request $request)
     {
         $logs = ActivityLog::with('user')
@@ -668,14 +403,11 @@ class DashboardController extends Controller
         $endDate = $request->input('end_date');
 
         $transaksis = Transaksi::where('status', '!=', 'proses')
-            ->where('status','!=','keluar')
-            ->with('barang')
-            ->get();
+            ->where('status', '!=', 'keluar')
+            ->with('barang');
 
         $pengajuans = PengajuanBarang::where('status', '!=', 'proses')
-            ->where('status','!=','proses')
-            ->with('barang') // relasi yang benar
-            ->get();
+            ->with('barang');
 
         if ($startDate) {
             $transaksis = $transaksis->where('created_at', '>=', $startDate);
@@ -686,6 +418,10 @@ class DashboardController extends Controller
             $pengajuans = $pengajuans->where('created_at', '<=', $endDate);
         }
 
+        $transaksis = $transaksis->get();
+        $pengajuans = $pengajuans->get();
+
+        // Gabungkan lalu urutkan terbaru
         $riwayatGabung = $transaksis->merge($pengajuans)->sortByDesc('created_at');
 
         return view('supervisor.riwayat', compact('judul', 'riwayatGabung'));

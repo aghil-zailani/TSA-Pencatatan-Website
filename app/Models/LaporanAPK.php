@@ -32,7 +32,6 @@ class LaporanAPK extends Model // Nama model diubah
         'safety_pin',
         'tindakan',
         'status',
-        // 'timeline' di ERD bisa jadi fitur terpisah atau bagian dari status/logs
     ];
 
     protected $casts = [

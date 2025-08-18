@@ -34,7 +34,7 @@
             </div>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="/home">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('supervisor.dashboard') }}">Dashboard</a></li>
                     <li class="breadcrumb-item active" aria-current="page">{{ $judul }}</li>
                 </ol>
             </nav>
@@ -171,54 +171,69 @@
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        $(document).ready(function() {
-            // Inisialisasi DataTables
-            $('#dataTable').DataTable({
-                "pageLength": 10,
-                "lengthMenu": [
-                    [10, 25, 50, -1],
-                    [10, 25, 50, "Semua"]
-                ],
-                "searching": true,
-                "info": true,
-                "paging": true,
-                "ordering": false // Nonaktifkan sorting bawaan DataTables karena kita sudah urutkan di backend dan ada duplikasi baris
-            });
+$(document).ready(function() {
+    // Inisialisasi DataTables
+    $('#dataTable').DataTable({
+        "pageLength": 10,
+        "lengthMenu": [
+            [10, 25, 50, -1],
+            [10, 25, 50, "Semua"]
+        ],
+        "searching": true,
+        "info": true,
+        "paging": true,
+        "ordering": false // Nonaktifkan sorting bawaan DataTables
+    });
 
-            // Ketika modal QR Code ditampilkan
-            $('#qrCodeModal').on('show.bs.modal', function (event) {
-                var button = $(event.relatedTarget); // Tombol yang memicu modal
-                var itemId = button.data('item-id'); // Ambil ID barang asli
-                var itemName = button.data('item-nama'); // Ambil nama barang (dengan penanda item ke-X)
+    // Simpan riwayat barang yang sudah pernah ditampilkan QR-nya
+    var qrShownHistory = {};
 
-                var modal = $(this);
-                modal.find('.modal-title #qrItemName').text(itemName); // Set nama barang di judul modal
+    $('#qrCodeModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        var itemId = button.data('item-id');
+        var itemName = button.data('item-nama');
 
-                // Panggil API untuk mendapatkan QR Code
-                var qrCodeUrl = "{{ route('staff_gudang.generate_qrcode', ':id') }}";
-                qrCodeUrl = qrCodeUrl.replace(':id', itemId);
+        var qrCodeUrl = "{{ route('staff_gudang.generate_qrcode', ':id') }}".replace(':id', itemId);
 
-                $('#qrCodeContainer').html('<p class="text-muted">Memuat QR Code...</p>'); // Tampilkan loading
-                
-                $.ajax({
-                    url: qrCodeUrl,
-                    type: 'GET',
-                    dataType: 'json',
-                    success: function(data) {
-                        // Buat <img> tag pakai URL PNG
-                        const imgTag = '<img src="' + data.url + '" alt="QR Code" class="img-fluid">';
-                        $('#qrCodeContainer').html(imgTag);
+        // Reset container QR Code sebelum load
+        $('#qrCodeContainer').html(`
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        `);
 
-                        // Ganti tombol download ke direct URL PNG
-                        $('#downloadQrBtn').attr('href', data.url);
-                        $('#downloadQrBtn').attr('download', data.fileName);
-                    },
-                    error: function(xhr) {
-                        $('#qrCodeContainer').html('<p class="text-danger">Gagal memuat QR Code.</p>');
-                        console.error('Error:', xhr.responseText);
+        $.ajax({
+            url: qrCodeUrl,
+            type: 'GET',
+            dataType: 'json',
+            success: function(data) {
+                if (data.status === 'exists') {
+                    // Kalau QR sudah ada
+                    if (!qrShownHistory[itemId]) {
+                        // Tampilkan notifikasi sekali saja untuk item ini
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'QR Sudah Ada',
+                            text: data.message,
+                            timer: 3000,
+                            showConfirmButton: false
+                        });
+                        qrShownHistory[itemId] = true;
                     }
-                });
-            });
+                }
+
+                // Tampilkan QR di modal
+                $('#qrItemName').text(itemName);
+                $('#qrCodeContainer').html('<img src="' + data.url + '" alt="QR Code" class="img-fluid">');
+                $('#downloadQrBtn').attr('href', data.url);
+                $('#downloadQrBtn').attr('download', data.fileName);
+            },
+            error: function(xhr) {
+                $('#qrCodeContainer').html('<p class="text-danger">Gagal memuat QR Code.</p>');
+            }
         });
-    </script>
+    });
+});
+</script>
+
 @endsection

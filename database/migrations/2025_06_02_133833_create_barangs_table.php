@@ -15,6 +15,9 @@ return new class extends Migration
             // PK: id_barang
             $table->id('id_barang');
 
+            $table->string('created_by_role')->nullable();
+            $table->unsignedBigInteger('created_by_id')->nullable();
+
             // Kolom-kolom sesuai ERD dan input form
             $table->string('nama_barang');
             $table->integer('jumlah_barang')->default(0);

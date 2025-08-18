@@ -7,6 +7,7 @@ use App\Http\Controllers\Supervisor\Pemeliharaan;
 use App\Http\Controllers\Supervisor\MasterDataController;
 use App\Http\Controllers\Supervisor\DashboardController as SupervisorDashboardController;
 use App\Http\Controllers\StaffGudang\DashboardController as StaffGudangDashboardController;
+use App\Http\Controllers\LaporanController;
 
 // Route untuk login WEB
 Route::get('/login', [WebLoginController::class, 'showLoginForm'])->name('login')->middleware('guest');
@@ -33,13 +34,13 @@ Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->name('supe
     Route::delete('/master-data/category/{category_name}', [MasterDataController::class, 'destroyMasterCategory'])->name('master.data.destroy_category');
     //Master Data
 
-    Route::get('/validasi-barang-masuk', [SupervisorDashboardController::class, 'validasiBarangMasuk'])->name('validasi.barang_masuk'); // Halaman Supervisor
-    Route::get('/validasi-laporan/{reportId}', [SupervisorDashboardController::class, 'lihatDetailLaporan'])->name('validasi.laporan_detail');
-    Route::post('/validasi-pengajuan', [SupervisorDashboardController::class, 'validasiPengajuan'])->name('validasi.pengajuan');
+    Route::get('/validasi-barang-masuk', [LaporanController::class, 'validasiBarangMasuk'])->name('validasi.barang_masuk'); // Halaman Supervisor
+    Route::get('/validasi-laporan/{reportId}', [LaporanController::class, 'lihatDetailLaporan'])->name('validasi.laporan_detail');
+    Route::post('/validasi-pengajuan', [LaporanController::class, 'validasiPengajuan'])->name('validasi.pengajuan');
 
-    Route::get('/validasi/barang-keluar', [SupervisorDashboardController::class, 'validasiBarangKeluar'])->name('validasi.barang_keluar');
-    Route::get('/validasi/barang-keluar/{reportId}', [SupervisorDashboardController::class, 'showKeluarDetail'])->name('validasi.keluar_detail');
-    Route::post('/validasi-pengajuan-keluar', [SupervisorDashboardController::class, 'validasiPengajuanKeluar'])->name('validasi.pengajuan.keluar');
+    Route::get('/validasi/barang-keluar', [LaporanController::class, 'validasiBarangKeluar'])->name('validasi.barang_keluar');
+    Route::get('/validasi/barang-keluar/{reportId}', [LaporanController::class, 'showKeluarDetail'])->name('validasi.keluar_detail');
+    Route::post('/validasi-pengajuan-keluar', [LaporanController::class, 'validasiPengajuanKeluar'])->name('validasi.pengajuan.keluar');
     
     // MODUL PEMELIHARAAN AWAL
     Route::get('/pemeliharaan-riwayat', [Pemeliharaan::class, 'pemeliharaanRiwayat'])->name('pemeliharaan.riwayat');
@@ -49,6 +50,8 @@ Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->name('supe
     // MODUL PEMELIHARAAN AKHIR
 
     Route::get('/riwayat', [SupervisorDashboardController::class, 'riwayat'])->name('riwayat');
+    Route::get('/riwayat-masuk/{reportId}', [LaporanController::class, 'riwayatMasukDetail'])->name('riwayat.detail_masuk');
+    Route::get('/riwayat-keluar/{reportId}', [LaporanController::class, 'riwayatKeluarDetail'])->name('riwayat.detail_keluar');
     Route::get('/log-aktivitas', [SupervisorDashboardController::class, 'logAktivitas'])->name('log.aktivitas');
     
 });
@@ -64,8 +67,9 @@ Route::middleware(['auth', 'role:staff_gudang'])->prefix('staff-gudang')->name('
     Route::get('/data-barang', [StaffGudangDashboardController::class, 'barangDiterima'])->name('data-barang');
     Route::get('/generate-qrcode/{id}', [StaffGudangDashboardController::class, 'generateQrCode'])->name('generate_qrcode');
     Route::get('/buat-laporan', [StaffGudangDashboardController::class, 'buatLaporan'])->name('buat_laporan');
-    Route::post('/kirim-laporan', [StaffGudangDashboardController::class, 'kirimLaporan'])->name('kirim_laporan');
-    Route::get('/form-pengajuan', [StaffGudangDashboardController::class, 'formPengajuan'])->name('form_pengajuan');
+    Route::post('/kirim-laporan-pengajuan', [LaporanController::class, 'kirimLaporanPengajuan'])->name('kirim_laporan_pengajuan');
+    Route::post('/kirim-laporan', [LaporanController::class, 'kirimLaporan'])->name('kirim_laporan');
+    Route::get('/form-pengajuan', [LaporanController::class, 'formPengajuan'])->name('form_pengajuan');
     Route::get('/riwayat-aktivitas', [StaffGudangDashboardController::class, 'riwayat'])->name('riwayat.aktivitas');
     // Route::get('/laporan/{laporan}', [LaporanController::class, 'show'])->name('laporan.show');
 });

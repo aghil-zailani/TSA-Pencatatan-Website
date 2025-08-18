@@ -1,6 +1,8 @@
 @extends('layouts/main')
 
 @section('container')
+<link rel="shortcut icon" href="{{ url('logo/tsa.png') }}" type="image/x-icon">
+<link rel="shortcut icon" href="{{ url('logo/tsa.png') }}" type="image/png">
 <div id="app">
     <div id="main">
         <header class="mb-3">
@@ -14,7 +16,7 @@
         </div>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="/home">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('supervisor.dashboard') }}">Dashboard</a></li>
                 <li class="breadcrumb-item active" aria-current="page">{{ $judul }}</li>
             </ol>
         </nav>
@@ -82,17 +84,25 @@
                                     <thead>
                                         <tr>
                                             <th>No</th>
-                                            <th>Nama Barang</th>
+                                            <th>Nama Laporan</th>
+                                            <th>Jumlah Barang</th>
                                             <th>Tanggal</th>
                                             <th>Status</th>
                                             <th>Catatan</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($laporan as $index => $item)
+                                        @foreach ($riwayatGabung as $index => $item)
                                             <tr>
                                                 <td>{{ $index + 1 }}</td>
-                                                <td>{{ $item->nama_barang }}</td>
+                                                <td>
+                                                    @if ($item instanceof \App\Models\Transaksi)
+                                                    Laporan Barang Keluar
+                                                    @elseif ($item instanceof \App\Models\PengajuanBarang)
+                                                    Laporan Barang Masuk
+                                                    @endif
+                                                </td>
+                                                <td>{{ $item->jumlah_barang ?? '-' }}</td>
                                                 <td>{{ $item->created_at }}</td>
                                                 <td>
                                                     @if ($item->status == 'diterima')
@@ -106,9 +116,7 @@
                                         @endforeach
                                     </tbody>
                                 </table>
-                                <div class="d-flex justify-content-end">
-                                    {{ $laporan->links() }}
-                                </div>
+                               
                             </div>
                         </div>
                     </div>
@@ -129,15 +137,33 @@
         info: true,
         responsive: true
       });
-    $('#laporanTable').DataTable({
+    var laporanTable = $('#laporanTable').DataTable({
         paging: true,
         lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Semua"]],
         pageLength: 10,
         ordering: true,
         searching: true,
         info: true,
-        responsive: true
+        responsive: true,
+        // 1. Urutkan berdasarkan kolom Tanggal (indeks 2) secara menurun
+        order: [[ 2, 'desc' ]],
+        // 2. Nonaktifkan sorting untuk kolom "No"
+        columnDefs: [ {
+            "searchable": false,
+            "orderable": false,
+            "targets": 0
+        } ]
       });
+
+    // 3. Fungsi untuk membuat ulang nomor urut secara otomatis
+    laporanTable.on('draw.dt', function () {
+        var pageInfo = laporanTable.page.info();
+        var start = pageInfo.start;
+        laporanTable.cells(null, 0, { search: 'applied', order: 'applied' }).every(function (cell) {
+            this.data(start + 1);
+            start++;
+        });
+    }).draw();
   });
 </script>
 @endsection

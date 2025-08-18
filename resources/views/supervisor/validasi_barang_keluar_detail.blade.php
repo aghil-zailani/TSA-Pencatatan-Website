@@ -77,8 +77,8 @@
             </div>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="/home">Dashboard</a></li>
-                    <li class="breadcrumb-item"><a href="{{ route('supervisor.validasi.barang_masuk') }}">Validasi Barang Masuk</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('supervisor.dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('supervisor.validasi.barang_keluar') }}">Validasi Barang Keluar</a></li>
                     <li class="breadcrumb-item active" aria-current="page">{{ $judul }}</li>
                 </ol>
             </nav>
@@ -165,7 +165,7 @@
                 <input type="hidden" name="aksi" value="tolak">
                 <div class="modal-content border-0 shadow-lg rounded">
                     <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title" id="tolakModalLabel">Tolak Laporan</h5>
+                    <h5 class="modal-title text-white" id="tolakModalLabel">Tolak Laporan</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">

@@ -22,6 +22,7 @@ class QrCode extends Model
         'nomor_identifikasi', // Data yang akan dipindai dari QR Code
         'qr_code_path',       // Path ke gambar QR code (opsional, jika disimpan)
         'tanggal_pembuatan',  // Tanggal pembuatan QR
+        'status',
     ];
 
     protected $casts = [
@@ -33,4 +34,7 @@ class QrCode extends Model
     {
         return $this->belongsTo(Barang::class, 'id_barang', 'id_barang');
     }
+
+    const STATUS_AKTIF = 'Aktif';
+    const STATUS_TIDAK_AKTIF = 'Tidak Aktif';
 }

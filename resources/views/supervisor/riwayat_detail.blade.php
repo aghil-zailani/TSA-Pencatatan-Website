@@ -78,7 +78,7 @@
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{{ route('supervisor.dashboard') }}">Dashboard</a></li>
-                    <li class="breadcrumb-item"><a href="{{ route('supervisor.validasi.barang_masuk') }}">Validasi Barang Masuk</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('supervisor.riwayat') }}">Riwayat</a></li>
                     <li class="breadcrumb-item active" aria-current="page">{{ $judul }}</li>
                 </ol>
             </nav>
@@ -86,40 +86,7 @@
                 <section class="section">
                     <div class="card shadow h-md-50">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <h4 class="card-title mb-0">{{ $nama_laporan }}</h4>
-                            <div>
-                                @php
-                                    $semuaSelesai = $itemsInReport->every(fn($item) => in_array($item->status, ['accept', 'rejected']));
-                                @endphp
-
-                                @if(!$itemsInReport->isEmpty() && !$semuaSelesai)
-                                <form action="{{ route('supervisor.validasi.pengajuan') }}" method="POST" class="d-inline confirm-validation-form">
-                                    @csrf
-                                    <input type="hidden" name="report_id" value="{{ $reportId }}">
-                                    <input type="hidden" name="aksi" value="terima">
-                                    <button type="submit" class="btn btn-success-custom btn-sm"
-                                        data-confirm-text="Apakah Anda yakin ingin MENERIMA seluruh laporan ini? Stok barang akan bertambah.">
-                                        Terima Semua
-                                    </button>
-                                </form>
-
-                                <button type="button" class="btn btn-danger-custom btn-sm" data-bs-toggle="modal" data-bs-target="#tolakModal">
-                                    Tolak Semua
-                                </button>
-                                @endif
-
-                                @php
-                                    $semuaAccept = $itemsInReport->every(fn($item) => $item->status === 'accept');
-                                    $semuaReject = $itemsInReport->every(fn($item) => $item->status === 'rejected');
-                                @endphp
-
-                                @if ($semuaAccept)
-                                    <div class="btn btn-success">Laporan Sudah Diterima</div>
-                                @elseif ($semuaReject)
-                                    <div class="btn btn-danger">Laporan Ditolak</div>
-                                @endif
-
-                            </div>
+                            <h4 class="card-title mb-0">{{ $nama_laporan }} - {{ $report_id }}</h4>
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">
@@ -166,48 +133,6 @@
             </div>
         </div>
 
-        <!-- Modal Tolak Laporan -->
-        <div class="modal fade" id="tolakModal" tabindex="-1" aria-labelledby="tolakModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <form action="{{ route('supervisor.validasi.pengajuan') }}" method="POST" class="confirm-validation-form">
-                @csrf
-                <input type="hidden" name="report_id" value="{{ $reportId }}">
-                <input type="hidden" name="aksi" value="tolak">
-                <div class="modal-content border-0 shadow-lg rounded">
-                    <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title text-white" id="tolakModalLabel">Tolak Laporan</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                    <p class="mb-3">Silakan berikan alasan penolakan laporan ini:</p>
-                    <div class="form-group">
-                        <label for="catatan_penolakan" class="form-label fw-semibold">Catatan Penolakan</label>
-                        <textarea class="form-control rounded" name="catatan_penolakan" id="catatan_penolakan" rows="4" placeholder="Contoh: Data barang tidak sesuai atau stok tidak valid." required></textarea>
-                    </div>
-                    </div>
-                    <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-danger">Tolak Laporan</button>
-                    </div>
-                </div>
-                </form>
-            </div>
-        </div>
-
-        {{-- SweetAlert untuk Notifikasi Sukses/Error --}}
-        @if (session('message'))
-            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-            <script>
-                Swal.fire({ icon: "success", title: "Success!", text: "{{ session('message') }}", timer: 2500, showConfirmButton: false });
-            </script>
-        @endif
-        @if (session('error'))
-            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-            <script>
-                Swal.fire({ icon: "error", title: "Error!", text: "{{ session('error') }}", timer: 2500, showConfirmButton: false });
-            </script>
-        @endif
-
     </body>
 
     </html>
@@ -233,30 +158,6 @@
                 "paging": true,
                 "ordering": false
             });
-
-            // LOGIKA KONFIRMASI SWEETALERT UNTUK TERIMA/TOLAK
-            $('.confirm-validation-form').on('submit', function(e) {
-                e.preventDefault();
-                
-                var form = $(this);
-                var button = form.find('button[type="submit"]');
-                var confirmText = button.data('confirm-text') || 'Apakah Anda yakin?';
-                var action = form.find('input[name="aksi"]').val();
-                
-                Swal.fire({
-                    title: 'Konfirmasi Aksi',
-                    text: confirmText,
-                    icon: (action === 'terima') ? 'success' : 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: (action === 'terima') ? '#28a745' : '#dc3545',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: (action === 'terima') ? 'Ya, Terima!' : 'Ya, Tolak!',
-                    cancelButtonText: 'Batal'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        form.off('submit').submit();
-                    }
-                });
             });
         });
     </script>

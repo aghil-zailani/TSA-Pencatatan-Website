@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Route;
+use Carbon\Carbon;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -20,6 +21,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        config(['app.timezone' => 'Asia/Jakarta']);
+            date_default_timezone_set(config('app.timezone'));
+            Carbon::setLocale('id');
+
         Route::prefix('api')
             ->middleware('api')
             ->group(base_path('routes/api.php'));
