@@ -14,7 +14,7 @@ Route::get('/login', [WebLoginController::class, 'showLoginForm'])->name('login'
 Route::post('/login', [WebLoginController::class, 'login'])->middleware('guest'); // Akan ditangani oleh WebLoginController
 Route::post('/logout', [WebLoginController::class, 'logout'])->name('logout')->middleware('auth');
 
-Route::get('/home', [HomeController::class, 'index'])->name('home')->middleware('auth');
+// Route::get('/home', [HomeController::class, 'index'])->name('home')->middleware('auth');
 
 Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->name('supervisor.')->group(function () {
     Route::get('/dashboard', [SupervisorDashboardController::class, 'index'])->name('dashboard');

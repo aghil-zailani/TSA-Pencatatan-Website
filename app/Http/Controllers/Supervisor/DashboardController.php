@@ -50,9 +50,9 @@ class DashboardController extends Controller
                 return ['country' => $item->nama_barang, 'value' => (int)$item->stokBarang];
         });
         
-        $rs = Barang::where('tipe_barang', 'Sparepart')->count();
+        $rs = Barang::where('tipe_barang', 'Sparepart')->sum('jumlah_barang');
 
-        $fp = Barang::where('tipe_barang', 'Barang Jadi')->count();
+        $fp = Barang::where('tipe_barang', 'Barang Jadi')->sum('jumlah_barang');
 
         $pengajuan = PengajuanBarang::orderBy('created_at', 'desc')->get();
 
