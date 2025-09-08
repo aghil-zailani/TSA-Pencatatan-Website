@@ -58,7 +58,7 @@
                                         <th>Fitur</th>
                                         <th>Aksi</th>
                                         <th>Deskripsi</th>
-                                        <th>Waktu</th>
+                                        <th>Tanggal</th>
                                         </tr>
                                     </thead>
                                     <tbody>
