@@ -3,18 +3,32 @@
 // app/Http/Controllers/Api/NotifikasiController.php
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Barang;
 use App\Models\Notifikasi;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 
 class NotifikasiController extends Controller
 {
     public function index()
     {
-        $notifikasis = Notifikasi::with('barang')
+        $currentUser = Auth::user();
+
+        if ($currentUser->role !== 'staff_gudang') {
+            return response()->json([
+                'message' => 'Fitur Notifikasi Coming Soon yaa!'
+            ], 403);
+        }
+
+        // Ambil notifikasi hanya untuk barang yang dibuat oleh staff_gudang ini
+         $notifikasis = Notifikasi::with('barang')
+            ->whereHas('barang', function ($query) use ($currentUser) {
+                $query->where('created_by_role', 'staff_gudang')
+                    ->where('created_by_id', $currentUser->id);
+            })
             ->orderBy('tanggal', 'desc')
             ->get()
             ->map(function ($notif) {

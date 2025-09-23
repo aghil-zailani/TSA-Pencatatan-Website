@@ -5,133 +5,164 @@ namespace App\Http\Controllers\Api;
 use App\Models\QrCode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use App\Models\Barang; // Pastikan model Barang sudah diimport
 use Illuminate\Support\Facades\Validator; // Untuk validasi manual
 
 class BarangController extends Controller
 {
+    // ... di dalam file app/Http/Controllers/Api/BarangController.php
+
     public function index()
     {
-        $barangs = Barang::all(); // Ambil semua barang
+        $currentUser = Auth::user();
+        if (!$currentUser) {
+            return response()->json(['error' => 'User not authenticated'], 401);
+        }
+
+        $barangQuery = Barang::query();
+
+        // Logika filter berdasarkan role, sama seperti di metode ringkasan
+        switch ($currentUser->role) {
+            case 'supervisor_umum':
+                // Supervisor umum dapat melihat semua barang yang dibuat oleh supervisor_umum
+                $barangQuery->where('created_by_role', 'supervisor_umum');
+                break;
+            case 'inspektor':
+                // Inspektor hanya dapat melihat barang dari supervisor yang ditugaskan
+                $barangQuery->where('created_by_role', 'supervisor_umum');
+                if (!empty($currentUser->supervisor_id)) {
+                    $barangQuery->where('created_by_id', $currentUser->supervisor_id);
+                }
+                break;
+            case 'staff_gudang':
+                // Staff gudang hanya dapat melihat barang yang dibuat oleh dirinya sendiri
+                $barangQuery->where('created_by_role', 'staff_gudang')
+                            ->where('created_by_id', $currentUser->id);
+                break;
+            default:
+                // Role lainnya tidak memiliki akses
+                return response()->json([
+                    'message' => 'Anda tidak memiliki akses ke data ini.'
+                ], 403);
+        }
+
+        // Ambil semua barang setelah difilter
+        $barangs = $barangQuery->get();
 
         return response()->json([
-            'message' => 'List semua barang',
+            'message' => 'List barang berhasil dimuat',
             'data' => $barangs
         ], 200);
     }
 
-    public function showByQrCode(Request $request, $qrCodeData)
+    public function ringkasan(Request $request)
     {
-        // Cari QR Code di database berdasarkan nomor_identifikasi (dari hasil scan)
-        $qrCode = QrCode::where('nomor_identifikasi', $qrCodeData)->first();
-
-        if ($qrCode) {
-            // Jika QR Code ditemukan, ambil data barang yang berelasi
-            $barang = $qrCode->barang; // Menggunakan relasi barang() di model QrCode
-
-            if ($barang) {
-                return response()->json([
-                    'message' => 'Data barang ditemukan',
-                    'data' => [
-                        'id_barang' => $barang->id_barang,
-                        'nama_barang' => $barang->nama_barang,
-                        'jenis_barang' => $barang->jenis_barang, // Asumsi ada di model Barang dan relasi
-                        'lokasi_barang' => $barang->lokasi_barang, // Asumsi ada di model Barang dan relasi
-                        'qr_code_data' => $qrCodeData, // Kirim kembali data QR mentah
-                        // Tambahkan field lain dari barang yang ingin dikirim ke Flutter
-                        'tipe_barang' => $barang->tipe_barang,
-                        'jumlah_barang' => $barang->jumlah_barang,
-                        'kondisi' => $barang->kondisi,
-                        // ... dan seterusnya dari model barang
-                    ]
-                ], 200);
-            } else {
-                return response()->json(['message' => 'Barang terkait QR Code ini tidak ditemukan.'], 404);
+        try {$currentUser = Auth::user();
+            if (!$currentUser) {
+                return response()->json(['error' => 'User not authenticated'], 401);
             }
-        } else {
-            return response()->json(['message' => 'QR Code tidak dikenali atau tidak terdaftar.'], 404);
+
+            $barangQuery = Barang::query();
+
+            // Filter berdasarkan role
+            switch ($currentUser->role) {
+                case 'supervisor_umum':
+                    $barangQuery->where('created_by_role', 'supervisor_umum');
+                    break;
+                case 'inspektor':
+                    $barangQuery->where('created_by_role', 'supervisor_umum');
+                    if (!empty($currentUser->supervisor_id)) {
+                        $barangQuery->where('created_by_id', $currentUser->supervisor_id);
+                    }
+                    break;
+                case 'staff_gudang':
+                    $barangQuery->where('created_by_role', 'staff_gudang')
+                                ->where('created_by_id', $currentUser->id);
+                    break;
+                default:
+                    return response()->json(['total' => 0, 'baik' => 0, 'perlu_cek' => 0]);
+            }
+
+            // Hitung total, baik, dan perlu_cek langsung di database
+            $kondisiBaik = ['baik', 'bagus', 'oke', 'good', 'Baik', 'Bagus', 'Oke', 'Good'];
+
+            $total = $barangQuery->count();
+            $baik = (clone $barangQuery)->whereIn('kondisi', $kondisiBaik)->count();
+            $perluCek = $total - $baik;
+
+            $response = [
+                'total' => $total,
+                'baik' => $baik,
+                'perlu_cek' => $perluCek,
+                'user_role' => $currentUser->role
+            ];
+
+            // Ringkasan per tipe hanya untuk staff_gudang
+            if ($currentUser->role === 'staff_gudang') {
+                $aparTotal = (clone $barangQuery)->where('tipe_barang', 'APAR')->count();
+                $aparBaik = (clone $barangQuery)->where('tipe_barang', 'APAR')->whereIn('kondisi', $kondisiBaik)->count();
+
+                $hydrantTotal = (clone $barangQuery)->where('tipe_barang', 'HYDRANT')->count();
+                $hydrantBaik = (clone $barangQuery)->where('tipe_barang', 'HYDRANT')->whereIn('kondisi', $kondisiBaik)->count();
+
+                $response['apar'] = [
+                    'total' => $aparTotal,
+                    'baik' => $aparBaik,
+                    'perlu_cek' => $aparTotal - $aparBaik
+                ];
+
+                $response['hydrant'] = [
+                    'total' => $hydrantTotal,
+                    'baik' => $hydrantBaik,
+                    'perlu_cek' => $hydrantTotal - $hydrantBaik
+                ];
+            }
+
+            return response()->json($response);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Internal server error', 'message' => $e->getMessage()], 500);
         }
     }
 
-    public function ringkasan()
+    public function showByQrCode(Request $request, $qrCodeData)
     {
-        $kondisiBaik = ['baik', 'bagus', 'oke', 'good', 'Baik', 'Bagus', 'Oke', 'Good'];
+        // Gunakan eager loading untuk memuat relasi barang
+        $qrCode = QrCode::with('barang')->where('nomor_identifikasi', $qrCodeData)->first();
 
-        // Ambil semua barang
-        $barangs = Barang::all();
+        Log::info("QR code dicari: $qrCodeData");
 
-        // Subquery: ambil laporan terakhir (berdasarkan ID terbesar per barang)
-       $latestReports = DB::table('laporan_apk as l1')
-        ->select('l1.id_barang', 'l1.kondisi_fisik')
-        ->join(DB::raw('
-            (SELECT id_barang, MAX(id_laporan_pemeliharaan) as max_id
-            FROM laporan_apk
-            GROUP BY id_barang) as l2
-        '), function($join) {
-            $join->on('l1.id_barang', '=', 'l2.id_barang')
-                ->on('l1.id_laporan_pemeliharaan', '=', 'l2.max_id');
-        });
+        if ($qrCode && $qrCode->barang) {
+            $barang = $qrCode->barang;
 
-        // Gabungkan ke data barang
-        $dataGabungan = DB::table('barangs as b')
-            ->leftJoinSub($latestReports, 'laporan', function($join) {
-                $join->on('b.id_barang', '=', 'laporan.id_barang');
-            })
-            ->select(
-                'b.id_barang',
-                'b.tipe_barang',
-                DB::raw('LOWER(COALESCE(laporan.kondisi_fisik, b.kondisi)) as kondisi_terakhir')
-            )
-            ->get();
-
-        // Hitung total dari tabel barangs (bukan dari hasil join laporan)
-        $total = $barangs->count();
-
-        // Ringkasan umum
-        $baik = $dataGabungan->whereIn('kondisi_terakhir', $kondisiBaik)->count();
-        $perluCek = $dataGabungan->whereNotIn('kondisi_terakhir', $kondisiBaik)->count();
-
-        // Ringkasan khusus per tipe
-        $apar = $dataGabungan->filter(function ($item) {
-            return strtolower($item->tipe_barang) === 'apar';
-        });
-
-        $hydrant = $dataGabungan->filter(function ($item) {
-            return strtolower($item->tipe_barang) === 'hydrant';
-        });
-
-
-        $aparTotal = $barangs->filter(function ($item) {
-            return strtolower($item->tipe_barang) === 'apar';
-        })->count();
-
-        $hydrantTotal = $barangs->filter(function ($item) {
-            return strtolower($item->tipe_barang) === 'hydrant';
-        })->count();
-
-
-        $aparBaik = $apar->whereIn('kondisi_terakhir', $kondisiBaik)->count();
-        $aparPerluCek = $apar->whereNotIn('kondisi_terakhir', $kondisiBaik)->count();
-
-        $hydrantBaik = $hydrant->whereIn('kondisi_terakhir', $kondisiBaik)->count();
-        $hydrantPerluCek = $hydrant->whereNotIn('kondisi_terakhir', $kondisiBaik)->count();
-
-        return response()->json([
-            'total' => $total,
-            'baik' => $baik,
-            'perlu_cek' => $perluCek,
-            'apar' => [
-                'total' => $aparTotal,
-                'baik' => $aparBaik,
-                'perlu_cek' => $aparPerluCek
-            ],
-            'hydrant' => [
-                'total' => $hydrantTotal,
-                'baik' => $hydrantBaik,
-                'perlu_cek' => $hydrantPerluCek
-            ]
-        ]);
+            // Tambahkan data created_by_role dan created_by_id ke respons
+            return response()->json([
+                'status' => 'exists', // Tambahkan status agar konsisten dengan endpoint lain
+                'message' => 'Data barang ditemukan',
+                'data' => [
+                    'id_barang' => $barang->id_barang,
+                    'nama_barang' => $barang->nama_barang,
+                    'jenis_barang' => $barang->jenis_barang, // Pastikan field ini ada di model Barang
+                    'lokasi_barang' => $barang->lokasi_barang,
+                    'qr_code_data' => $qrCodeData,
+                    'tipe_barang' => $barang->tipe_barang,
+                    'jumlah_barang' => $barang->jumlah_barang,
+                    'kondisi' => $barang->kondisi,
+                    // Tambahkan data penting ini
+                    'created_by_role' => $barang->created_by_role ?? null,
+                    'created_by_id' => $barang->created_by_id ?? null,
+                ]
+            ], 200);
+        } else {
+            return response()->json([
+                'status' => 'not_found', // Tambahkan status agar konsisten
+                'message' => 'QR Code tidak dikenali atau tidak terdaftar.'
+            ], 404);
+        }
     }
 
     public function store(Request $request)

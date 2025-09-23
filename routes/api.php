@@ -10,6 +10,8 @@ use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Http\Controllers\Supervisor\MasterDataController;
 use App\Http\Controllers\Supervisor\DashboardController as SupervisorDashboardController;
 use App\Http\Controllers\StaffGudang\DashboardController as StaffDashboardController;
+// use App\Http\Controllers\Api\LaporanAPKController;
+use App\Http\Controllers\Api\SupervisorUmumBarangController;
 
 Route::middleware(['api'])->group(function(){
     Route::post('/login', [ApiLoginController::class, 'login']);
@@ -18,11 +20,20 @@ Route::middleware(['api'])->group(function(){
     Route::post('/login-android', [ApiLoginController::class, 'loginAndroid']);
     Route::post('/register', [RegisterController::class, 'register']);
 
+    Route::put('/user/update', [ApiLoginController::class, 'update']);
+
     Route::middleware('auth:sanctum')->group(function () {
 
         Route::post('/barang', [BarangController::class, 'store'])->name('barang.store');
+        Route::get('/barangs', [BarangController::class, 'index']);
+        Route::get('/barang/ringkasan', [BarangController::class, 'ringkasan']);
+        Route::get('/barang/{qrCodeData}', [BarangController::class, 'showByQrCode']);
 
-        // 🔐 STAFF GUDANG
+        Route::post('/laporan-apk', [LaporanAPKController::class, 'store']);
+
+        Route::get('/notifikasi', [NotifikasiController::class, 'index']);
+        Route::post('/notifikasi/generate', [NotifikasiController::class, 'generateNotifikasi']);
+
         Route::middleware('role:staff_gudang')->prefix('staff')->group(function () {
             Route::get('/barang/ringkasan', [BarangController::class, 'ringkasan']);
             Route::get('/barang/{qrCodeData}', [BarangController::class, 'showByQrCode']);
@@ -33,23 +44,25 @@ Route::middleware(['api'])->group(function(){
             Route::post('/notifikasi/generate', [NotifikasiController::class, 'generateNotifikasi']);
         });
 
-        // 🔐 INSPEKTOR
         Route::middleware('role:inspektor')->prefix('inspektor')->group(function () {
             //
         });
 
-        // 🔐 Supervisor Umum
         Route::middleware('role:supervisor_umum')->prefix('supervisor')->group(function () {
             //
         });
 
-        // ✅ Logout dan info user
         Route::post('/logout', [ApiLoginController::class, 'logout']);
         Route::get('/user', function (Request $request) {
             return $request->user();
         });
 
         Route::post('/pengajuan-barangs', [StaffDashboardController::class, 'pengajuanBarangs']);
+    });
+
+    Route::middleware(['auth:sanctum', 'role:supervisor_umum'])->group(function () {
+        Route::post('/supervisor-umum/barang', [SupervisorUmumBarangController::class, 'store']);
+        Route::post('/supervisor-umum/scan-qr', [SupervisorUmumBarangController::class, 'scanQr']);
     });
 
     Route::get('/form-configs/{form_type}', [MasterDataController::class, 'getFormConfigsForMobile']);

@@ -1,12 +1,16 @@
 <?php
 
+use App\Models\LaporanAPK;
+use App\Exports\LaporanExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\LoginController as WebLoginController; // Alias untuk kejelasan
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Supervisor\Pemeliharaan;
 use App\Http\Controllers\Supervisor\MasterDataController;
 use App\Http\Controllers\Supervisor\DashboardController as SupervisorDashboardController;
 use App\Http\Controllers\StaffGudang\DashboardController as StaffGudangDashboardController;
+use App\Http\Controllers\LoginController as WebLoginController; // Alias untuk kejelasan
+use App\Http\Controllers\SupervisorUmum\SupervisorUmumController;
 use App\Http\Controllers\LaporanController;
 
 // Route untuk login WEB
@@ -47,6 +51,9 @@ Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->name('supe
     Route::get('/pemeliharaan-validasi', [Pemeliharaan::class, 'pemeliharaanValidasi'])->name('pemeliharaan.validasi');
     Route::post('/pemeliharaan-validasi/{id}', [Pemeliharaan::class, 'submitValidasi'])->name('pemeliharaan.validasi.submit');
     Route::get('/laporan/{id}', [Pemeliharaan::class, 'getLaporanDetail']);
+    Route::get('/export-laporan', function () {
+        return Excel::download(new LaporanExport, 'riwayat-pemeliharaan.xlsx');
+    })->name('export.laporan');
     // MODUL PEMELIHARAAN AKHIR
 
     Route::get('/riwayat', [SupervisorDashboardController::class, 'riwayat'])->name('riwayat');
@@ -56,9 +63,13 @@ Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->name('supe
     
 });
 
-Route::middleware(['auth', 'role:supervisor_umum'])->prefix('supervisor-umum')->name('supervisor_umum.')->group(function () {
-    //
-});
+Route::middleware(['auth', 'role:supervisor_umum'])
+    ->prefix('partner')
+    ->name('supervisor_umum.')
+    ->group(function () {
+        Route::get('/riwayat', [SupervisorUmumController::class, 'index'])->name('riwayat');
+    });
+    
 
 Route::middleware(['auth', 'role:staff_gudang'])->prefix('staff-gudang')->name('staff_gudang.')->group(function () {
     Route::get('/dashboard', [StaffGudangDashboardController::class, 'index'])->name('dashboard');

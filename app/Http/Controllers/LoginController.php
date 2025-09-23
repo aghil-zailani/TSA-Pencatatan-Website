@@ -47,6 +47,8 @@ class LoginController extends Controller
                 return redirect()->intended(route('supervisor.dashboard'));
             } elseif ($user->role == 'staff_gudang') {
                 return redirect()->intended(route('staff_gudang.dashboard'));
+            } elseif ($user->role == 'supervisor_umum') {
+                return redirect()->intended(route('supervisor_umum.riwayat'));
             }
             
             // Fallback jika tidak ada role spesifik

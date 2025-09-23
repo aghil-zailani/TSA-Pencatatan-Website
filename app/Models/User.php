@@ -16,7 +16,7 @@ class User extends Authenticatable
      * Menentukan nama tabel yang digunakan oleh model ini.
      * Defaultnya adalah 'users', kita ubah menjadi 'user'.
      */
-    protected $table = 'user';
+    protected $table = 'users';
 
     /**
      * Primary key untuk tabel ini.

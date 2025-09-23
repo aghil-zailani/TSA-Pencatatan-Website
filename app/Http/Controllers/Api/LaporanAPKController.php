@@ -2,31 +2,29 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\LaporanAPK;
+use App\Models\Barang;
 use App\Models\QrCode;
+use App\Models\LaporanAPK;
+use App\Models\Notifikasi;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Models\Notifikasi;
+use App\Http\Controllers\Controller;
 
 class LaporanAPKController extends Controller
 {
     private function detectTipeBarang($qrCode)
     {
-        // Deteksi berdasarkan relasi barang
         if ($qrCode->barang && $qrCode->barang->tipe_barang) {
             $tipe = strtoupper(trim($qrCode->barang->tipe_barang));
             if (strpos($tipe, 'APAR') !== false) return 'APAR';
             if (strpos($tipe, 'HYDRANT') !== false) return 'HYDRANT';
         }
 
-        // Deteksi berdasarkan nomor identifikasi
         $identifier = strtoupper(trim($qrCode->nomor_identifikasi));
         if (strpos($identifier, 'APAR') !== false || strpos($identifier, 'APACO') !== false) return 'APAR';
         if (strpos($identifier, 'HYD') !== false || strpos($identifier, 'HYDRANT') !== false) return 'HYDRANT';
 
-        // Deteksi berdasarkan nama barang
         if ($qrCode->barang && $qrCode->barang->nama_barang) {
             $nama = strtoupper($qrCode->barang->nama_barang);
             if (strpos($nama, 'APAR') !== false) return 'APAR';
@@ -38,17 +36,20 @@ class LaporanAPKController extends Controller
 
     public function store(Request $request)
     {
+        Log::info('Authorization Header:', ['header' => request()->header('Authorization')]);
+        Log::info('User info:', ['user' => $request->user()]);
+
         $data = $request->all();
         Log::info("📥 Data diterima: " . json_encode($data));
 
-        // Validasi dasar
+        // Validasi dasar + catatan_tindakan jika Ganti
         $validator = validator($data, [
             'qr_code_data' => 'required|string',
             'tanggal_inspeksi' => 'required|date',
             'lokasi_alat' => 'required|string|max:255',
             'foto' => 'nullable|file|image|max:5120',
             'kondisi_fisik' => 'required|string|in:Good,Korosif,Bad',
-            'tindakan' => 'required|string|in:Isi Ulang,Ganti',
+            'catatan_tindakan' => 'nullable|string|max:500',
         ]);
 
         if ($validator->fails()) {
@@ -56,7 +57,7 @@ class LaporanAPKController extends Controller
             return response()->json(['message' => 'Validasi gagal', 'errors' => $validator->errors()], 422);
         }
 
-        // 🔍 Normalisasi dan cari QR Code
+        // Cari QR Code
         $qrCodeInput = strtolower(trim($data['qr_code_data']));
         Log::info("🔍 Mencari QR Code (setelah trim + lower): $qrCodeInput");
 
@@ -87,34 +88,32 @@ class LaporanAPKController extends Controller
         // Validasi tambahan jika APAR
         if ($tipeBarang === 'APAR') {
             $aparValidator = validator($data, [
+                'tindakan' => 'required|string|in:Good,Isi Ulang,Ganti',
                 'selang' => 'required|string|in:Good,Bad,Crack',
                 'pressure_gauge' => 'required|string|in:Good,Bad',
                 'safety_pin' => 'required|string|in:Good,Crack',
             ]);
-
             if ($aparValidator->fails()) {
-                Log::warning("❌ Validasi APAR gagal: " . json_encode($aparValidator->errors()));
-                return response()->json([
-                    'message' => 'Validasi APAR gagal',
-                    'errors' => $aparValidator->errors(),
-                ], 422);
+                return response()->json(['message' => 'Validasi APAR gagal', 'errors' => $aparValidator->errors()], 422);
+            }
+            if (strtolower($data['tindakan']) === 'ganti' && empty($data['catatan_tindakan'])) {
+                return response()->json(['message' => 'Catatan tindakan wajib diisi untuk APAR jika memilih Ganti.'], 422);
             }
         }
 
-        // Validasi tambahan jika HYDRANT (optional)
+        // Validasi tambahan khusus HYDRANT
         if ($tipeBarang === 'HYDRANT') {
             $hydrantValidator = validator($data, [
+                'tindakan' => 'required|string|in:Good,Broken,Repair',
                 'tekanan_air' => 'sometimes|nullable|string|in:Good,Low,Bad',
                 'katup' => 'sometimes|nullable|string|in:Good,Bad,Stuck',
                 'selang_hydrant' => 'sometimes|nullable|string|in:Good,Bad,Crack',
             ]);
-
             if ($hydrantValidator->fails()) {
-                Log::warning("❌ Validasi HYDRANT gagal: " . json_encode($hydrantValidator->errors()));
-                return response()->json([
-                    'message' => 'Validasi HYDRANT gagal',
-                    'errors' => $hydrantValidator->errors(),
-                ], 422);
+                return response()->json(['message' => 'Validasi HYDRANT gagal', 'errors' => $hydrantValidator->errors()], 422);
+            }
+            if (strtolower($data['tindakan']) === 'repair' && empty($data['catatan_tindakan'])) {
+                return response()->json(['message' => 'Catatan tindakan wajib diisi untuk HYDRANT jika memilih Repair.'], 422);
             }
         }
 
@@ -131,6 +130,7 @@ class LaporanAPKController extends Controller
                 'id_qr' => $qrCode->nomor_identifikasi,
                 'id_barang' => $qrCode->id_barang,
                 'id_user' => $user->id,
+                'created_by_role' => $user->role,
                 'username' => $user->username,
                 'nama_barang' => $qrCode->barang->nama_barang,
                 'tipe_barang' => $tipeBarang,
@@ -138,18 +138,14 @@ class LaporanAPKController extends Controller
                 'lokasi_alat' => $data['lokasi_alat'],
                 'kondisi_fisik' => $data['kondisi_fisik'],
                 'tindakan' => $data['tindakan'],
+                'catatan_tindakan' => $data['catatan_tindakan'] ?? null,
                 'status' => 'Pending',
             ];
 
-            // ✅ Cek apakah ada file
             if ($request->hasFile('foto')) {
-                // Simpan di storage/app/public/foto_laporan/
                 $path = $request->file('foto')->store('foto_laporan', 'public');
-
-                // Simpan hanya path relatif untuk diakses di web
-                $laporanData['foto'] = $path; // hasil: foto_laporan/nama_file.jpg
+                $laporanData['foto'] = $path;
             }
-
 
             if ($tipeBarang === 'APAR') {
                 $laporanData['selang'] = $data['selang'];
@@ -166,7 +162,21 @@ class LaporanAPKController extends Controller
             $laporan = LaporanAPK::create($laporanData);
             Log::info("✅ Laporan berhasil disimpan. ID: " . $laporan->id);
 
-            // Buat notifikasi setelah laporan masuk
+            $barang = Barang::find($qrCode->id_barang);
+
+            if ($barang) {
+                // Definisikan kondisi yang dianggap "baik"
+                $kondisiBaik = ['baik', 'bagus', 'oke', 'good', 'Baik', 'Bagus', 'Oke', 'Good'];
+
+                // Cek apakah kondisi fisik dari laporan adalah "baik"
+                if (in_array(strtolower($laporanData['kondisi_fisik']), $kondisiBaik)) {
+                    // Update kondisi barang di tabel `barangs`
+                    $barang->kondisi = 'baik';
+                    $barang->save();
+                    Log::info("🔄 Kondisi barang '{$barang->nama_barang}' (ID: {$barang->id_barang}) berhasil diperbarui menjadi 'baik'.");
+                }
+            }
+
             Notifikasi::create([
                 'barang_id' => $qrCode->id_barang,
                 'judul' => 'Laporan Baru Dikirim ✉️',

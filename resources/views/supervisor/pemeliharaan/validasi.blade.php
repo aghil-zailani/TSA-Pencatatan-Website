@@ -8,7 +8,7 @@
             </div>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ route('supervisor.dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="/home">Dashboard</a></li>
                     <li class="breadcrumb-item active" aria-current="page">{{ $judul }}</li>
                 </ol>
             </nav>
@@ -75,65 +75,202 @@
         </div>
     </div>
 
-    <!-- Modal Validasi -->
+    <!-- Modal Validasi dengan Desain Modern -->
     <div class="modal fade" id="modalValidasi" tabindex="-1" aria-labelledby="modalValidasiLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-xl">
             <form id="formValidasi" method="POST">
                 @csrf
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="modalValidasiLabel">Validasi Laporan</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-content border-0 shadow-lg">
+                    <div class="modal-header bg-primary text-white border-0">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-clipboard-check me-2 fs-4"></i>
+                            <h5 class="modal-title mb-0" id="modalValidasiLabel">Validasi Laporan Pemeliharaan</h5>
+                        </div>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
                     </div>
-                    <div class="modal-body">
+
+                    <div class="modal-body p-0">
                         <!-- Loading Indicator -->
-                        <div id="loadingIndicator" class="text-center">
-                            <div class="spinner-border" role="status">
+                        <div id="loadingIndicator" class="text-center py-5">
+                            <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
                                 <span class="visually-hidden">Loading...</span>
                             </div>
-                            <p>Memuat data...</p>
+                            <p class="text-muted mb-0">Memuat data laporan...</p>
                         </div>
 
                         <!-- Content -->
                         <div id="laporanDetail" style="display: none;">
-                            <p><strong>Nama Barang:</strong> <span id="nama_barang_text"></span></p>
-                            <p><strong>Tipe:</strong> <span id="tipe_barang_text"></span></p>
-                            <p><strong>Lokasi:</strong> <span id="lokasi_alat_text"></span></p>
-                            <p><strong>Tanggal Inspeksi:</strong> <span id="tanggal_text"></span></p>
-                            <p><strong>Kondisi Fisik:</strong> <span id="kondisi_text"></span></p>
-                            <p><strong>Tindakan:</strong> <span id="tindakan_text"></span></p>
-                            <div id="tambahan_apar_fields" style="display: none;">
-                                <p><strong>Selang:</strong> <span id="selang_text"></span></p>
-                                <p><strong>Pressure Gauge:</strong> <span id="gauge_text"></span></p>
-                                <p><strong>Safety Pin:</strong> <span id="pin_text"></span></p>
-                            </div>
-                            <p><strong>Foto:</strong><br>
-                                <img id="foto_preview" src="" alt="Foto" width="200" class="img-thumbnail" />
-                            </p>
-                            <hr>
+                            <div class="row g-0">
+                                <!-- Bagian Kiri - Detail Laporan -->
+                                <div class="col-md-8 border-end">
+                                    <div class="p-4">
+                                        <h6 class="text-primary mb-3 fw-bold">
+                                            <i class="bi bi-info-circle me-2"></i>Detail Laporan
+                                        </h6>
 
-                            <div class="mb-3">
-                                <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
-                                <select name="status" id="status" class="form-select" required>
-                                    <option value="">-- Pilih Status --</option>
-                                    <option value="Diterima">Diterima</option>
-                                    <option value="Ditolak">Ditolak</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="catatan_validasi" class="form-label">Catatan</label>
-                                <textarea name="catatan_validasi" id="catatan_validasi" rows="3" class="form-control"
-                                    placeholder="Catatan validasi (opsional)..."></textarea>
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <div class="info-item">
+                                                    <label class="form-label text-muted small fw-semibold">NAMA
+                                                        BARANG</label>
+                                                    <div class="info-value" id="nama_barang_text">-</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="info-item">
+                                                    <label class="form-label text-muted small fw-semibold">TIPE</label>
+                                                    <div class="info-value" id="tipe_barang_text">-</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="info-item">
+                                                    <label class="form-label text-muted small fw-semibold">LOKASI</label>
+                                                    <div class="info-value" id="lokasi_alat_text">-</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="info-item">
+                                                    <label class="form-label text-muted small fw-semibold">TANGGAL
+                                                        INSPEKSI</label>
+                                                    <div class="info-value" id="tanggal_text">-</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="info-item">
+                                                    <label class="form-label text-muted small fw-semibold">KONDISI
+                                                        FISIK</label>
+                                                    <div class="info-value" id="kondisi_text">-</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="info-item">
+                                                    <label class="form-label text-muted small fw-semibold">TINDAKAN</label>
+                                                    <div class="info-value" id="tindakan_text">-</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="info-item">
+                                                    <label class="form-label text-muted small fw-semibold">CATATAN
+                                                        TINDAKAN</label>
+                                                    <div class="info-value" id="catatan_tindakan_text">-</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- APAR Specific Fields -->
+                                        <div id="tambahan_apar_fields" class="mt-4" style="display: none;">
+                                            <h6 class="text-warning mb-3 fw-bold">
+                                                <i class="bi bi-fire me-2"></i>Detail APAR
+                                            </h6>
+                                            <div class="row g-3">
+                                                <div class="col-md-4">
+                                                    <div class="info-item">
+                                                        <label
+                                                            class="form-label text-muted small fw-semibold">SELANG</label>
+                                                        <div class="info-value" id="selang_text">-</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="info-item">
+                                                        <label class="form-label text-muted small fw-semibold">PRESSURE
+                                                            GAUGE</label>
+                                                        <div class="info-value" id="gauge_text">-</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="info-item">
+                                                        <label class="form-label text-muted small fw-semibold">SAFETY
+                                                            PIN</label>
+                                                        <div class="info-value" id="pin_text">-</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Bagian Kanan - Foto dan Validasi -->
+                                <div class="col-md-4">
+                                    <div class="p-4">
+                                        <!-- Foto Section -->
+                                        <div class="mb-4">
+                                            <h6 class="text-primary mb-3 fw-bold">
+                                                <i class="bi bi-camera me-2"></i>Foto Laporan
+                                            </h6>
+                                            <div class="position-relative">
+                                                <img id="foto_preview" src="" alt="Foto Laporan"
+                                                    class="img-fluid rounded shadow-sm w-100"
+                                                    style="max-height: 250px; object-fit: cover;" />
+                                                <div class="position-absolute top-0 end-0 p-2">
+                                                    <button type="button" class="btn btn-sm btn-light rounded-circle"
+                                                        onclick="openImageModal()" title="Lihat gambar penuh">
+                                                        <i class="bi bi-arrows-fullscreen"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Validation Section -->
+                                        <div>
+                                            <h6 class="text-success mb-3 fw-bold">
+                                                <i class="bi bi-check-circle me-2"></i>Validasi
+                                            </h6>
+
+                                            <div class="mb-3">
+                                                <label for="status" class="form-label fw-semibold">
+                                                    Status Validasi <span class="text-danger">*</span>
+                                                </label>
+                                                <select name="status" id="status" class="form-select form-select-lg"
+                                                    required>
+                                                    <option value="">-- Pilih Status --</option>
+                                                    <option value="Diterima">✅ Diterima</option>
+                                                    <option value="Ditolak">❌ Ditolak</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="catatan_validasi" class="form-label fw-semibold">Catatan
+                                                    Validasi</label>
+                                                <textarea name="catatan_validasi" id="catatan_validasi" rows="4"
+                                                    class="form-control"
+                                                    placeholder="Tambahkan catatan validasi (opsional)..."></textarea>
+                                                <div class="form-text">
+                                                    <small class="text-muted">Berikan penjelasan jika diperlukan</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-primary" id="submitBtn" disabled>Kirim Validasi</button>
+                    <div class="modal-footer bg-light border-0">
+                        <button type="button" class="btn btn-outline-secondary btn-lg px-4" data-bs-dismiss="modal">
+                            <i class="bi bi-x-lg me-2"></i>Batal
+                        </button>
+                        <button type="submit" class="btn btn-primary btn-lg px-4" id="submitBtn" disabled>
+                            <i class="bi bi-send me-2"></i>Kirim Validasi
+                        </button>
                     </div>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal untuk Fullscreen Image -->
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content bg-transparent border-0">
+                <div class="modal-body p-0 text-center">
+                    <img id="fullscreenImage" src="" alt="Foto Laporan" class="img-fluid rounded" />
+                    <button type="button" class="btn btn-light position-absolute top-0 end-0 m-3 rounded-circle"
+                        data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 @endsection
@@ -141,6 +278,74 @@
 @push('styles')
     <!-- DataTables CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+
+    <!-- Custom Styles untuk Modal -->
+    <style>
+        .info-item {
+            margin-bottom: 1rem;
+        }
+
+        .info-value {
+            background: #f8f9fa;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            border: 1px solid #e9ecef;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .modal-xl {
+            max-width: 1200px;
+        }
+
+        .btn-lg {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+        }
+
+        #status option {
+            padding: 10px;
+            font-size: 1rem;
+        }
+
+        .form-select-lg {
+            padding: 0.75rem 1rem;
+            font-size: 1.1rem;
+        }
+
+        .modal-content {
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+        }
+
+        .border-end {
+            border-right: 2px solid #e9ecef !important;
+        }
+
+        /* Smooth transitions */
+        .modal.fade .modal-dialog {
+            transform: translate(0, -50px);
+            transition: all 0.3s ease-out;
+        }
+
+        .modal.show .modal-dialog {
+            transform: translate(0, 0);
+        }
+
+        /* Image hover effect */
+        #foto_preview {
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+
+        #foto_preview:hover {
+            transform: scale(1.05);
+        }
+    </style>
 @endpush
 
 @push('scripts')
@@ -230,6 +435,7 @@
                         $('#tanggal_text').text(data.tanggal_inspeksi_formatted || data.tanggal_inspeksi || '-');
                         $('#kondisi_text').text(data.kondisi_fisik || '-');
                         $('#tindakan_text').text(data.tindakan || '-');
+                        $('#catatan_tindakan_text').text(data.catatan_tindakan || '-');
 
                         // Handle foto
                         let fotoSrc = '{{ asset('storage') }}/foto_laporan/default.jpg';
@@ -238,8 +444,8 @@
                             fotoSrc = '{{ asset('storage') }}/' + data.foto;
                         }
 
-
                         $('#foto_preview').attr('src', fotoSrc);
+                        $('#fullscreenImage').attr('src', fotoSrc);
 
                         // Show APAR specific fields if needed
                         if (data.tipe_barang && data.tipe_barang.toLowerCase() === 'apar') {
@@ -287,10 +493,15 @@
                         }
 
                         $('#laporanDetail').html(`
-                                <div class="alert alert-danger">
-                                    <strong>Error:</strong> ${errorMessage}
-                                    <br><small>Silakan coba lagi atau hubungi administrator.</small>
-                                    <br><small class="text-muted">Request ID: ${id}</small>
+                                <div class="p-4">
+                                    <div class="alert alert-danger text-center">
+                                        <i class="bi bi-exclamation-triangle fs-1 text-danger mb-3"></i>
+                                        <h5 class="alert-heading">Oops! Terjadi Kesalahan</h5>
+                                        <p class="mb-0">${errorMessage}</p>
+                                        <hr>
+                                        <small class="text-muted">Request ID: ${id}</small>
+                                        <br><small class="text-muted">Silakan coba lagi atau hubungi administrator.</small>
+                                    </div>
                                 </div>
                             `).show();
                     }
@@ -315,7 +526,18 @@
                     return false;
                 }
             });
+
+            // Image click handler untuk foto preview
+            $('#foto_preview').on('click', function () {
+                openImageModal();
+            });
         });
+
+        // Function untuk membuka modal fullscreen image
+        function openImageModal() {
+            const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+            imageModal.show();
+        }
     </script>
 
     @if(session('success'))

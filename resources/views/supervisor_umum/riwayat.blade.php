@@ -15,46 +15,57 @@
 
             <section class="section">
                 <div class="card shadow">
-                    <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="card-header">
                         <h4 class="card-title">Tabel Riwayat Pemeliharaan</h4>
-                        <a href="{{ route('supervisor.export.laporan') }}" class="btn btn-success">
-                            <i class="fa fa-file-excel"></i> Export Excel
-                        </a>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
                             <table class="table table-bordered table-hover" id="riwayatTable" width="100%">
                                 <thead>
                                     <tr class="text-center">
-                                        <th>No</th>
+                                        <th>ID QR</th>
+                                        <th>Role</th>
                                         <th>Nama Barang</th>
-                                        <th>Jumlah Item</th>
-                                        <th>Status</th>
+                                        <th>Tipe Barang</th>
                                         <th>Tanggal Inspeksi</th>
-                                        <th>Tanggal Validasi</th>
+                                        <th>Lokasi Alat</th>
+                                        <th>Foto</th>
+                                        <th>Kondisi Fisik</th>
+                                        <th>Selang</th>
+                                        <th>Pressure Gauge</th>
+                                        <th>Safety Pin</th>
+                                        <th>Tindakan</th>
+                                        <th>Dibuat Pada</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @forelse ($riwayat as $laporan)
                                         <tr>
-                                            <td>{{ $loop->iteration }}</td>
+                                            <td>{{ $laporan->id_qr }}</td>
+                                            <td>{{ $laporan->created_by_role }}</td>
                                             <td>{{ $laporan->nama_barang }}</td>
-                                            <td class="text-center">{{ $laporan->total_items }}</td>
-                                            <td class="text-center">
-                                                @php
-    $statusLower = strtolower(trim($laporan->status));
-    $badgeClass = $statusLower === 'diterima' ? 'bg-success' : 'bg-danger';
-                                                @endphp
-                                                <span class="badge {{ $badgeClass }}">
-                                                    {{ ucfirst($statusLower) }}
-                                                </span>
+                                            <td>{{ $laporan->tipe_barang }}</td>
+                                            <td>{{ \Carbon\Carbon::parse($laporan->tanggal_inspeksi)->format('d M Y') }}</td>
+                                            <td>{{ $laporan->lokasi_alat }}</td>
+                                            <td>
+                                                @if ($laporan->foto)
+                                                    <img src="{{ asset('storage/' . $laporan->foto) }}" alt="Foto"
+                                                        style="max-width: 80px;">
+                                                @else
+                                                    -
+                                                @endif
                                             </td>
-                                            <td>{{ $laporan->created_at ? $laporan->created_at->format('d M Y H:i') : 'N/A' }}</td>
-                                            <td>{{ $laporan->validated_at ? $laporan->validated_at->format('d M Y H:i') : 'N/A' }}</td>
+                                            <td>{{ $laporan->kondisi_fisik }}</td>
+                                            <td>{{ $laporan->selang ?? '-' }}</td>
+                                            <td>{{ $laporan->pressure_gauge ?? '-' }}</td>
+                                            <td>{{ $laporan->safety_pin ?? '-' }}</td>
+                                            <td>{{ $laporan->tindakan }}</td>
+                                            <td>{{ $laporan->created_at ? $laporan->created_at->format('d M Y H:i') : '-' }}
+                                            </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="6" class="text-center text-muted">Tidak ada riwayat pemeliharaan.</td>
+                                            <td colspan="20" class="text-center text-muted">Tidak ada riwayat pemeliharaan.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
@@ -70,7 +81,7 @@
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
             $('#riwayatTable').DataTable({
                 pageLength: 10,
                 lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Semua"]],

@@ -12,25 +12,40 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('barangs', function (Blueprint $table) {
-            // PK: id_barang
-            $table->id('id_barang');
-
+            $table->string('id_barang', 50)->primary(); // VARCHAR primary key
             $table->string('created_by_role')->nullable();
             $table->unsignedBigInteger('created_by_id')->nullable();
-
-            // Kolom-kolom sesuai ERD dan input form
-            $table->string('nama_barang');
-            $table->integer('jumlah_barang')->default(0);
-            $table->string('tipe_barang'); // Untuk membedakan, misal: 'Barang Jadi', 'Sparepart'
+            $table->string('nama_barang')->nullable();
+            $table->string('slug')->unique()->nullable();
+            $table->string('short_description')->nullable();
+            $table->text('deskripsi')->nullable();
+            $table->integer('harga_beli')->nullable(); // int
+            $table->integer('harga_jual')->nullable(); // int
+            $table->decimal('pajak_persen', 5, 2)->default(0.00)->nullable();
+            $table->enum('stok_status', ['instock', 'outofstock'])->nullable();
+            $table->boolean('featured')->default(0)->nullable();
+            $table->unsignedInteger('jumlah_barang')->default(10)->nullable();
+            $table->string('media')->nullable(); 
+            $table->text('medias')->nullable();   
+            $table->unsignedBigInteger('category_id')->nullable();
+            $table->unsignedBigInteger('brand_id')->nullable();
+            $table->string('tipe_barang')->nullable();
+            $table->string('tipe_barang_kategori')->nullable();
+            $table->string('jenis_barang')->nullable();
             $table->decimal('berat_barang', 8, 2)->nullable();
-            $table->string('satuan');
-            $table->string('kondisi');
-            $table->decimal('harga_beli', 15, 2)->nullable();
-            $table->decimal('harga_jual', 15, 2)->nullable();
+            $table->date('tanggal_kadaluarsa')->nullable();
+            $table->string('satuan')->nullable();
+            $table->string('kondisi')->nullable();
+            $table->string('status')->nullable();
             $table->string('ukuran_barang')->nullable();
-            $table->string('merek_barang')->nullable();
-            
-            $table->timestamps(); // created_at dan updated_at
+            $table->decimal('panjang', 10, 2)->nullable();
+            $table->decimal('lebar', 10, 2)->nullable();
+            $table->decimal('tinggi', 10, 2)->nullable();
+            $table->string('lokasi')->nullable();
+            $table->timestamps();
+
+            $table->foreign('category_id')->references('id')->on('categories')->onDelete('cascade');
+            $table->foreign('brand_id')->references('id')->on('brands')->onDelete('cascade');
         });
     }
 

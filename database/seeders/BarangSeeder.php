@@ -15,6 +15,8 @@ class BarangSeeder extends Seeder
     {
         DB::table('barangs')->insert([
             [
+                'created_by_role' => 'supervisor_umum',
+                'created_by_id' => '3',
                 'nama_barang' => 'Pompa Air',
                 'jumlah_barang' => 10,
                 'tipe_barang' => 'Barang Jadi',
@@ -29,6 +31,8 @@ class BarangSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
+                'created_by_role' => 'supervisor_umum',
+                'created_by_id' => '3',
                 'nama_barang' => 'Pipa PVC',
                 'jumlah_barang' => 100,
                 'tipe_barang' => 'Sparepart',
@@ -43,6 +47,8 @@ class BarangSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
+                'created_by_role' => 'supervisor_umum',
+                'created_by_id' => '3',
                 'nama_barang' => 'APAR CO2 3Kg',
                 'jumlah_barang' => 5,
                 'tipe_barang' => 'APAR',
@@ -57,6 +63,8 @@ class BarangSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
+                'created_by_role' => 'staff_gudang',
+                'created_by_id' => '2',
                 'nama_barang' => 'APAR Powder 6Kg',
                 'jumlah_barang' => 7,
                 'tipe_barang' => 'APAR',
@@ -71,6 +79,8 @@ class BarangSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
+                'created_by_role' => 'staff_gudang',
+                'created_by_id' => '2',
                 'nama_barang' => 'Hydrant Valve',
                 'jumlah_barang' => 3,
                 'tipe_barang' => 'HYDRANT',
@@ -85,6 +95,8 @@ class BarangSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
+                'created_by_role' => 'staff_gudang',
+                'created_by_id' => '2',
                 'nama_barang' => 'Hydrant Box',
                 'jumlah_barang' => 2,
                 'tipe_barang' => 'HYDRANT',

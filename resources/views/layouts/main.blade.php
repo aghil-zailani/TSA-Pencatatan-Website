@@ -14,15 +14,20 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <!-- Bootstrap CSS (di <head>) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url('dist/assets/css/main/app.css') }}">
     <link rel="stylesheet" href="{{ url('dist/assets/css/main/app-dark.css') }}">
     <link rel="shortcut icon" href="{{ url('logo/tsa.png') }}" type="image/x-icon">
     <link rel="shortcut icon" href="{{ url('logo/tsa.png') }}" type="image/png">
     <link href="{{ url('/vendor/datatables/dataTables.bootstrap4.min.css') }}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
     <!-- css me -->
 
     <link rel="shortcut icon" href="logo/tsa.png" type="image/png" />
     <link rel="stylesheet" href="{{ url('dist/assets/css/shared/iconly.css') }}" />
+
+    @stack('styles')
 
     <style>
     .sidebar-wrapper {
@@ -34,7 +39,7 @@
 
     .sidebar-wrapper .sidebar-menu {
         overflow-y: auto;
-        flex-grow: 1; 
+        flex-grow: 1;
     }
 
     .sidebar-wrapper .sidebar-logout {
@@ -42,8 +47,73 @@
         padding: 1rem 1.5rem;
         background-color: inherit;
     }
+
+    .info-item {
+            margin-bottom: 1rem;
+        }
+
+        .info-value {
+            background: #f8f9fa;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            border: 1px solid #e9ecef;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .modal-xl {
+            max-width: 1200px;
+        }
+
+        .btn-lg {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+        }
+
+        #status option {
+            padding: 10px;
+            font-size: 1rem;
+        }
+
+        .form-select-lg {
+            padding: 0.75rem 1rem;
+            font-size: 1.1rem;
+        }
+
+        .modal-content {
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+        }
+
+        .border-end {
+            border-right: 2px solid #e9ecef !important;
+        }
+
+        /* Smooth transitions */
+        .modal.fade .modal-dialog {
+            transform: translate(0, -50px);
+            transition: all 0.3s ease-out;
+        }
+
+        .modal.show .modal-dialog {
+            transform: translate(0, 0);
+        }
+
+        /* Image hover effect */
+        #foto_preview {
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+
+        #foto_preview:hover {
+            transform: scale(1.05);
+        }
 </style>
-    
+
 </head>
 
 <body>
@@ -72,6 +142,8 @@
                                     Supervisor
                                 @elseif(Auth::user()->role == 'staff_gudang')
                                     Staff Gudang
+                                @elseif(Auth::user()->role == 'supervisor_umum')
+                                    Supervisor Umum
                                 @endif
                             </li>
                             <hr />
@@ -136,7 +208,7 @@
                                         <span>Log Aktivitas</span>
                                     </a>
                                 </li>
-                                
+
                             @elseif(Auth::user()->role == 'staff_gudang')
                                 <li class="sidebar-item {{ request()->is('staff-gudang/dashboard*') ? 'active' : '' }}">
                                     <a href="{{ route('staff_gudang.dashboard') }}" class='sidebar-link'>
@@ -174,6 +246,13 @@
                                         <span>Riwayat</span>
                                     </a>
                                 </li>
+                            @elseif(Auth::user()->role == 'supervisor_umum')
+                                <li class="sidebar-item {{ request()->is('partner/riwayat*') ? 'active' : '' }}">
+                                    <a href="{{ route('supervisor_umum.riwayat') }}" class='sidebar-link'>
+                                        <i class="bi bi-clock-history"></i>
+                                        <span>Riwayat Laporan</span>
+                                    </a>
+                                </li>
                             @endif
                         </ul>
                     @endauth
@@ -183,7 +262,7 @@
                         @csrf
                         {{-- Tambahkan id pada button --}}
                         <button type="submit" class="btn btn-danger w-100" id="logoutButton" style="cursor: pointer;">
-                            <i class="bi bi-power"></i> 
+                            <i class="bi bi-power"></i>
                             <span>Logout</span>
                         </button>
                     </form>
@@ -226,7 +305,7 @@
     <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
     <script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
     <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
-    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>    
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
     <!-- chart resource -->
 
     {{-- sweetalert --}}
@@ -253,6 +332,7 @@
             });
         });
     </script>
+    @stack('scripts')
 @yield('scripts')
 </body>
 @yield('container');

@@ -20,6 +20,7 @@ class LaporanAPK extends Model // Nama model diubah
         'id_qr',
         'id_barang',
         'id_user',
+        'created_by_role',
         'username',
         'nama_barang',
         'tipe_barang',
@@ -32,6 +33,8 @@ class LaporanAPK extends Model // Nama model diubah
         'safety_pin',
         'tindakan',
         'status',
+        'catatan_validasi',
+        'catatan_tindakan',
     ];
 
     protected $casts = [

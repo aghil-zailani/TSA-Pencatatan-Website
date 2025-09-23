@@ -13,7 +13,7 @@
         /* Styling umum untuk kartu */
         .master-data-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Kolom responsif */
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 1.5rem;
         }
         @media (max-width: 768px) {
@@ -37,7 +37,7 @@
             transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, background-color 0.2s ease-in-out;
             background-color: #fff;
             border: 1px solid #e9ecef;
-            position: relative; /* Penting untuk posisi tombol hapus */
+            position: relative;
         }
 
         .master-data-card:hover {
@@ -56,6 +56,37 @@
         }
         .master-data-card.add-new i { color: #6c757d; }
         .master-data-card.add-new:hover { background-color: #e9ecef; border-color: #6c757d; }
+
+        /* MODAL FIXES */
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5) !important;
+        }
+        
+        .modal {
+            z-index: 1055 !important;
+        }
+        
+        .modal-dialog {
+            z-index: 1056 !important;
+        }
+        
+        /* Ensure modal content is properly styled */
+        .modal-content {
+            background-color: #fff !important;
+            border-radius: 0.5rem !important;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+        }
+        
+        /* Fix for any potential overlay issues */
+        .modal.show {
+            display: block !important;
+        }
+        
+        /* Ensure body doesn't scroll when modal is open */
+        body.modal-open {
+            overflow: hidden;
+            padding-right: 0 !important;
+        }
         
     </style>
 </head>
@@ -86,7 +117,7 @@
                     </div>
 
                     {{-- Tombol Hapus Kategori (di luar grid) --}}
-                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal">
+                    <button type="button" class="btn btn-danger mb-3" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal">
                         <i class="bi bi-trash"></i> Hapus Kategori
                     </button>
 
@@ -112,7 +143,6 @@
         </div>
     </div>
 
-    {{-- SweetAlert dan Modal Hapus Kategori (tetap sama) --}}
     @if (session('message'))
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
@@ -126,9 +156,8 @@
         </script>
     @endif
 
-    {{-- MODAL HAPUS KATEGORI --}}
-    <div class="modal fade" id="deleteCategoryModal" tabindex="-1" role="dialog" aria-labelledby="deleteCategoryModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal fade" id="deleteCategoryModal" tabindex="-1" aria-labelledby="deleteCategoryModalLabel" aria-hidden="true" data-bs-backdrop="true" data-bs-keyboard="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <form id="deleteCategoryForm" method="POST">
                     @csrf
@@ -138,12 +167,12 @@
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <p>Pilih kategori konfigurasi yang ingin Anda hapus. **Perhatian: Semua field di bawah kategori ini akan ikut terhapus!**</p>
+                        <p>Pilih kategori konfigurasi yang ingin Anda hapus. <strong>Perhatian: Semua field di bawah kategori ini akan ikut terhapus!</strong></p>
                         <div class="mb-3">
                             <label for="categoryToDelete" class="form-label">Pilih Kategori Konfigurasi</label>
                             <select class="form-select" id="categoryToDelete" name="category_name" required>
                                 <option value="">-- Pilih Kategori Konfigurasi --</option>
-                                @foreach($uniqueCategories as $cat) {{-- Ini harus uniqueCategories dari MasterData.category --}}
+                                @foreach($uniqueCategories as $cat)
                                     <option value="{{ $cat }}">{{ ucfirst(str_replace('_', ' ', $cat)) }}</option>
                                 @endforeach
                             </select>
@@ -159,8 +188,8 @@
     </div>
 
     {{-- MODAL TAMBAH KATEGORI BARU --}}
-    <div class="modal fade" id="addCategoryModal" tabindex="-1" role="dialog" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true" data-bs-backdrop="true" data-bs-keyboard="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <form id="addCategoryForm" action="{{ route('supervisor.master.data.store') }}" method="POST">
                     @csrf
@@ -172,13 +201,12 @@
                         <div class="mb-3">
                             <label for="new_category_name" class="form-label">Nama Kategori Konfigurasi Baru</label>
                             <input type="text" class="form-control" id="new_category_name" name="category" placeholder="Contoh: APAR, Hydrant" required>
-                            {{-- Input value awal untuk kategori baru (sebagai field_name default) --}}
-                            <input type="hidden" name="value" value="default_field_name"> {{-- field_name awal --}}
-                            <input type="hidden" name="label_display" value="Default Label"> {{-- label_display awal --}}
-                            <input type="hidden" name="input_type" value="text"> {{-- input_type awal --}}
-                            <input type="hidden" name="field_order" value="1"> {{-- field_order awal --}}
-                            <input type="hidden" name="is_required" value="0"> {{-- is_required awal --}}
-                            <input type="hidden" name="options_category" value=""> {{-- options_category awal --}}
+                            <input type="hidden" name="value" value="default_field_name">
+                            <input type="hidden" name="label_display" value="Default Label">
+                            <input type="hidden" name="input_type" value="text">
+                            <input type="hidden" name="field_order" value="1">
+                            <input type="hidden" name="is_required" value="0">
+                            <input type="hidden" name="options_category" value="">
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -191,13 +219,16 @@
     </div>
 
 
-    {{-- Script JavaScript --}}
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         $(document).ready(function() {
+            // Initialize modals properly
+            var addCategoryModal = new bootstrap.Modal(document.getElementById('addCategoryModal'));
+            var deleteCategoryModal = new bootstrap.Modal(document.getElementById('deleteCategoryModal'));
+            
             // Ketika form tambah kategori disubmit
             $('#addCategoryForm').on('submit', function(e) {
                 e.preventDefault();
@@ -212,8 +243,7 @@
                     data: formData,
                     dataType: 'json',
                     success: function(response) {
-                        var addModal = bootstrap.Modal.getInstance(document.getElementById('addCategoryModal'));
-                        if (addModal) { addModal.hide(); }
+                        addCategoryModal.hide();
                         Swal.fire({
                             icon: 'success',
                             title: 'Berhasil!',
@@ -225,8 +255,7 @@
                         });
                     },
                     error: function(xhr) {
-                        var addModal = bootstrap.Modal.getInstance(document.getElementById('addCategoryModal'));
-                        if (addModal) { addModal.hide(); }
+                        addCategoryModal.hide();
                         var errorMessage = 'Terjadi kesalahan. Mohon coba lagi.';
                         if (xhr.responseJSON && xhr.responseJSON.message) {
                             var errors = xhr.responseJSON.errors;
@@ -254,6 +283,18 @@
                 e.preventDefault();
                 var form = $(this);
                 var categoryName = $('#categoryToDelete').val();
+                
+                if (!categoryName) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Peringatan!',
+                        text: 'Pilih kategori yang ingin dihapus terlebih dahulu.',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    return;
+                }
+                
                 var url = "{{ route('supervisor.master.data.destroy_category', ':category_name') }}";
                 url = url.replace(':category_name', categoryName);
 
@@ -270,12 +311,11 @@
                     if (result.isConfirmed) {
                         $.ajax({
                             url: url,
-                            type: 'POST', // Menggunakan POST karena method('DELETE')
+                            type: 'POST',
                             data: form.serialize(),
                             dataType: 'json',
                             success: function(response) {
-                                var deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteCategoryModal'));
-                                if (deleteModal) { deleteModal.hide(); }
+                                deleteCategoryModal.hide();
                                 Swal.fire({
                                     icon: 'success',
                                     title: 'Berhasil!',
@@ -287,8 +327,7 @@
                                 });
                             },
                             error: function(xhr) {
-                                var deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteCategoryModal'));
-                                if (deleteModal) { deleteModal.hide(); }
+                                deleteCategoryModal.hide();
                                 var errorMessage = 'Terjadi kesalahan. Mohon coba lagi.';
                                 if (xhr.responseJSON && xhr.responseJSON.message) {
                                     errorMessage = xhr.responseJSON.message;
@@ -304,6 +343,15 @@
                         });
                     }
                 });
+            });
+
+            // Clear form when modal is hidden
+            $('#addCategoryModal').on('hidden.bs.modal', function () {
+                $('#addCategoryForm')[0].reset();
+            });
+
+            $('#deleteCategoryModal').on('hidden.bs.modal', function () {
+                $('#deleteCategoryForm')[0].reset();
             });
         });
     </script>
