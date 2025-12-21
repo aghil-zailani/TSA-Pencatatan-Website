@@ -42,6 +42,7 @@ return new class extends Migration
             $table->decimal('lebar', 10, 2)->nullable();
             $table->decimal('tinggi', 10, 2)->nullable();
             $table->string('lokasi')->nullable();
+            $table->string('merek_barang')->nullable();
             $table->timestamps();
 
             $table->foreign('category_id')->references('id')->on('categories')->onDelete('cascade');

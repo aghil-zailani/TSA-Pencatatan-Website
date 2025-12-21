@@ -20,7 +20,7 @@
             background-color: #f4f7f6;
         }
         .navbar-custom {
-            background-color: #ffffff; /* Warna navbar bisa disesuaikan */
+            background-color: #ffffff; 
             box-shadow: 0 2px 4px rgba(0,0,0,.1);
         }
         .content-area {

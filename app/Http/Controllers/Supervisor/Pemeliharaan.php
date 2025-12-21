@@ -13,15 +13,15 @@ class Pemeliharaan extends Controller
     public function pemeliharaanRiwayat()
     {
         $riwayat = LaporanAPK::whereIn('status', ['Diterima', 'Ditolak'])
-            ->orderByDesc('updated_at') // atau validated_at jika ada kolom tersebut
+            ->orderByDesc('updated_at') 
             ->get()
             ->map(function ($item) {
                 return (object)[
                     'nama_barang' => $item->nama_barang,
-                    'total_items' => 1, // karena 1 laporan hanya untuk 1 alat
+                    'total_items' => 1, 
                     'status' => strtolower($item->status),
                     'created_at' => $item->created_at,
-                    'validated_at' => $item->updated_at, // pakai updated_at karena validasi update
+                    'validated_at' => $item->updated_at, 
                 ];
             });
 
@@ -44,14 +44,14 @@ class Pemeliharaan extends Controller
         ]);
     }
 
-    // Method untuk mendapatkan detail laporan via AJAX
+    
     public function getLaporanDetail($id)
     {
         try {
-            // Log untuk debugging
+            
             Log::info("Mencari laporan dengan ID: " . $id);
 
-            // Cek apakah ID valid
+            
             if (!is_numeric($id)) {
                 Log::error("ID tidak valid: " . $id);
                 return response()->json([
@@ -59,13 +59,13 @@ class Pemeliharaan extends Controller
                 ], 400);
             }
 
-            // Cari laporan berdasarkan primary key yang benar
+            
             $laporan = LaporanAPK::where('id_laporan_pemeliharaan', $id)->first();
 
             if (!$laporan) {
                 Log::error("Laporan tidak ditemukan dengan ID: " . $id);
 
-                // Debug: tampilkan semua data yang ada
+                
                 $allReports = LaporanAPK::select('id_laporan_pemeliharaan', 'nama_barang')->get();
                 Log::info("Data laporan yang tersedia: ", $allReports->toArray());
 
@@ -76,7 +76,7 @@ class Pemeliharaan extends Controller
                 ], 404);
             }
 
-            // Format tanggal untuk ditampilkan
+            
             $laporan->tanggal_inspeksi_formatted = Carbon::parse($laporan->tanggal_inspeksi)->format('d M Y');
 
             Log::info("Laporan ditemukan: " . $laporan->nama_barang);

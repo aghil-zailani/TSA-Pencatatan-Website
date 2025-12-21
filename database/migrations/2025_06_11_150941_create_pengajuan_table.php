@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('pengajuan', function (Blueprint $table) {
             $table->id('id_pengajuan');
-            $table->unsignedBigInteger('id_barang');
+            $table->string('id_barang', 50);
             $table->foreign('id_barang')->references('id_barang')->on('barangs')->onDelete('cascade');
             $table->string('status')->default('diajukan');
             $table->integer('jumlah_diperbaiki')->nullable();

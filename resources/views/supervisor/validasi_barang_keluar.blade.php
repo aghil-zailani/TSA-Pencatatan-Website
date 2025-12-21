@@ -8,7 +8,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $judul }}</title>
     <style>
-        /* Styling umum dari desain Anda */
         body { font-family: 'Poppins', sans-serif; color: #333; }
         h3, h4 { font-family: 'Poppins', sans-serif; font-weight: 700; color: #444; }
         .card { border-radius: 0.75rem; box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.05); }
@@ -22,7 +21,7 @@
         .btn-danger-custom { background-color: #dc3545; border-color: #dc3545; color: #fff; }
         .btn-danger-custom:hover { background-color: #c82333; border-color: #c82333; }
         .btn-detail-info {
-            background-color: #007bff; /* Biru */
+            background-color: #007bff; 
             border-color: #007bff;
             color: white;
             font-family: 'Poppins', sans-serif;
@@ -35,7 +34,6 @@
             border-color: #0056b3;
         }
 
-        /* Styling Modal Detail (tetap ada karena digunakan di validasi_laporan_detail) */
         #detailModal .modal-header { background-color: #007bff; color: white; }
         #detailModal .modal-header .btn-close { filter: invert(100%) grayscale(100%) brightness(200%); }
         .detail-item { margin-bottom: 1rem; }
@@ -131,9 +129,6 @@
     </body>
 
     </html>
-
-    {{-- MODAL UNTUK MENAMPILKAN DETAIL BARANG (Ini ada di validasi_laporan_detail.blade.php) --}}
-    {{-- Anda bisa menghapus blok ini dari file ini jika sudah ada di validasi_laporan_detail.blade.php --}}
     <div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
@@ -213,7 +208,6 @@
     </div>
 
 
-    {{-- Script JavaScript --}}
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
@@ -221,7 +215,6 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         $(document).ready(function() {
-            // Inisialisasi DataTables
             $('#dataTable').DataTable({
                 "pageLength": 10,
                 "lengthMenu": [
@@ -234,7 +227,6 @@
                 "ordering": false
             });
 
-            // LOGIKA KONFIRMASI SWEETALERT UNTUK TERIMA/TOLAK
             $('.confirm-validation-form').on('submit', function(e) {
                 e.preventDefault();
                 
@@ -259,16 +251,12 @@
                 });
             });
 
-            // LOGIKA UNTUK MODAL LIHAT DETAIL
             $('.view-detail-btn').on('click', function() {
-                // Ambil data dari data-attributes tombol
                 var itemData = $(this).data();
 
-                // Bersihkan tampilan modal sebelumnya
                 $('#apar-details').hide();
                 $('#hydrant-details').hide();
                 
-                // Isi data yang umum
                 $('#detail_nama_barang').text(itemData.itemNama || 'N/A');
                 $('#detail_kategori').text(itemData.itemKategori || 'N/A');
                 $('#detail_tipe_barang').text(itemData.itemTipe || 'N/A');
@@ -278,7 +266,6 @@
                 $('#detail_merek').text(itemData.itemMerek || 'N/A');
                 $('#detail_tgl_pengajuan').text(itemData.itemPengajuan || 'N/A');
 
-                // Tampilkan detail khusus berdasarkan kategori
                 if (itemData.itemKategori === 'APAR') {
                     $('#detail_berat').text(itemData.itemBerat || 'N/A');
                     $('#detail_tgl_kadaluarsa').text(itemData.itemTglKadaluarsa || 'N/A');

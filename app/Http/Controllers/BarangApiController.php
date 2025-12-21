@@ -9,31 +9,31 @@ class BarangApiController extends Controller
 {
     public function index()
     {
-        return Barang::all(); // Mengambil semua barang
+        return Barang::all(); 
     }
 
     public function store(Request $request)
     {
-        $barang = Barang::create($request->all()); // Membuat barang baru
-        return response()->json($barang, 201); // Mengembalikan barang dan kode 201 (Created)
+        $barang = Barang::create($request->all()); 
+        return response()->json($barang, 201); 
     }
 
     public function show($id)
     {
-        return Barang::findOrFail($id); // Mengambil barang berdasarkan ID
+        return Barang::findOrFail($id); 
     }
 
     public function update(Request $request, $id)
     {
         $barang = Barang::findOrFail($id);
-        $barang->update($request->all()); // Memperbarui barang
+        $barang->update($request->all()); 
         return $barang;
     }
 
     public function destroy($id)
     {
         $barang = Barang::findOrFail($id);
-        $barang->delete(); // Menghapus barang
-        return response()->json(null, 204); // Mengembalikan kode 204 (No Content)
+        $barang->delete(); 
+        return response()->json(null, 204); 
     }
 }

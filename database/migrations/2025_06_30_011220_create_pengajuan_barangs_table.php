@@ -30,6 +30,7 @@ class CreatePengajuanBarangsTable extends Migration
             $table->string('tinggi')->nullable();
             $table->string('merek')->nullable();
             $table->string('status')->default('pending');
+            $table->string('catatan_penolakan')->nullable();
             $table->timestamps();
         });
     }

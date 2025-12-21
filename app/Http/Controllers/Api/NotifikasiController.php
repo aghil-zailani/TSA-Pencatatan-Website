@@ -1,6 +1,6 @@
 <?php
 
-// app/Http/Controllers/Api/NotifikasiController.php
+
 namespace App\Http\Controllers\Api;
 
 use App\Models\Barang;
@@ -23,7 +23,7 @@ class NotifikasiController extends Controller
             ], 403);
         }
 
-        // Ambil notifikasi hanya untuk barang yang dibuat oleh staff_gudang ini
+        
          $notifikasis = Notifikasi::with('barang')
             ->whereHas('barang', function ($query) use ($currentUser) {
                 $query->where('created_by_role', 'staff_gudang')
@@ -57,8 +57,8 @@ class NotifikasiController extends Controller
     public function generateNotifikasi()
     {
         $today = Carbon::now();
-        $cutoff60 = $today->copy()->subDays(60); // > 60 hari
-        $cutoff50 = $today->copy()->subDays(50); // 50–59 hari
+        $cutoff60 = $today->copy()->subDays(60); 
+        $cutoff50 = $today->copy()->subDays(50); 
 
         $barangs = DB::table('barangs')
             ->leftJoin('laporan_apk', 'barangs.id_barang', '=', 'laporan_apk.id_barang')
@@ -72,7 +72,7 @@ class NotifikasiController extends Controller
 
         foreach ($barangs as $barang) {
             if (is_null($barang->last_checked)) {
-                // Belum pernah dicek
+                
                 Notifikasi::updateOrCreate(
                     ['barang_id' => $barang->id_barang, 'tanggal' => now()->toDateString()],
                     [
@@ -86,7 +86,7 @@ class NotifikasiController extends Controller
                 $lastChecked = Carbon::parse($barang->last_checked);
 
                 if ($lastChecked < $cutoff60) {
-                    // Sudah lewat lebih dari 60 hari
+                    
                     Notifikasi::updateOrCreate(
                         ['barang_id' => $barang->id_barang, 'tanggal' => now()->toDateString()],
                         [
@@ -97,7 +97,7 @@ class NotifikasiController extends Controller
                         ]
                     );
                 } elseif ($lastChecked < $cutoff50) {
-                    // Hampir jatuh tempo (50–59 hari)
+                    
                     $selisih = $lastChecked->diffInDays($today);
                     Notifikasi::updateOrCreate(
                         ['barang_id' => $barang->id_barang, 'tanggal' => now()->toDateString()],

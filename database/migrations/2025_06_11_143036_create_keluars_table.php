@@ -14,12 +14,16 @@ return new class extends Migration
         Schema::create('transaksis', function (Blueprint $table) {
             $table->id('id_transaksi'); // Primary Key, auto-increment, dengan nama 'id_transaksi'
 
-            $table->unsignedBigInteger('id_barang'); // Kolom di tabel transaksis
+            $table->string('id_barang', 50);
             $table->foreign('id_barang')->references('id_barang')->on('barangs')->onDelete('cascade');
+            $table->string('report_id');
+
+            $table->string('status')->nullable();
 
             $table->integer('jumlah_barang'); // Untuk jumlah barang
             $table->string('tujuan');         // Untuk tujuan pengiriman/transaksi
             $table->text('keterangan')->nullable(); // Untuk keterangan tambahan, bisa null
+            
 
             $table->timestamps();
         });

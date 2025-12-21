@@ -8,7 +8,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $judul }}</title>
     <style>
-        /* Styling umum (dari monitoring_stok_barang.blade.php) */
         body { font-family: 'Poppins', sans-serif; color: #333; }
         h3, h4 { font-family: 'Poppins', sans-serif; font-weight: 700; color: #444; }
         .card { border-radius: 0.75rem; box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.05); }
@@ -59,9 +58,7 @@
                                     </thead>
                                     <tbody>
                                         <?php $i = 1; ?>
-                                        {{-- Loop utama untuk setiap jenis barang --}}
                                         @forelse ($barangDiterima as $item)
-                                            {{-- Loop bersarang untuk mengulang baris sebanyak jumlah_barang --}}
                                             @for ($j = 0; $j < $item->jumlah_barang; $j++)
                                                 <tr>
                                                     <td><?= $i++ ?></td>
@@ -71,16 +68,13 @@
                                                     <td>{{ $item->created_at ? $item->created_at->format('d M Y H:i') : '-' }}</td>
                                                     <td class="text-center">
                                                         @if ($item->qrCode && $item->qrCode->qr_code_path)
-                                                            <!-- Tombol nonaktif jika QR sudah ada -->
                                                             <button type="button" class="btn btn-secondary btn-sm" disabled>
                                                                 <i class="bi bi-check-circle"></i> QR Sudah Ada
                                                             </button>
 
-                                                            <!-- Tampilkan gambar QR jika mau -->
                                                             <br>
                                                             <img src="{{ asset('storage/' . $item->qrCode->qr_code_path) }}" alt="QR Code" width="80">
                                                         @else
-                                                            <!-- Tombol aktif jika QR belum ada -->
                                                             <button type="button" class="btn btn-generate-qr btn-success btn-sm"
                                                                 data-bs-toggle="modal"
                                                                 data-bs-target="#qrCodeModal"
@@ -172,7 +166,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
 $(document).ready(function() {
-    // Inisialisasi DataTables
     $('#dataTable').DataTable({
         "pageLength": 10,
         "lengthMenu": [
@@ -182,10 +175,9 @@ $(document).ready(function() {
         "searching": true,
         "info": true,
         "paging": true,
-        "ordering": false // Nonaktifkan sorting bawaan DataTables
+        "ordering": false 
     });
 
-    // Simpan riwayat barang yang sudah pernah ditampilkan QR-nya
     var qrShownHistory = {};
 
     $('#qrCodeModal').on('show.bs.modal', function (event) {
@@ -195,7 +187,6 @@ $(document).ready(function() {
 
         var qrCodeUrl = "{{ route('staff_gudang.generate_qrcode', ':id') }}".replace(':id', itemId);
 
-        // Reset container QR Code sebelum load
         $('#qrCodeContainer').html(`
             <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Loading...</span>
@@ -208,9 +199,7 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(data) {
                 if (data.status === 'exists') {
-                    // Kalau QR sudah ada
                     if (!qrShownHistory[itemId]) {
-                        // Tampilkan notifikasi sekali saja untuk item ini
                         Swal.fire({
                             icon: 'warning',
                             title: 'QR Sudah Ada',
@@ -222,7 +211,6 @@ $(document).ready(function() {
                     }
                 }
 
-                // Tampilkan QR di modal
                 $('#qrItemName').text(itemName);
                 $('#qrCodeContainer').html('<img src="' + data.url + '" alt="QR Code" class="img-fluid">');
                 $('#downloadQrBtn').attr('href', data.url);

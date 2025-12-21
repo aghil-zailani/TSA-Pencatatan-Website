@@ -6,23 +6,19 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
+    /** 
      * Run the migrations.
      */
     public function up(): void
     {
-        Schema::create('notifikasis', function (Blueprint $table) {
+        Schema::create('cart_items', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('cart_id')->constrained('carts')->onDelete('cascade');
             $table->string('id_barang', 50);
-            $table->string('judul');
-            $table->text('deskripsi');
-            $table->string('tipe')->default('warning'); // success / warning / info
-            $table->date('tanggal');
-            $table->boolean('baru')->default(true);
-            $table->timestamps();
-
             $table->foreign('id_barang')->references('id_barang')->on('barangs')->onDelete('cascade');
-
+            $table->integer('quantity')->default(1);
+            $table->timestamps();
         });
     }
 
@@ -31,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('notifikasis');
+        Schema::dropIfExists('cart_items');
     }
 };

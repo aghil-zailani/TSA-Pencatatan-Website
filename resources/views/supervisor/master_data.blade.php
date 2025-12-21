@@ -10,7 +10,6 @@
     <style>
         body { font-family: 'Poppins', sans-serif; color: #333; }
         h3, h4 { font-family: 'Poppins', sans-serif; font-weight: 700; color: #444; }
-        /* Styling umum untuk kartu */
         .master-data-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -48,7 +47,6 @@
         .master-data-card i { font-size: 3.5rem; margin-bottom: 0.75rem; }
         .master-data-card h5 { font-family: 'Poppins', sans-serif; font-weight: 600; margin-bottom: 0; color: #343a40; }
 
-        /* Styling untuk kartu tambah baru */
         .master-data-card.add-new {
             border: 2px dashed #adb5bd;
             color: #6c757d;
@@ -57,7 +55,6 @@
         .master-data-card.add-new i { color: #6c757d; }
         .master-data-card.add-new:hover { background-color: #e9ecef; border-color: #6c757d; }
 
-        /* MODAL FIXES */
         .modal-backdrop {
             background-color: rgba(0, 0, 0, 0.5) !important;
         }
@@ -69,20 +66,17 @@
         .modal-dialog {
             z-index: 1056 !important;
         }
-        
-        /* Ensure modal content is properly styled */
+
         .modal-content {
             background-color: #fff !important;
             border-radius: 0.5rem !important;
             box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
         }
-        
-        /* Fix for any potential overlay issues */
+
         .modal.show {
             display: block !important;
         }
-        
-        /* Ensure body doesn't scroll when modal is open */
+
         body.modal-open {
             overflow: hidden;
             padding-right: 0 !important;
@@ -110,19 +104,16 @@
             </nav>
             <div class="page-content">
                 <section class="section">
-                    {{-- Alert Peringatan --}}
                     <div class="alert alert-danger fade show mb-4" role="alert" style="background-color: #f8d7da; border-color: #f5c2c7; color: #721c24;">
                         <h4 class="alert-heading mb-1" style="font-family: 'Poppins', sans-serif; font-weight: bold;">Peringatan!</h4>
                         <p class="mb-0" style="font-family: 'Poppins', sans-serif;">Data Dibawah Ini Terhubung Langsung Dengan Aplikasi Pencatatan Barang pada Mobile.</p>
                     </div>
 
-                    {{-- Tombol Hapus Kategori (di luar grid) --}}
                     <button type="button" class="btn btn-danger mb-3" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal">
                         <i class="bi bi-trash"></i> Hapus Kategori
                     </button>
 
                     <div class="master-data-grid">
-                        {{-- Kartu Dinamis dari Database (berdasarkan kategori unik dari master_data) --}}
                         @foreach($cards as $card)
                             <a href="{{ route('supervisor.master.data.specific', $card['category_name']) }}" class="master-data-card-link">
                                 <div class="card master-data-card">
@@ -131,10 +122,9 @@
                             </a>
                         @endforeach
 
-                        {{-- Kartu untuk Tambah Kategori Baru (MEMICU MODAL) --}}
                         <a href="#" class="master-data-card-link" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
                             <div class="card master-data-card add-new">
-                                <h5>Tambah Kategori Konfigurasi Baru</h5> {{-- Ubah teks --}}
+                                <h5>Tambah Kategori Konfigurasi Baru</h5>
                             </div>
                         </a>
                     </div>
@@ -225,11 +215,9 @@
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
     <script>
         $(document).ready(function() {
-            // Initialize modals properly
             var addCategoryModal = new bootstrap.Modal(document.getElementById('addCategoryModal'));
             var deleteCategoryModal = new bootstrap.Modal(document.getElementById('deleteCategoryModal'));
             
-            // Ketika form tambah kategori disubmit
             $('#addCategoryForm').on('submit', function(e) {
                 e.preventDefault();
                 var form = $(this);
@@ -278,7 +266,6 @@
                 });
             });
 
-            // Ketika form hapus kategori disubmit
             $('#deleteCategoryForm').on('submit', function(e) {
                 e.preventDefault();
                 var form = $(this);
@@ -345,7 +332,6 @@
                 });
             });
 
-            // Clear form when modal is hidden
             $('#addCategoryModal').on('hidden.bs.modal', function () {
                 $('#addCategoryForm')[0].reset();
             });

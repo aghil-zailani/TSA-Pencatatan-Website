@@ -17,7 +17,7 @@ use Illuminate\Support\Str;
 
 class LaporanController extends Controller
 {
-    // Validasi Barang Masuk (untuk halaman ringkasan laporan)
+    
     public function validasiBarangMasuk()
     {
         $pengajuanPending = PengajuanBarang::select('report_id', 'nama_laporan','status', \DB::raw('COUNT(*) as total_items'), \DB::raw('MIN(created_at) as created_at'))
@@ -39,7 +39,7 @@ class LaporanController extends Controller
                 DB::raw('COUNT(*) as total_items'),
                 DB::raw('MIN(created_at) as created_at')
             )
-            ->where('status', 'keluar') // Status laporan yang baru dibuat dari mobile
+            ->where('status', 'keluar') 
             ->whereNotNull('report_id')
             ->groupBy('report_id', 'status')
             ->orderBy('created_at', 'desc')
@@ -60,7 +60,7 @@ class LaporanController extends Controller
             return back()->with('error', 'Stok tidak mencukupi.');
         }
 
-        // Kurangi stok
+        
         $barang->decrement('jumlah_barang', $transaksi->jumlah_barang);
 
         $transaksi->status = 'diterima';
@@ -85,9 +85,9 @@ class LaporanController extends Controller
             ->with('message', 'Laporan ditolak dengan catatan.');
     }
 
-    public function showKeluarDetail($reportId) // Nama parameter diubah agar lebih jelas
+    public function showKeluarDetail($reportId) 
     {
-        // Ambil semua item transaksi yang memiliki report_id yang sama
+        
         $keluar = DB::table('transaksis')
             ->join('barangs', 'transaksis.id_barang', '=', 'barangs.id_barang')
             ->select('transaksis.*', 'barangs.nama_barang')
@@ -95,19 +95,19 @@ class LaporanController extends Controller
             ->orderBy('id_transaksi')
             ->get();
 
-        // PERBAIKAN: Tambahkan pengecekan jika laporan tidak ditemukan
+        
         if ($keluar->isEmpty()) {
-            // Jika tidak ada data, tampilkan halaman error 404
+            
             abort(404, 'Laporan barang keluar tidak ditemukan.');
         }
 
         $judul = 'Detail Laporan Barang Keluar';
 
-        // Kirim data ke view dengan nama variabel yang lebih jelas
+        
         return view('supervisor.validasi_barang_keluar_detail', compact('judul', 'keluar', 'reportId'));
     }
     
-    // Metode untuk menampilkan detail laporan yang akan divalidasi
+    
     public function lihatDetailLaporan($reportId)
     {
         $itemsInReport = PengajuanBarang::where('report_id', $reportId)->orderBy('id')->get();
@@ -118,13 +118,13 @@ class LaporanController extends Controller
 
         $judul = 'Detail Laporan Barang Masuk';
 
-        // Ambil nama_laporan dari item pertama
+        
         $nama_laporan = $itemsInReport->first()->nama_laporan ?? 'Laporan';
 
         return view('supervisor.validasi_laporan_detail', compact('itemsInReport', 'judul', 'reportId', 'nama_laporan'));
     }
 
-    // Metode untuk memvalidasi (menerima atau menolak) pengajuan
+    
     public function validasiPengajuan(Request $request)
     {
         $request->validate([
@@ -162,7 +162,7 @@ class LaporanController extends Controller
                         }
                     }
 
-                    // Normalisasi teks (hindari duplikat karena beda kapitalisasi)
+                    
                     if (isset($barangData['nama_barang'])) {
                         $barangData['nama_barang'] = ucwords(strtolower($barangData['nama_barang']));
                     }
@@ -172,11 +172,11 @@ class LaporanController extends Controller
 
                     $barangData['merek_barang'] = $barangData['nama_barang'];
 
-                    // Tambahkan created_by_id dan created_by_role dari pengajuan
+                    
                     $barangData['created_by_id']   = $pengajuan->created_by_id ?? auth()->id();
                     $barangData['created_by_role'] = $pengajuan->created_by_role ?? (auth()->user()->role ?? '-');
 
-                    // Cek apakah barang sudah ada dengan data yang sama (nama + merek + tipe + berat)
+                    
                     $barangSudahAda = Barang::where('nama_barang', $barangData['nama_barang'] ?? '')
                         ->where('merek_barang', $barangData['merek_barang'] ?? '')
                         ->where('tipe_barang', $barangData['tipe_barang'] ?? '')
@@ -184,7 +184,7 @@ class LaporanController extends Controller
                         ->exists();
 
                     if (!$barangSudahAda) {
-                        // Generate ID unik
+                        
                         $prefix = strtoupper(substr(trim($pengajuan->tipe_barang_kategori), 0, 3));
                         $product = 'GEN';
                         if (!empty(trim($pengajuan->tipe_barang ?? ''))) {
@@ -197,7 +197,7 @@ class LaporanController extends Controller
                         $increment = str_pad($count, 3, '0', STR_PAD_LEFT);
                         $barangData['id_barang'] = "{$fullPrefix}{$increment}";
 
-                        // Simpan ke database
+                        
                         Barang::create($barangData);
                     }
                 }
@@ -252,12 +252,12 @@ class LaporanController extends Controller
                         return redirect()->back()->with('error', 'Stok barang ' . ($barang->nama_barang ?? '-') . ' tidak mencukupi.');
                     }
 
-                    // Kurangi stok barang
+                    
                     $barang->jumlah_barang -= $item->jumlah_barang;
                     $barang->save();
                 }
 
-                // Update status
+                
                 PengajuanBarang::where('report_id', $reportId)->update(['status' => 'diterima']);
                 Transaksi::where('report_id', $reportId)->update(['status' => 'diterima']);
 
@@ -299,17 +299,17 @@ class LaporanController extends Controller
 
         DB::beginTransaction();
         try {
-            // Ambil semua pengajuan pending
+            
             $pengajuanPending = PengajuanBarang::where('status', '-')->get();
 
             if ($pengajuanPending->isEmpty()) {
                 return redirect()->back()->with('error', 'Tidak ada laporan yang bisa dikirim.');
             }
 
-            // Buat 1 report_id untuk semua data
+            
             $reportId = 'RPT-' . strtoupper(Str::random(8));
 
-            // Update semua data
+            
             foreach ($pengajuanPending as $pengajuan) {
                 $pengajuan->update([
                     'report_id' => $reportId,
@@ -327,7 +327,7 @@ class LaporanController extends Controller
         }
     }
 
-    // Modifikasi metode kirimLaporan untuk bisa mengirim berbagai jenis laporan
+    
     public function kirimLaporanPengajuan(Request $request)
     {
         ActivityLog::create([
@@ -344,7 +344,7 @@ class LaporanController extends Controller
             $itemsToProcess = collect();
 
             if ($jenisLaporan === 'Laporan Kondisi Barang') {
-                // Ambil barang selain "Bagus" atau yang sudah lebih dari 1 bulan
+                
                 $barangRusak = Barang::join('qr_codes', 'barangs.id_barang', '=', 'qr_codes.id_barang')
                     ->where(function ($query) {
                         $query->where('barangs.kondisi', '!=', 'Bagus')
@@ -391,18 +391,15 @@ class LaporanController extends Controller
     }
 
     public function formPengajuan()
-    {
-        // Ambil ID barang yang sudah ada di laporan_apk
+    {        
         $barangSudahDilaporkan = LaporanApk::pluck('id_barang')->toArray();
-
-        // Barang selain "Bagus" dan punya QR, yang belum pernah dilaporkan
+        
         $barangKondisiBuruk = Barang::join('qr_codes', 'barangs.id_barang', '=', 'qr_codes.id_barang')
             ->where('barangs.kondisi', '!=', 'Bagus')
             ->whereNotIn('barangs.id_barang', $barangSudahDilaporkan)
             ->select('barangs.*', 'qr_codes.nomor_identifikasi as id_qr')
             ->get();
-
-        // Barang "Bagus" tapi lebih dari 1 bulan dan punya QR, yang belum pernah dilaporkan
+        
         $barangBagusLama = Barang::join('qr_codes', 'barangs.id_barang', '=', 'qr_codes.id_barang')
             ->where('barangs.kondisi', 'Bagus')
             ->where('barangs.created_at', '<', Carbon::now()->subMonth())
@@ -423,46 +420,40 @@ class LaporanController extends Controller
 
     public function riwayatMasukDetail($reportId){
         try {
-            // Cari semua item yang memiliki report_id yang sama
+            
             $items = PengajuanBarang::where('report_id', $reportId)
-                ->select('nama_barang', 'jumlah_barang', 'tipe_barang_kategori', 'catatan_penolakan') // Ambil hanya kolom yang dibutuhkan
+                ->select('nama_barang', 'jumlah_barang', 'tipe_barang_kategori', 'catatan_penolakan') 
                 ->get();
 
-            if ($items->isEmpty()) {
-                // Jika tidak ada data, kirim respons 'not found'
+            if ($items->isEmpty()) {            
                 return response()->json(['success' => false, 'message' => 'Data tidak ditemukan'], 404);
             }
 
-            // Jika berhasil, kirim data sebagai JSON
             return response()->json(['success' => true, 'data' => $items]);
 
         } catch (\Exception $e) {
-            // Jika terjadi error server, kirim respons error
-            // Sebaiknya log error ini untuk debugging
-            // Log::error($e->getMessage());
+
             return response()->json(['success' => false, 'message' => 'Terjadi kesalahan pada server'], 500);
         }
     }
 
-    public function riwayatKeluarDetail($reportId) // Nama parameter diubah agar lebih jelas
+    public function riwayatKeluarDetail($reportId) 
     {
         try {
-            // Cari semua item yang memiliki id_transaksi yang sama
+            
             $items = Transaksi::where('id_transaksi', $reportId)
-                ->select('nama_barang', 'jumlah_barang', 'tujuan', 'catatan_penolakan') // Pastikan nama kolom ini ada di tabel Transaksi
+                ->select('nama_barang', 'jumlah_barang', 'tujuan', 'catatan_penolakan') 
                 ->get();
             
             if ($items->isEmpty()) {
-                // Jika tidak ada data, kirim respons 'not found'
+                
                 return response()->json(['success' => false, 'message' => 'Data tidak ditemukan'], 404);
             }
 
-            // Jika berhasil, kirim data sebagai JSON
             return response()->json(['success' => true, 'data' => $items]);
 
         } catch (\Exception $e) {
-            // Jika terjadi error server, kirim respons error
-            // Log::error($e->getMessage());
+
             return response()->json(['success' => false, 'message' => 'Terjadi kesalahan pada server'], 500);
         }
     }

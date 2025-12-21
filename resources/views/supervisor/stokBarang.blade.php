@@ -9,7 +9,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monitoring Stok Barang</title>
     <style>
-        /* CSS custom yang mungkin tidak sepenuhnya di-cover oleh Bootstrap atau untuk override spesifik */
         body {
             font-family: 'Poppins', sans-serif;
         }
@@ -22,16 +21,16 @@
         }
         .export-buttons-container {
             display: flex;
-            gap: 0.75rem; /* Jarak antar tombol */
-            justify-content: flex-end; /* Tombol di kanan */
-            align-items: center; /* Tombol di tengah vertikal */
-            height: 100%; /* Pastikan tingginya sama dengan kotak total barang */
+            gap: 0.75rem;
+            justify-content: flex-end; 
+            align-items: center; 
+            height: 100%; 
         }
         .export-buttons-container .btn {
             font-family: 'Poppins', sans-serif;
             font-weight: 500;
             border-radius: 0.5rem;
-            padding: 0.75rem 1.25rem; /* Padding tombol yang lebih pas */
+            padding: 0.75rem 1.25rem;
         }
     </style>
 </head>
@@ -66,7 +65,7 @@
                         <div class="card-body">
                             <div class="row g-3">
                                 @forelse ($lowStockItems as $item)
-                                    <div class="col-md-2 col-lg-2"> {{-- Dibuat lebih responsif --}}
+                                    <div class="col-md-2 col-lg-2"> 
                                         <div class="card border-0 shadow-sm h-100">
                                             <div class="card-body p-2">
                                                 <div class="d-flex justify-content-between align-items-start">
@@ -81,7 +80,7 @@
                                                     </div>
                                                     <div class="text-end">
                                                         @php
-                                                            // Gunakan $item->total_stok sesuai controller
+                                    
                                                             $stockLevel = $item->total_stok;
                                                             $badgeClass = $stockLevel <= 2 ? 'bg-danger' : ($stockLevel <= 5 ? 'bg-warning text-dark' : 'bg-info');
                                                         @endphp
@@ -316,19 +315,17 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         $(document).ready(function() {
-            // Inisialisasi DataTables
             var table = $('#dataTable').DataTable({
                 "pageLength": 10,
                 "lengthMenu": [
                     [10, 25, 50, -1],
                     [10, 25, 50, "Semua"]
                 ],
-                "searching": true, // Aktifkan fitur pencarian bawaan DataTables
+                "searching": true, 
                 "info": true,
                 "paging": true
             });
 
-            // Logika untuk mengisi modal edit harga (tetap sama)
             $('.edit-price-btn').on('click', function() {
                 var namaBarang = $(this).data('nama-barang');
                 var tipeBarang = $(this).data('tipe-barang');
@@ -343,7 +340,6 @@
                 $('#edit_harga_jual').val(hargaJual);
             });
 
-            // Logika ketika form update harga disubmit (tetap sama)
             $('#updatePriceForm').on('submit', function(e) {
                 e.preventDefault();
 

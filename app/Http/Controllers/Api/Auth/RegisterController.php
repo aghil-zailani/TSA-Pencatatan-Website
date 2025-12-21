@@ -12,12 +12,12 @@ class RegisterController extends Controller
 {
     public function register(Request $request)
     {
-        // Validasi menggunakan Validator untuk response JSON yang lebih baik
+        
         $validator = Validator::make($request->all(), [
             'username' => 'required|string|max:255|unique:users',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
-            'password_confirmation' => 'required|string|same:password', // Ubah dari 'confirmed' ke 'same:password'
+            'password_confirmation' => 'required|string|same:password', 
             'role' => 'nullable|string',
         ]);
 
@@ -29,7 +29,7 @@ class RegisterController extends Controller
         }
 
         try {
-            // Buat user baru
+            
             $user = User::create([
                 'username' => $request->username,
                 'email' => $request->email,
@@ -37,7 +37,7 @@ class RegisterController extends Controller
                 'role' => $request->role ?? 'inspektor',
             ]);
 
-            // Buat token untuk auto-login
+            
             $token = $user->createToken('api-token-'.$user->id)->plainTextToken;
 
             $userData = [

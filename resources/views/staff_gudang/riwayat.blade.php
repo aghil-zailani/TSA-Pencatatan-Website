@@ -145,9 +145,8 @@
         searching: true,
         info: true,
         responsive: true,
-        // 1. Urutkan berdasarkan kolom Tanggal (indeks 2) secara menurun
         order: [[ 2, 'desc' ]],
-        // 2. Nonaktifkan sorting untuk kolom "No"
+
         columnDefs: [ {
             "searchable": false,
             "orderable": false,
@@ -155,7 +154,6 @@
         } ]
       });
 
-    // 3. Fungsi untuk membuat ulang nomor urut secara otomatis
     laporanTable.on('draw.dt', function () {
         var pageInfo = laporanTable.page.info();
         var start = pageInfo.start;

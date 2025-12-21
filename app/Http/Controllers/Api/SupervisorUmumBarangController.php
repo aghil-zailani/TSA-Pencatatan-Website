@@ -29,7 +29,7 @@ class SupervisorUmumBarangController extends Controller
 
             $nomorIdentifikasi = trim($request->nomor_identifikasi);
 
-            // Jika QR kosong (literal kosong)
+            
             if ($nomorIdentifikasi === '' || strtolower($nomorIdentifikasi) === 'nomor identifikasi:') {
                 return response()->json([
                     'status' => 'not_found',
@@ -37,14 +37,14 @@ class SupervisorUmumBarangController extends Controller
                 ], 200);
             }
 
-            // Cari QR code
+            
             $qrCode = QrCode::with(['barang'])
                 ->whereRaw('LOWER(TRIM(nomor_identifikasi)) = ?', [
                     strtolower($nomorIdentifikasi)
                 ])
                 ->first();
 
-            // Jika QR belum ada di tabel atau sudah ada tapi belum link ke barang
+            
             if (!$qrCode || !$qrCode->barang) {
                 return response()->json([
                     'status' => 'not_found',
@@ -54,7 +54,7 @@ class SupervisorUmumBarangController extends Controller
 
             $barang = $qrCode->barang;
 
-            // Validasi akses
+            
             if (!$this->validateAccess($barang, $currentUser)) {
                 return response()->json([
                     'status' => 'access_denied',
@@ -124,7 +124,7 @@ class SupervisorUmumBarangController extends Controller
             $createdByRole = $currentUser->role;
             $createdById = $currentUser->id;
 
-            // 1. Cari QR Code fisik
+            
             $qrCode = QrCode::where('nomor_identifikasi', $validated['nomor_identifikasi'])->first();
 
             if ($qrCode && $qrCode->id_barang) {
@@ -134,7 +134,7 @@ class SupervisorUmumBarangController extends Controller
                 ], 400);
             }
 
-            // 2. Buat barang baru
+            
             $barang = Barang::create([
                 'created_by_role' => $createdByRole,
                 'created_by_id'   => $createdById,
@@ -151,7 +151,7 @@ class SupervisorUmumBarangController extends Controller
                 'lokasi_barang'   => $validated['lokasi_barang'] ?? null,
             ]);
 
-            // 3. Update atau buat QR Code
+            
             if ($qrCode) {
                 $qrCode->update([
                     'id_barang' => $barang->id_barang,
@@ -205,7 +205,7 @@ class SupervisorUmumBarangController extends Controller
         $creatorId = $barang->created_by_id;
         $userId = $user->id;
 
-        // Log untuk debugging
+        
         Log::info('Access Validation', [
             'user_role' => $userRole,
             'creator_role' => $creatorRole,
@@ -215,15 +215,15 @@ class SupervisorUmumBarangController extends Controller
 
         switch ($userRole) {
             case 'supervisor_umum':
-                // Supervisor hanya bisa akses barang yang dia buat sendiri
+                
                 return $creatorRole === 'supervisor_umum' && (string)$creatorId === (string)$userId;
 
             case 'inspektor':
-                // Inspektor hanya bisa akses barang dari supervisor_umum (siapa saja supervisor)
+                
                 return $creatorRole === 'supervisor_umum';
 
             case 'staff_gudang':
-                // Staff gudang hanya bisa akses barang dari staff_gudang (siapa saja staff_gudang)
+                
                 return $creatorRole === 'staff_gudang';
 
             default:

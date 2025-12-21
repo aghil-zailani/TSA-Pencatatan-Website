@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::create('qr_codes', function (Blueprint $table) {
             $table->id('id_qr_code'); // Primary Key sesuai ERD
-            $table->foreignId('id_barang')->constrained('barangs', 'id_barang')->onDelete('cascade'); // Foreign Key ke tabel 'barangs'
+            $table->string('id_barang', 50);
+            $table->foreign('id_barang')->references('id_barang')->on('barangs')->onDelete('cascade');
 
             $table->string('nomor_identifikasi')->unique(); // Data QR yang dipindai, harus unik
             $table->string('qr_code_path')->nullable(); // Path gambar QR (opsional)

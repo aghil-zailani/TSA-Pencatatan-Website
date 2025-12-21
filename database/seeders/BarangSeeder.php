@@ -15,6 +15,7 @@ class BarangSeeder extends Seeder
     {
         DB::table('barangs')->insert([
             [
+                'id_barang' => 'APARTOS-101125',
                 'created_by_role' => 'supervisor_umum',
                 'created_by_id' => '3',
                 'nama_barang' => 'Pompa Air',
@@ -31,6 +32,7 @@ class BarangSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
+                'id_barang' => 'PIPAPVC-101125',
                 'created_by_role' => 'supervisor_umum',
                 'created_by_id' => '3',
                 'nama_barang' => 'Pipa PVC',
@@ -47,6 +49,7 @@ class BarangSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
+                'id_barang' => 'APARCO-101125',
                 'created_by_role' => 'supervisor_umum',
                 'created_by_id' => '3',
                 'nama_barang' => 'APAR CO2 3Kg',
@@ -63,6 +66,7 @@ class BarangSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
+                'id_barang' => 'APARPOW-101125',
                 'created_by_role' => 'staff_gudang',
                 'created_by_id' => '2',
                 'nama_barang' => 'APAR Powder 6Kg',
@@ -79,6 +83,7 @@ class BarangSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
+                'id_barang' => 'HYDVAL-101125',
                 'created_by_role' => 'staff_gudang',
                 'created_by_id' => '2',
                 'nama_barang' => 'Hydrant Valve',
@@ -95,6 +100,7 @@ class BarangSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
+                'id_barang' => 'HYDBOX-101125',
                 'created_by_role' => 'staff_gudang',
                 'created_by_id' => '2',
                 'nama_barang' => 'Hydrant Box',

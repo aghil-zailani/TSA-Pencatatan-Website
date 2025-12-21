@@ -20,6 +20,11 @@ class CreateMasterDataTable extends Migration
             $table->boolean('is_active')->default(true); // Kolom untuk status aktif/tidak aktif
             $table->timestamps(); // Kolom created_at dan updated_at
             $table->unique(['category', 'value']); // Kombinasi category dan value harus unik
+            $table->string('label_display');
+            $table->string('input_type');
+            $table->string('field_order');
+            $table->boolean('is_required')->default(false);
+        
         });
     }
 

@@ -11,7 +11,6 @@ class PengajuanBarangController extends Controller
 {
     public function store(Request $request)
     {
-        // Validasi data dari mobile
         $validator = Validator::make($request->all(), [
             'nama_barang' => 'required|string',
             'tipe_barang_kategori' => 'required|string',
@@ -32,7 +31,6 @@ class PengajuanBarangController extends Controller
             return response()->json(['error' => $validator->errors()], 400);
         }
 
-        // Simpan data ke tabel perantara
         $pengajuan = PengajuanBarang::create($request->all());
 
         return response()->json([

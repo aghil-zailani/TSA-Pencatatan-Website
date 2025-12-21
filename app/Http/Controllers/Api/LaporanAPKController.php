@@ -42,7 +42,7 @@ class LaporanAPKController extends Controller
         $data = $request->all();
         Log::info("📥 Data diterima: " . json_encode($data));
 
-        // Validasi dasar + catatan_tindakan jika Ganti
+        
         $validator = validator($data, [
             'qr_code_data' => 'required|string',
             'tanggal_inspeksi' => 'required|date',
@@ -57,7 +57,7 @@ class LaporanAPKController extends Controller
             return response()->json(['message' => 'Validasi gagal', 'errors' => $validator->errors()], 422);
         }
 
-        // Cari QR Code
+        
         $qrCodeInput = strtolower(trim($data['qr_code_data']));
         Log::info("🔍 Mencari QR Code (setelah trim + lower): $qrCodeInput");
 
@@ -81,11 +81,11 @@ class LaporanAPKController extends Controller
             return response()->json(['message' => 'Barang terkait QR Code tidak ditemukan.'], 404);
         }
 
-        // Deteksi tipe barang
+        
         $tipeBarang = $this->detectTipeBarang($qrCode);
         Log::info("📦 Barang ditemukan: {$qrCode->nomor_identifikasi}, ID: {$qrCode->id_barang}, Tipe: $tipeBarang");
 
-        // Validasi tambahan jika APAR
+        
         if ($tipeBarang === 'APAR') {
             $aparValidator = validator($data, [
                 'tindakan' => 'required|string|in:Good,Isi Ulang,Ganti',
@@ -101,7 +101,7 @@ class LaporanAPKController extends Controller
             }
         }
 
-        // Validasi tambahan khusus HYDRANT
+        
         if ($tipeBarang === 'HYDRANT') {
             $hydrantValidator = validator($data, [
                 'tindakan' => 'required|string|in:Good,Broken,Repair',
@@ -117,13 +117,13 @@ class LaporanAPKController extends Controller
             }
         }
 
-        // Autentikasi
+        
         $user = $request->user();
         if (!$user) {
             return response()->json(['message' => 'Tidak terautentikasi.'], 401);
         }
 
-        // Simpan laporan
+        
         DB::beginTransaction();
         try {
             $laporanData = [
@@ -165,12 +165,12 @@ class LaporanAPKController extends Controller
             $barang = Barang::find($qrCode->id_barang);
 
             if ($barang) {
-                // Definisikan kondisi yang dianggap "baik"
+                
                 $kondisiBaik = ['baik', 'bagus', 'oke', 'good', 'Baik', 'Bagus', 'Oke', 'Good'];
 
-                // Cek apakah kondisi fisik dari laporan adalah "baik"
+                
                 if (in_array(strtolower($laporanData['kondisi_fisik']), $kondisiBaik)) {
-                    // Update kondisi barang di tabel `barangs`
+                    
                     $barang->kondisi = 'baik';
                     $barang->save();
                     Log::info("🔄 Kondisi barang '{$barang->nama_barang}' (ID: {$barang->id_barang}) berhasil diperbarui menjadi 'baik'.");

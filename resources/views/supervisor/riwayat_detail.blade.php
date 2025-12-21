@@ -8,7 +8,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $judul }}</title>
     <style>
-        /* Styling umum dari desain Anda */
         body { font-family: 'Poppins', sans-serif; color: #333; }
         h3, h4 { font-family: 'Poppins', sans-serif; font-weight: 700; color: #444; }
         .card { border-radius: 0.75rem; box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.05); }
@@ -22,7 +21,7 @@
         .btn-danger-custom { background-color: #dc3545; border-color: #dc3545; color: #fff; }
         .btn-danger-custom:hover { background-color: #c82333; border-color: #c82333; color: #fff; }
         .btn-detail-info {
-            background-color: #007bff; /* Biru */
+            background-color: #007bff; 
             border-color: #007bff;
             color: white;
             font-family: 'Poppins', sans-serif;
@@ -35,9 +34,8 @@
             border-color: #0056b3;
         }
 
-        /* Styling Modal Detail */
         #detailModal .modal-header {
-            background-color: #007bff; /* Biru */
+            background-color: #007bff; 
             color: white;
         }
         #detailModal .modal-header .btn-close {
@@ -137,8 +135,6 @@
 
     </html>
 
-
-    {{-- Script JavaScript --}}
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
@@ -146,7 +142,6 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         $(document).ready(function() {
-            // Inisialisasi DataTables
             $('#dataTable').DataTable({
                 "pageLength": 10,
                 "lengthMenu": [

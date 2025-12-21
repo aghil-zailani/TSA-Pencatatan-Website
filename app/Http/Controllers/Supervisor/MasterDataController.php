@@ -11,11 +11,11 @@ use Illuminate\Support\Facades\Validator;
 
 class MasterDataController extends Controller{
 
-    // Metode utama untuk halaman indeks "Manajemen Data" (menampilkan kartu pilihan berdasarkan category dari master_data)
+    
     public function manageMasterData()
     {
-        // === BARU: Ambil semua kategori unik dari database untuk kartu dinamis ===
-        // Pastikan ini mengambil data dari tabel master_data, bukan Barang
+        
+        
         $uniqueCategories = MasterData::distinct()->pluck('category');
 
         $displayCategoryMap = [
@@ -40,62 +40,62 @@ class MasterDataController extends Controller{
         }
 
         $judul = 'Manajemen Data Input Mobile';
-        // PASTIKAN 'uniqueCategories' ada di compact()
+        
         return view('supervisor.master_data', compact('judul', 'cards', 'uniqueCategories'));
     }
 
-    // Parameter diubah dari $tipe_barang_name menjadi $category_name
-    public function manageSpecificMaster($form_config_category) // Ubah parameter menjadi $form_config_category
+    
+    public function manageSpecificMaster($form_config_category) 
     {
-        // Ambil konfigurasi field untuk form_type ini
+        
         $masterData = MasterData::where('category', $form_config_category)
-                                ->orderBy('field_order') // Urutkan berdasarkan field_order
+                                ->orderBy('field_order') 
                                 ->get();
         
-        // Ambil semua nilai unik dari kolom 'value' di seluruh tabel master_data untuk dropdown di form ini
+        
         $allUniqueValues = MasterData::distinct()->pluck('value');
 
-        // Tentukan judul tampilan
+        
         $displayTitleMap = [
             'form_config_apar_sparepart' => 'Konfigurasi Form: APAR Sparepart',
             'form_config_sparepart' => 'Konfigurasi Form: Sparepart',
             'form_config_barang_jadi' => 'Konfigurasi Form: Barang Jadi',
-            'form_config_hydrant_barang_jadi' => 'Konfigurasi Form: Hydrant Barang Jadi', // Tambahkan jika ada
-            'form_config_barang_keluar' => 'Konfigurasi Form: Barang Keluar', // Tambahkan jika ada
+            'form_config_hydrant_barang_jadi' => 'Konfigurasi Form: Hydrant Barang Jadi', 
+            'form_config_barang_keluar' => 'Konfigurasi Form: Barang Keluar', 
         ];
         $judul = $displayTitleMap[$form_config_category] ?? 'Konfigurasi Form: ' . ucfirst(str_replace('_', ' ', str_replace('form_config_', '', $form_config_category)));
         
         return view('supervisor.manage_spesific_master', [
         'masterData' => $masterData,
         'judul' => $judul,
-        'category_name' => $form_config_category, // Ini sekarang benar di dalam array
+        'category_name' => $form_config_category, 
         'allUniqueValues' => $allUniqueValues
     ]);
     }
 
-    // Metode untuk menyimpan data master (Store) - TETAP SAMA
+    
     public function storeMasterData(Request $request)
     {
-        // Validasi menggunakan Validator
+        
         $validator = Validator::make($request->all(), [
             'category' => 'required|string|max:50',
             'value' => 'required|string|max:255',
             'label_display' => 'required|string|max:255',
             'input_type' => 'required|string|in:text,number,dropdown,date',
             'field_order' => 'required|integer',
-            'is_required' => 'nullable|boolean', // Gunakan nullable|boolean untuk checkbox
+            'is_required' => 'nullable|boolean', 
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()->first()], 422); // 422 Unprocessable Entity
+            return response()->json(['error' => $validator->errors()->first()], 422); 
         }
 
-        // Cek duplikasi data
+        
         $existing = MasterData::where('category', $request->category)
                                 ->where('value', $request->value)
                                 ->first();
         if ($existing) {
-            return response()->json(['error' => 'Field "' . $request->value . '" sudah ada untuk kategori "' . $request->category . '".'], 409); // 409 Conflict
+            return response()->json(['error' => 'Field "' . $request->value . '" sudah ada untuk kategori "' . $request->category . '".'], 409); 
         }
 
         try {
@@ -105,10 +105,10 @@ class MasterDataController extends Controller{
                 'label_display' => $request->label_display,
                 'input_type' => 'text',
                 'field_order' => $request->field_order,
-                'is_required' => $request->has('is_required'), // has() mengembalikan true/false
+                'is_required' => $request->has('is_required'), 
                 'is_active' => true,
             ]);
-            return response()->json(['message' => 'Konfigurasi field berhasil ditambahkan!'], 201); // 201 Created
+            return response()->json(['message' => 'Konfigurasi field berhasil ditambahkan!'], 201); 
 
         } catch (Throwable $e) {
             Log::error('Error storing MasterData: ' . $e->getMessage(), ['exception' => $e]);
@@ -116,7 +116,7 @@ class MasterDataController extends Controller{
         }
     }
 
-    // Metode untuk update data master (Update) - Akan mengupdate konfigurasi field
+    
     public function updateMasterData(Request $request, MasterData $masterData)
     {
         $validator = Validator::make($request->all(), [
@@ -136,8 +136,8 @@ class MasterDataController extends Controller{
             $masterData->label_display = $request->input('label_display');
             $masterData->input_type = $request->input('input_type');
             $masterData->field_order = $request->input('field_order');
-            $masterData->is_required = $request->has('is_required'); // is_required from checkbox
-            $masterData->is_active = $request->has('is_active'); // is_active from checkbox
+            $masterData->is_required = $request->has('is_required'); 
+            $masterData->is_active = $request->has('is_active'); 
             $masterData->save();
 
             return response()->json(['message' => 'Konfigurasi field berhasil diperbarui!'], 200);
@@ -148,12 +148,12 @@ class MasterDataController extends Controller{
         }
     }
 
-    // Metode untuk menghapus nilai spesifik dari master_data (tetap sama)
+    
     public function destroyMasterData(MasterData $masterData)
     {
         try {
             $masterData->delete();
-            // Kembalikan JSON untuk sukses penghapusan
+            
             return response()->json(['message' => 'Konfigurasi field berhasil dihapus!'], 200);
 
         } catch (Throwable $e) {
@@ -162,7 +162,7 @@ class MasterDataController extends Controller{
         }
     }
 
-    // Metode untuk menghapus SELURUH KATEGORI (misal 'form_config_APAR') dari tabel `master_data`
+    
     public function destroyMasterCategory($category_name)
     {
         try {
@@ -179,11 +179,11 @@ class MasterDataController extends Controller{
         }
     }
 
-    // BARU: API untuk mendapatkan konfigurasi form input untuk tipe tertentu (untuk mobile)
+    
     public function getFormConfigsForMobile($form_type)
     {
         try {
-            // PENTING: HAPUS 'options_category' DARI SELECT STATEMENT INI
+            
             $configs = MasterData::select(
                                     'value as field_name',
                                     'label_display',
@@ -211,7 +211,7 @@ class MasterDataController extends Controller{
     {
         try {
             if ($category_name === 'category_name') {
-                // Khusus endpoint untuk ambil LIST KATEGORI
+                
                 $categories = MasterData::select('category')->distinct()->pluck('category');
                 return response()->json(['categories' => $categories]);
             }

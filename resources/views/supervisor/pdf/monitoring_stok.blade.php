@@ -5,11 +5,11 @@
         body {
             font-family: Arial, Helvetica, sans-serif;
             font-size: 12px;
-            margin: 40px; /* Biar ga nempel pinggir kertas */
+            margin: 40px; 
         }
         .header {
             display: flex;
-            align-items: center; /* center vertikal */
+            align-items: center;
             border-bottom: 2px solid #000;
             padding-bottom: 10px;
             margin-bottom: 20px;
@@ -23,7 +23,7 @@
 
         .company-info {
             flex: 1;
-            text-align: center; /* TEKS DI DALAMNYA TENGAH */
+            text-align: center;
         }
 
         .company-info h2 {

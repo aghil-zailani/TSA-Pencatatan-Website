@@ -9,12 +9,12 @@ use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
-use App\Models\Barang; // Pastikan model Barang sudah diimport
-use Illuminate\Support\Facades\Validator; // Untuk validasi manual
+use App\Models\Barang; 
+use Illuminate\Support\Facades\Validator; 
 
 class BarangController extends Controller
 {
-    // ... di dalam file app/Http/Controllers/Api/BarangController.php
+    
 
     public function index()
     {
@@ -25,32 +25,32 @@ class BarangController extends Controller
 
         $barangQuery = Barang::query();
 
-        // Logika filter berdasarkan role, sama seperti di metode ringkasan
+        
         switch ($currentUser->role) {
             case 'supervisor_umum':
-                // Supervisor umum dapat melihat semua barang yang dibuat oleh supervisor_umum
+                
                 $barangQuery->where('created_by_role', 'supervisor_umum');
                 break;
             case 'inspektor':
-                // Inspektor hanya dapat melihat barang dari supervisor yang ditugaskan
+                
                 $barangQuery->where('created_by_role', 'supervisor_umum');
                 if (!empty($currentUser->supervisor_id)) {
                     $barangQuery->where('created_by_id', $currentUser->supervisor_id);
                 }
                 break;
             case 'staff_gudang':
-                // Staff gudang hanya dapat melihat barang yang dibuat oleh dirinya sendiri
+                
                 $barangQuery->where('created_by_role', 'staff_gudang')
                             ->where('created_by_id', $currentUser->id);
                 break;
             default:
-                // Role lainnya tidak memiliki akses
+                
                 return response()->json([
                     'message' => 'Anda tidak memiliki akses ke data ini.'
                 ], 403);
         }
 
-        // Ambil semua barang setelah difilter
+        
         $barangs = $barangQuery->get();
 
         return response()->json([
@@ -68,7 +68,7 @@ class BarangController extends Controller
 
             $barangQuery = Barang::query();
 
-            // Filter berdasarkan role
+            
             switch ($currentUser->role) {
                 case 'supervisor_umum':
                     $barangQuery->where('created_by_role', 'supervisor_umum');
@@ -87,7 +87,7 @@ class BarangController extends Controller
                     return response()->json(['total' => 0, 'baik' => 0, 'perlu_cek' => 0]);
             }
 
-            // Hitung total, baik, dan perlu_cek langsung di database
+            
             $kondisiBaik = ['baik', 'bagus', 'oke', 'good', 'Baik', 'Bagus', 'Oke', 'Good'];
 
             $total = $barangQuery->count();
@@ -101,7 +101,7 @@ class BarangController extends Controller
                 'user_role' => $currentUser->role
             ];
 
-            // Ringkasan per tipe hanya untuk staff_gudang
+            
             if ($currentUser->role === 'staff_gudang') {
                 $aparTotal = (clone $barangQuery)->where('tipe_barang', 'APAR')->count();
                 $aparBaik = (clone $barangQuery)->where('tipe_barang', 'APAR')->whereIn('kondisi', $kondisiBaik)->count();
@@ -131,7 +131,7 @@ class BarangController extends Controller
 
     public function showByQrCode(Request $request, $qrCodeData)
     {
-        // Gunakan eager loading untuk memuat relasi barang
+        
         $qrCode = QrCode::with('barang')->where('nomor_identifikasi', $qrCodeData)->first();
 
         Log::info("QR code dicari: $qrCodeData");
@@ -139,27 +139,27 @@ class BarangController extends Controller
         if ($qrCode && $qrCode->barang) {
             $barang = $qrCode->barang;
 
-            // Tambahkan data created_by_role dan created_by_id ke respons
+            
             return response()->json([
-                'status' => 'exists', // Tambahkan status agar konsisten dengan endpoint lain
+                'status' => 'exists', 
                 'message' => 'Data barang ditemukan',
                 'data' => [
                     'id_barang' => $barang->id_barang,
                     'nama_barang' => $barang->nama_barang,
-                    'jenis_barang' => $barang->jenis_barang, // Pastikan field ini ada di model Barang
+                    'jenis_barang' => $barang->jenis_barang, 
                     'lokasi_barang' => $barang->lokasi_barang,
                     'qr_code_data' => $qrCodeData,
                     'tipe_barang' => $barang->tipe_barang,
                     'jumlah_barang' => $barang->jumlah_barang,
                     'kondisi' => $barang->kondisi,
-                    // Tambahkan data penting ini
+                    
                     'created_by_role' => $barang->created_by_role ?? null,
                     'created_by_id' => $barang->created_by_id ?? null,
                 ]
             ], 200);
         } else {
             return response()->json([
-                'status' => 'not_found', // Tambahkan status agar konsisten
+                'status' => 'not_found', 
                 'message' => 'QR Code tidak dikenali atau tidak terdaftar.'
             ], 404);
         }
@@ -167,11 +167,11 @@ class BarangController extends Controller
 
     public function store(Request $request)
     {
-        // Validasi bisa dibuat lebih dinamis jika perlu, tapi ini contoh dasarnya
+        
         $validatedData = $request->validate([
             'nama_barang' => 'required|string|max:255',
             'jumlah_barang' => 'required|integer|min:0',
-            'tipe_barang' => 'required|string', // Pastikan Flutter mengirim field ini
+            'tipe_barang' => 'required|string', 
             'satuan' => 'required|string',
             'kondisi' => 'required|string',
             'berat_barang' => 'nullable|numeric',
@@ -179,7 +179,7 @@ class BarangController extends Controller
             'ukuran_barang' => 'nullable|string',
         ]);
 
-        // Simpan ke database
+        
         $barang = Barang::create($validatedData);
 
         return response()->json([

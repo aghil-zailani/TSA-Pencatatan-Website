@@ -10,37 +10,33 @@
             justify-content: space-between;
             align-items: center;
             padding: 0.8rem 0.5rem;
-            border-bottom: 1px solid #f0f0f0; /* Garis pemisah tipis */
+            border-bottom: 1px solid #f0f0f0; 
         }
         .list-item-custom:last-child {
-            border-bottom: none; /* Hilangkan border untuk item terakhir */
+            border-bottom: none;
         }
         .list-item-custom .icon-link {
             font-size: 1.2rem;
-            color: #6c757d; /* Warna ikon abu-abu */
+            color: #6c757d;
             text-decoration: none;
             transition: color 0.3s;
         }
         .list-item-custom .icon-link:hover {
-            color: #435ebe; /* Warna ikon saat di-hover */
+            color: #435ebe;
         }
         .time-badge {
-            background-color: #eef2f7; /* Warna abu-abu muda */
-            color: #474747; /* Warna teks gelap */
+            background-color: #eef2f7;
+            color: #474747;
             padding: 0.25rem 0.6rem;
-            border-radius: 0.5rem; /* Sedikit lebih rounded */
+            border-radius: 0.5rem;
             font-size: 0.8em;
             font-weight: 500;
         }
         .card-scrollable .card-body {
-            /* Tentukan tinggi maksimal untuk area konten */
-            max-height: 250px; /* Anda bisa menyesuaikan tinggi ini sesuai kebutuhan */
-
-            /* Tambahkan scrollbar vertikal hanya jika konten melebihi max-height */
+            max-height: 250px;
             overflow-y: auto;
         }
 
-        /* Styling tambahan untuk scrollbar agar lebih modern (opsional) */
         .card-scrollable .card-body::-webkit-scrollbar {
             width: 6px;
         }
@@ -53,7 +49,7 @@
         }
 
         .modal-backdrop.show {
-            opacity: 0.5 !important; /* Membuat overlay lebih gelap */
+            opacity: 0.5 !important; 
         }
 
         .modal-content {
@@ -62,29 +58,29 @@
         }
 
         .modal-header {
-            background-color: #f8d7da; /* Warna latar belakang header merah muda */
-            color: #721c24; /* Warna teks merah gelap */
+            background-color: #f8d7da;
+            color: #721c24; 
             border-bottom: none;
             border-top-left-radius: 1rem;
             border-top-right-radius: 1rem;
             padding: 1.5rem;
-            font-family: 'Poppins', sans-serif; /* Menggunakan Poppins jika tersedia */
+            font-family: 'Poppins', sans-serif;
         }
 
         .modal-title {
             font-weight: bold;
-            display: flex; /* Menggunakan flexbox untuk ikon dan teks */
-            align-items: center; /* Menyelaraskan ikon dan teks secara vertikal */
+            display: flex; 
+            align-items: center;
         }
 
         .modal-title i {
-            font-size: 1.5rem; /* Ukuran ikon peringatan lebih besar */
-            margin-right: 0.75rem; /* Jarak antara ikon dan teks */
-            color: #dc3545; /* Warna ikon peringatan yang jelas */
+            font-size: 1.5rem;
+            margin-right: 0.75rem; 
+            color: #dc3545; 
         }
 
         .modal-header .btn-close {
-            filter: invert(30%) sepia(100%) saturate(7000%) hue-rotate(330deg) brightness(90%) contrast(80%); /* Mengubah warna ikon silang menjadi merah gelap */
+            filter: invert(30%) sepia(100%) saturate(7000%) hue-rotate(330deg) brightness(90%) contrast(80%); 
         }
 
         .modal-body {
@@ -98,25 +94,25 @@
             justify-content: space-between;
             align-items: center;
             padding: 0.75rem 1.25rem;
-            border: none; /* Hilangkan border item default */
-            border-bottom: 1px solid #eee; /* Garis pemisah antar item */
-            font-size: 0.95rem; /* Ukuran font sedikit lebih besar */
-            color: #343a40; /* Warna teks yang lebih gelap */
+            border: none; 
+            border-bottom: 1px solid #eee; 
+            font-size: 0.95rem; 
+            color: #343a40; 
         }
         .list-group-item-stock:last-child {
             border-bottom: none;
         }
 
-        /* Badge Stok yang Lebih Estetik */
+        
         .list-group-item-stock .badge-stock {
-            background-color: #ffc107; /* Warna kuning Bootstrap default */
-            color: #212529; /* Teks hitam atau gelap */
-            padding: 0.4em 0.8em; /* Padding badge lebih baik */
-            border-radius: 0.5rem; /* Rounded corner */
+            background-color: #ffc107; 
+            color: #212529; 
+            padding: 0.4em 0.8em; 
+            border-radius: 0.5rem; 
             font-weight: bold;
-            min-width: 60px; /* Lebar minimum agar konsisten */
-            text-align: center; /* Teks di tengah badge */
-            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); /* Shadow tipis */
+            min-width: 60px; 
+            text-align: center; 
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); 
         }
 
         .modal-footer {
@@ -125,7 +121,7 @@
             color:white;
         }
         .btn-primary-stock-modal {
-            background-color: #435ebe; /* Warna biru konsisten dengan tema Mazer */
+            background-color: #435ebe; 
             border-color: #435ebe;
             font-family: 'Poppins', sans-serif;
             border-radius: 0.5rem;
@@ -417,20 +413,12 @@
         <script>
             am5.ready(function() {
 
-                // Create root element
-                // https://www.amcharts.com/docs/v5/getting-started/#Root_element
                 var root = am5.Root.new("chartdiv");
 
-
-                // Set themes
-                // https://www.amcharts.com/docs/v5/concepts/themes/
                 root.setThemes([
                     am5themes_Animated.new(root)
                 ]);
 
-
-                // Create chart
-                // https://www.amcharts.com/docs/v5/charts/xy-chart/
                 var chart = root.container.children.push(am5xy.XYChart.new(root, {
                     panX: true,
                     panY: true,
@@ -439,14 +427,9 @@
                     pinchZoomX: true
                 }));
 
-                // Add cursor
-                // https://www.amcharts.com/docs/v5/charts/xy-chart/cursor/
                 var cursor = chart.set("cursor", am5xy.XYCursor.new(root, {}));
                 cursor.lineY.set("visible", false);
 
-
-                // Create axes
-                // https://www.amcharts.com/docs/v5/charts/xy-chart/axes/
                 var xRenderer = am5xy.AxisRendererX.new(root, {
                     minGridDistance: 30
                 });
@@ -475,9 +458,6 @@
                     })
                 }));
 
-
-                // Create series
-                // https://www.amcharts.com/docs/v5/charts/xy-chart/series/
                 var series = chart.series.push(am5xy.ColumnSeries.new(root, {
                     name: "Series 1",
                     xAxis: xAxis,
@@ -503,7 +483,6 @@
                     return chart.get("colors").getIndex(series.columns.indexOf(target));
                 });
 
-                // Set data
                 var data = [];
                 @foreach($chart as $item)
                 data.push({
@@ -515,13 +494,10 @@
                 xAxis.data.setAll(data);
                 series.data.setAll(data);
 
-
-                // Make stuff animate on load
-                // https://www.amcharts.com/docs/v5/concepts/animations/
                 series.appear(1000);
                 chart.appear(1000, 100);
 
-            }); // end am5.ready()
+            }); 
         </script>
         <!-- styling bar chart -->
 
@@ -546,22 +522,17 @@
                     alignLabels: false
                 }));
 
-                // [UBAH] Atur format teks untuk label di potongan chart
                 series.labels.template.setAll({
                     textType: "circular",
                     centerX: 0,
                     centerY: 0,
-                    // Tampilkan kategori dan jumlah aktualnya
                     text: "{category}: {value}" 
                 });
 
-                // [BARU] Atur format teks untuk tooltip (saat di-hover)
                 series.set("tooltip", am5.Tooltip.new(root, {
                     labelText: "{category}: {value} unit"
                 }));
 
-
-                // legend atau info kecil kecil dibawah chart
                 var legend = chart.children.push(am5.Legend.new(root, {
                     centerX: am5.percent(50),
                     x: am5.percent(50),
@@ -569,20 +540,17 @@
                     marginBottom: 15,
                 }));
                 
-                // [BARU] Atur format teks untuk nilai di legenda
                 legend.valueLabels.template.setAll({
-                    // Tampilkan hanya jumlah aktualnya saja
                     text: "{value}"
                 });
 
-                // isi data chart (TETAP SAMA)
                 series.data.setAll([{
                         value: {{ $rs }},
-                        tipe_barang: "Sparepart" // 'category' diganti 'tipe_barang' agar konsisten
+                        tipe_barang: "Sparepart"
                     },
                     {
                         value: {{ $fp }},
-                        tipe_barang: "Barang Jadi" // 'category' diganti 'tipe_barang'
+                        tipe_barang: "Barang Jadi" 
                     },
                 ]);
 
@@ -594,21 +562,16 @@
         </script>
         <!-- styling pie chart -->
 
-        <!-- Script untuk Notifikasi Stok Minimum -->
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                // Cek apakah elemen modal ada di dalam HTML
                 const stockModalElement = document.getElementById('stockNotificationModal');
 
-                // Jika elemennya ADA (artinya Blade merendernya karena session ada)
                 if (stockModalElement) {
-                    // Buat instance modal dan langsung tampilkan
                     var stockModal = new bootstrap.Modal(stockModalElement);
                     stockModal.show();
                 }
             });
         </script>
-        <!-- Akhir Script Notifikasi Stok Minimum -->
     </body>
 
     </html>

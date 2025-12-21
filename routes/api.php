@@ -67,6 +67,7 @@ Route::middleware(['api'])->group(function(){
 
     Route::get('/form-configs/{form_type}', [MasterDataController::class, 'getFormConfigsForMobile']);
     Route::get('/master-data/{category_name}', [MasterDataController::class, 'getMasterDataByCategory']);
+    Route::post('/pengajuan-barangs', [StaffDashboardController::class, 'pengajuanBarangs']);
     Route::post('/transaksi/barang-keluar', [StaffDashboardController::class, 'catatBarangKeluar']);
 
     Route::get('/test', function () {

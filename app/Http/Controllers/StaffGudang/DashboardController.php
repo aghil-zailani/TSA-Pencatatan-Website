@@ -32,13 +32,13 @@ use Illuminate\Support\Facades\Validator;
 
 class DashboardController extends Controller
 {
-    // Dashboard Staff Gudang
+    
     public function index()
     {
         $awalBulan = Carbon::now()->startOfMonth();
         $akhirBulan = Carbon::now()->endOfMonth();
         $barangMasukCount = Barang::whereBetween('created_at', [$awalBulan, $akhirBulan])->sum('jumlah_barang');
-        $barangKeluarCount = Transaksi::where('status', 'diterima') // hanya yang sudah divalidasi supervisor
+        $barangKeluarCount = Transaksi::where('status', 'diterima') 
             ->whereBetween('created_at', [$awalBulan, $akhirBulan])
             ->sum('jumlah_barang');
 
@@ -71,12 +71,12 @@ class DashboardController extends Controller
         });
 
         if (!session()->has('lowStockShown')) {
-            // Ambil data yang sama untuk dikirim ke session flash
+            
             $lowStockItemsForModal = $lowStockItems->take(6);
 
-            // Simpan ke session flash biar cuma sekali muncul
+            
             session()->flash('lowStockItems', $lowStockItemsForModal);
-            session()->put('lowStockShown', true); // Tandai sudah pernah muncul
+            session()->put('lowStockShown', true); 
         }
 
             $laporanKeluarTerbaru = Transaksi::select(
@@ -141,7 +141,7 @@ class DashboardController extends Controller
 
             $laporanGabungan = $laporanValidasiTerbaru->merge($laporanKeluarTerbaru)
                                             ->sortByDesc('created_at')
-                                            ->take(10); // Maksimal 10 terbaru   
+                                            ->take(10); 
 
             $data = array(
                 'judul' => 'Dashboard',
@@ -159,7 +159,7 @@ class DashboardController extends Controller
             return view('staff_gudang.index', $data, compact('rs', 'fp', 'dataStokBarang', 'totalKeseluruhanBarang'));
         }
 
-    // Monitoring Stok Barang (Tampil)
+    
     public function tampil()
     {
         ActivityLog::create([
@@ -176,12 +176,12 @@ class DashboardController extends Controller
                 'berat_barang',
                 'tipe_barang_kategori',
                 'media',
-                \DB::raw('SUM(jumlah_barang) as total_stok'), // Menjumlahkan stok
-                \DB::raw('GROUP_CONCAT(DISTINCT tipe_barang) as jenis_barang'), // Mengumpulkan semua tipe barang unik
-                \DB::raw('GROUP_CONCAT(DISTINCT satuan) as satuan'), // Mengumpulkan semua berat unik
-                \DB::raw('ANY_VALUE(harga_beli) as harga_beli'), // Mengambil salah satu harga beli (asumsi harga sama untuk nama barang yang sama)
-                \DB::raw('ANY_VALUE(harga_jual) as harga_jual'), // Mengambil salah satu harga jual
-                \DB::raw('ANY_VALUE(id_barang) as id_representatif') // Ambil satu ID sebagai representasi untuk modal
+                \DB::raw('SUM(jumlah_barang) as total_stok'), 
+                \DB::raw('GROUP_CONCAT(DISTINCT tipe_barang) as jenis_barang'), 
+                \DB::raw('GROUP_CONCAT(DISTINCT satuan) as satuan'), 
+                \DB::raw('ANY_VALUE(harga_beli) as harga_beli'), 
+                \DB::raw('ANY_VALUE(harga_jual) as harga_jual'), 
+                \DB::raw('ANY_VALUE(id_barang) as id_representatif') 
             )
             ->groupBy('nama_barang', 'tipe_barang', 'berat_barang','tipe_barang_kategori', 'media')
             ->orderBy('nama_barang')
@@ -191,14 +191,14 @@ class DashboardController extends Controller
             ->orderBy('berat_barang')
             ->get();
 
-        // Anda juga bisa memformat jenis_barang_list jika ingin tampilan yang lebih rapi (misal: "APAR, Sparepart")
+        
         $barangAggregated->map(function($item) {
             $item->berat_display_formatted = ($item->berat_barang !== null && $item->berat_barang !== '') ? $item->berat_barang . ' Kg' : 'N/A';
             return $item;
         });
 
         $lowStockItems = $barangAggregated->filter(function ($item) {
-            // Ambil semua item yang total_stok nya kurang dari 10
+            
             return $item->total_stok < 10;
         });
         
@@ -219,14 +219,14 @@ class DashboardController extends Controller
             'description' => 'Staff melihat daftar barang masuk yang diterima.'
         ]);
 
-        // Ambil relasi dengan qrCode
+        
         $barangDiterima = Barang::with('qrCodes')->orderBy('created_at', 'desc')->get();
         $judul = 'Data Barang';
 
         return view('staff_gudang.data_barang', compact('barangDiterima', 'judul'));
     }
 
-    // BARU: Metode untuk menampilkan halaman Buat Laporan Staff Gudang
+    
     public function buatLaporan()
     {
         ActivityLog::create([
@@ -263,15 +263,15 @@ class DashboardController extends Controller
 
     public function generateQrCode(Request $request, $id)
     {
-        $forceGenerate = $request->input('force_generate', false); // default false
+        $forceGenerate = $request->input('force_generate', false); 
         $barang = Barang::findOrFail($id);
 
-        // Cek QR code sudah ada
+        
         $existingQr = QrCodeModel::where('id_barang', $id)->first();
 
         if ($existingQr && Storage::disk('public')->exists($existingQr->qr_code_path)) {
             if (!$forceGenerate) {
-                // Hanya kirim data tanpa generate ulang
+                
                 return response()->json([
                     'status' => 'exists',
                     'message' => 'QR Code untuk barang ini sudah pernah digenerate.',
@@ -284,7 +284,7 @@ class DashboardController extends Controller
             }
         }
 
-        // Proses generate QR baru
+        
         $namaUntukFile = !empty($barang->nama_barang) ? $barang->nama_barang : 'tanpa-nama';
         $safeNamaBarang = Str::slug($namaUntukFile, '_');
         $timestamp = now()->format('YmdHis');
@@ -359,23 +359,23 @@ class DashboardController extends Controller
         $transaksis = $transaksis->get();
         $pengajuans = $pengajuans->get();
 
-        // Gabungkan lalu urutkan terbaru
+        
         $riwayatGabung = $transaksis->merge($pengajuans)->sortByDesc('created_at');
         $judul = 'Riwayat';
 
-        // FIX: Nama variabel diperbaiki menjadi 'riwayatGabung'
+        
         return view('staff_gudang.riwayat', compact('logs', 'riwayatGabung', 'judul'));
     }
 
     public function pengajuanBarangs(Request $request)
     {
-        // 1️⃣ Ambil kategori
+        
         $category = $request->input('tipe_barang_kategori');
         if (!$category) {
             return response()->json(['message' => 'Tipe barang kategori wajib diisi.'], 422);
         }
 
-        // 2️⃣ Ambil konfigurasi form dinamis
+        
         $formConfigs = FormConfig::where('category', $category)->get();
         if ($formConfigs->isEmpty()) {
             return response()->json(['message' => "Konfigurasi form untuk kategori '{$category}' tidak ditemukan."], 404);
@@ -386,11 +386,11 @@ class DashboardController extends Controller
             return response()->json(['message' => 'Unauthorized.'], 401);
         }
         
-        // Asumsikan role disimpan di kolom 'role' pada model User
+        
         $created_by_role = $user->role;
         $created_by_id = $user->id;
 
-        // 3️⃣ Validasi dinamis
+        
         $validationRules = [];
         foreach ($formConfigs as $config) {
             $rules = [];
@@ -416,7 +416,7 @@ class DashboardController extends Controller
         }
         $validatedData = $validator->validated();
 
-        // 4️⃣ Pemetaan kolom
+        
         $columnMapping = [
             'kondisi' => 'kondisi_barang',
         ];
@@ -430,7 +430,7 @@ class DashboardController extends Controller
             }
         }
 
-        // 5️⃣ Cek `nama_barang` → kalau ada pakai ID dari `barangs`
+        
         $namaBarang = $validatedData['nama_barang'] ?? null;
         if (!$namaBarang) {
             return response()->json(['message' => 'Nama barang wajib diisi.'], 422);
@@ -441,10 +441,10 @@ class DashboardController extends Controller
                         ->where('tipe_barang_kategori', $tipeBarang)->first();
 
         if ($barang) {
-            // Pakai ID lama
+            
             $idBarang = $barang->id_barang;
         } else {
-            // Generate ID baru
+            
             $prefix = strtoupper(substr($validatedData['tipe_barang_kategori'], 0, 3));
             $product = isset($validatedData['tipe_barang']) ? strtoupper(substr($validatedData['tipe_barang'], 0, 3)) : 'GEN';
             $monthYear = date('my');
@@ -459,12 +459,12 @@ class DashboardController extends Controller
         $dataToSave['created_by_role'] = $created_by_role;
         $dataToSave['created_by_id'] = $created_by_id;
 
-        // 6️⃣ Data meta
+        
         $dataToSave['nama_laporan'] = 'Laporan Barang Masuk';
         $dataToSave['status'] = '-';
         $dataToSave['catatan_penolakan'] = '-';
 
-        // 7️⃣ Simpan
+        
         try {
             $pengajuan = PengajuanBarang::create($dataToSave);
             return response()->json(['message' => 'Pengajuan barang berhasil!', 'data' => $pengajuan], 201);
@@ -493,7 +493,7 @@ class DashboardController extends Controller
 
         DB::beginTransaction();
         try {
-            $reportId = 'PBK-' . date('ymd') . '-' . strtoupper(Str::random(4)); // PBK = Pengajuan Barang Keluar
+            $reportId = 'PBK-' . date('ymd') . '-' . strtoupper(Str::random(4)); 
 
             foreach ($items as $item) {
                 PengajuanBarang::create([
@@ -502,12 +502,12 @@ class DashboardController extends Controller
                     'jumlah_barang' => $item['jumlah_barang'],
                     'tujuan' => $commonData['tujuan'] ?? null,
                     'keterangan' => $commonData['keterangan'] ?? null,
-                    'status' => 'proses', // default status sebelum supervisor validasi
+                    'status' => 'proses', 
                     'catatan_penolakan' => '-',
                 ]);
             }
 
-            // Buat juga "header" transaksi di tabel Transaksi untuk supervisor validasi
+            
             Transaksi::create([
                 'report_id' => $reportId,
                 'id_barang' => $item['id_barang'],

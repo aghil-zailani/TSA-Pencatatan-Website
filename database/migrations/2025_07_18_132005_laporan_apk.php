@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('id_qr'); // Data QR yang dipindai (nomor_identifikasi)
             $table->foreign('id_qr')->references('nomor_identifikasi')->on('qr_codes')->onDelete('cascade');
 
-            $table->unsignedBigInteger('id_barang');
+            $table->string('id_barang', 50);
             $table->foreign('id_barang')->references('id_barang')->on('barangs')->onDelete('cascade');
 
             $table->unsignedBigInteger('id_user');

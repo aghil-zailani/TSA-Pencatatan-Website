@@ -12,30 +12,30 @@ class LoginController extends Controller
 {
     public function login(Request $request)
     {
-        // PERUBAHAN 1: Validasi sekarang untuk field 'id'
+        
         $request->validate([
             'id' => 'required|string',
             'password' => 'required|string',
         ]);
 
-        // PERUBAHAN 2: Cari user berdasarkan kolom 'id' di database
+        
         $user = User::where('id', $request->id)->first();
 
-        // Cek apakah user ditemukan dan password cocok
+        
         if (! $user || ! Hash::check($request->password, $user->password)) {
-            // PERUBAHAN 3: Pesan error merujuk ke 'id'
+            
             throw ValidationException::withMessages([
                 'id' => ['ID Perusahaan atau Password salah.'],
             ]);
         }
 
-        // PERUBAHAN 4: Buat nama token menggunakan user->id
+        
         $token = $user->createToken('api-token-'.$user->id)->plainTextToken;
 
-        // Sesuaikan data user yang dikembalikan
+        
         $userData = [
-            'id' => $user->id, // Menggunakan 'id' sesuai kolom database
-            'username' => $user->username, // Kolom username dari database Anda
+            'id' => $user->id, 
+            'username' => $user->username, 
             'email' => $user->email,
             'role' => $user->role,
         ];
@@ -58,27 +58,27 @@ class LoginController extends Controller
 
     public function loginAndroid(Request $request)
     {
-        // PERUBAHAN: Validasi sekarang untuk field 'username'
+        
         $request->validate([
-            'username' => 'required|string', // Validasi untuk username
+            'username' => 'required|string', 
             'password' => 'required|string',
         ]);
 
-        // PERUBAHAN: Cari user berdasarkan kolom 'username' di database
-        $user = User::where('username', $request->username)->first(); // Cari berdasarkan username
+        
+        $user = User::where('username', $request->username)->first(); 
 
-        // Cek apakah user ditemukan dan password cocok
+        
         if (! $user || ! Hash::check($request->password, $user->password)) {
-            // PERUBAHAN: Pesan error merujuk ke 'username'
+            
             throw ValidationException::withMessages([
                 'username' => ['Username atau Password salah.'],
             ]);
         }
 
-        // Buat nama token menggunakan user->id
+        
         $token = $user->createToken('api-token-'.$user->id)->plainTextToken;
 
-        // Sesuaikan data user yang dikembalikan
+        
         $userData = [
             'id' => $user->id,
             'username' => $user->username,

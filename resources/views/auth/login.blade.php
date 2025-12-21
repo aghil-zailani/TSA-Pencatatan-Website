@@ -135,11 +135,9 @@
             </div>
         @endif
 
-        {{-- Pastikan route('login') ini mengarah ke controller web login, bukan API --}}
         <form action="{{ route('login') }}" method="POST" class="login-form">
             @csrf
             <div class="form-group">
-                {{-- 'name' disesuaikan dengan field yang akan digunakan untuk login --}}
                 <input type="text" class="form-control" id="login_id" name="login_id" placeholder="ID Perusahaan" value="{{ old('login_id') }}" required>
             </div>
             <div class="form-group">

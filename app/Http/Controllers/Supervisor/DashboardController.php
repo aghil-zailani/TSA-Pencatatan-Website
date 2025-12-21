@@ -25,28 +25,21 @@ class DashboardController extends Controller
         $awalBulan = Carbon::now()->startOfMonth();
         $akhirBulan = Carbon::now()->endOfMonth();
 
-        // 1. Menghitung jumlah BARANG MASUK bulan ini
-        // Asumsi Anda punya tabel/model 'BarangMasuk' yang mencatat setiap kedatangan barang
-        // dan menggunakan kolom 'created_at'.
-        // Jika tidak ada, Anda bisa menghitung barang baru di tabel 'barangs'
         $barangMasukCount = Barang::whereBetween('created_at', [$awalBulan, $akhirBulan])->sum('jumlah_barang');
-        
-        // 2. Menghitung jumlah transaksi BARANG KELUAR bulan ini
-        // Asumsi Anda punya tabel/model 'Transaksi' (yang sebelumnya Anda sebut 'Keluar')
-        $barangKeluarCount = Transaksi::where('status', 'diterima') // hanya yang sudah divalidasi supervisor
+ 
+        $barangKeluarCount = Transaksi::where('status', 'diterima') 
             ->whereBetween('created_at', [$awalBulan, $akhirBulan])
             ->sum('jumlah_barang');
 
-        // Data lain untuk chart (jika masih diperlukan)
         $chartData = Barang::select(
                 'nama_barang',
-                \DB::raw('SUM(jumlah_barang) as stokBarang') // Agregasi total stok per nama_barang
+                \DB::raw('SUM(jumlah_barang) as stokBarang') 
             )
-            ->groupBy('nama_barang') // Kelompokkan HANYA berdasarkan nama_barang
+            ->groupBy('nama_barang') 
             ->orderBy('nama_barang')
             ->get()
             ->map(function($item) {
-                // AmCharts membutuhkan format seperti ini: 'country' dan 'value'
+                
                 return ['country' => $item->nama_barang, 'value' => (int)$item->stokBarang];
         });
         
@@ -57,8 +50,8 @@ class DashboardController extends Controller
         $pengajuan = PengajuanBarang::orderBy('created_at', 'desc')->get();
 
         $riwayatLoginData = LoginHistory::where('user_id', Auth::id())
-                                        ->latest('login_at') // Urutkan dari yang terbaru
-                                        ->take(5) // Ambil 5 data teratas
+                                        ->latest('login_at') 
+                                        ->take(5) 
                                         ->get();
 
         $dataStokBarang = Barang::select(
@@ -67,8 +60,7 @@ class DashboardController extends Controller
         )
         ->groupBy('nama_barang')
         ->get();
-
-        // Ini ambil transaksi barang keluar yang statusnya validasi
+        
         $laporanKeluarTerbaru = Transaksi::select(
                                     'id_transaksi',
                                     'status',
@@ -138,12 +130,12 @@ class DashboardController extends Controller
         });
 
         if (!session()->has('lowStockShown')) {
-            // Ambil data yang sama untuk dikirim ke session flash
+            
             $lowStockItemsForModal = $lowStockItems->take(6);
 
-            // Simpan ke session flash biar cuma sekali muncul
+            
             session()->flash('lowStockItems', $lowStockItemsForModal);
-            session()->put('lowStockShown', true); // Tandai sudah pernah muncul
+            session()->put('lowStockShown', true); 
         }
 
 
@@ -166,7 +158,7 @@ class DashboardController extends Controller
 
     public function tampil(Request $request)
     {
-         // Data barang sama seperti biasa
+         
         $barangAggregated = Barang::select(
                 'nama_barang',
                 'tipe_barang',
@@ -181,11 +173,11 @@ class DashboardController extends Controller
         $totalKeseluruhanBarang = $barangAggregated->sum('total_stok');
         
         $lowStockItems = $barangAggregated->filter(function ($item) {
-            // Ambil semua item yang total_stok nya kurang dari 10
+            
             return $item->total_stok < 10;
         });
 
-        // Ambil kolom terpilih dari query
+        
         $selectedColumns = $request->input('columns', [
             'nama_barang',
             'tipe_barang',
@@ -210,30 +202,30 @@ class DashboardController extends Controller
     public function updateHarga(Request $request){
         $request->validate([
             'nama_barang' => 'required|string',
-            'tipe_barang' => 'required|string',   // TAMBAHAN: Validasi tipe_barang
-            'berat_barang' => 'nullable|string', // TAMBAHAN: Validasi berat_barang (string karena bisa 'N/A')
+            'tipe_barang' => 'required|string',   
+            'berat_barang' => 'nullable|string', 
             'harga_beli' => 'nullable|numeric',
         ]);
 
         $namaBarang = $request->input('nama_barang');
-        $tipeBarang = $request->input('tipe_barang');   // AMBIL: tipe_barang
-        $beratBarang = $request->input('berat_barang'); // AMBIL: berat_barang
+        $tipeBarang = $request->input('tipe_barang');   
+        $beratBarang = $request->input('berat_barang'); 
         $hargaBeli = $request->input('harga_beli');
 
-        // PERUBAHAN KRITIS DI SINI: Tambahkan kondisi where untuk tipe_barang dan berat_barang
+        
         $query = Barang::where('nama_barang', $namaBarang);
 
-        // Tambahkan kondisi untuk tipe_barang
+        
         if (!empty($tipeBarang)) {
             $query->where('tipe_barang', $tipeBarang);
         }
 
-        // Tambahkan kondisi untuk berat_barang
-        // Perhatikan penanganan nilai 'N/A' atau kosong
+        
+        
         if (!empty($beratBarang) && $beratBarang !== 'N/A') {
             $query->where('berat_barang', $beratBarang);
         } else {
-            // Jika berat_barang adalah 'N/A' atau kosong, cari yang memang NULL atau kosong di DB
+            
             $query->where(function($q) {
                 $q->whereNull('berat_barang')->orWhere('berat_barang', '');
             });
@@ -261,8 +253,8 @@ class DashboardController extends Controller
 
     public function exportExcel()
     {
-        // Jika Anda ingin mengekspor data yang sama persis dengan tabel Monitoring Stok Barang:
-        // Anda perlu mengambil data dengan query agregasi yang sama
+        
+        
         $barangToExport = Barang::select(
             'nama_barang',
             'tipe_barang',
@@ -278,16 +270,16 @@ class DashboardController extends Controller
         ->orderBy('berat_barang')
         ->get();
 
-        // Format data agar sesuai dengan headings di ExcelExport (dan tambahkan formatting berat)
+        
         $formattedData = $barangToExport->map(function($item) {
             $berat = $item->berat_barang;
             $satuan = $item->satuan_unit;
-            $berat_display_formatted = ($berat !== null && $berat !== '') ? number_format((float)$berat, 2, '.', '') . ' ' . ($satuan ?? '') : 'N/A'; // Hilangkan 'N/A' ganda
+            $berat_display_formatted = ($berat !== null && $berat !== '') ? number_format((float)$berat, 2, '.', '') . ' ' . ($satuan ?? '') : 'N/A'; 
             $hargaBeliFormatted = $item->harga_beli ?? 'N/A';
             $hargaJualFormatted = $item->harga_jual ?? 'N/A';
 
             return [
-                'nama_barang' => $item->nama_barang, // Cocokkan dengan headings
+                'nama_barang' => $item->nama_barang, 
                 'tipe_barang' => $item->tipe_barang,
                 'total_stok' => $item->total_stok,
                 'berat_display_formatted' => $berat_display_formatted,
@@ -304,7 +296,7 @@ class DashboardController extends Controller
 
     public function exportPdf()
     {
-        // Ambil data yang sama dengan tabel
+        
         $barangAggregated = Barang::select(
                 'nama_barang',
                 'tipe_barang',
@@ -318,7 +310,7 @@ class DashboardController extends Controller
 
         $totalKeseluruhanBarang = $barangAggregated->sum('total_stok');
 
-        // Load view untuk PDF (buat file view baru!)
+        
         $pdf = Pdf::loadView('supervisor.pdf.monitoring_stok', [
             'barangAggregated' => $barangAggregated,
             'totalKeseluruhanBarang' => $totalKeseluruhanBarang
@@ -421,7 +413,7 @@ class DashboardController extends Controller
         $transaksis = $transaksis->get();
         $pengajuans = $pengajuans->get();
 
-        // Gabungkan lalu urutkan terbaru
+        
         $riwayatGabung = $transaksis->merge($pengajuans)->sortByDesc('created_at');
 
         return view('supervisor.riwayat', compact('judul', 'riwayatGabung'));

@@ -83,15 +83,12 @@
                                             <th>Nama Barang</th>
                                             <th>Tipe Barang</th>
                                             <th>Kondisi</th>
-                                            <th>Tanggal Masuk</th>
-                                            {{-- Tambahkan kolom lain sesuai data barang --}}
+                                            <th>Tanggal Masuk</th>                                           
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php $i = 1; ?>
-                                        {{-- Loop utama untuk setiap jenis barang unik --}}
+                                        <?php $i = 1; ?>                                       
                                         @forelse ($barangTidakBagus as $item)
-                                            {{-- Loop bersarang untuk mengulang baris sebanyak jumlah_barang --}}
                                             @for ($j = 0; $j < $item->jumlah_barang; $j++)
                                                 <tr>
                                                     <td><?= $i++ ?></td>
@@ -153,7 +150,6 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         $(document).ready(function() {
-            // Inisialisasi DataTables
             $('#dataTable').DataTable({
                 "pageLength": 10,
                 "lengthMenu": [
@@ -166,9 +162,8 @@
                 "ordering": false
             });
 
-            // LOGIKA KONFIRMASI SWEETALERT UNTUK KIRIM LAPORAN KONDISI
             $('#sendConditionReportForm').on('submit', function(e) {
-                e.preventDefault(); // Mencegah form submit default
+                e.preventDefault(); 
 
                 var form = $(this);
                 var message = 'Apakah Anda yakin ingin mengirim laporan kondisi barang ini ke Supervisor?';
@@ -178,13 +173,13 @@
                     text: message,
                     icon: 'question',
                     showCancelButton: true,
-                    confirmButtonColor: '#ffc107', // Kuning
+                    confirmButtonColor: '#ffc107', 
                     cancelButtonColor: '#6c757d',
                     confirmButtonText: 'Ya, Kirim!',
                     cancelButtonText: 'Batal'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        form.off('submit').submit(); // Submit form setelah konfirmasi
+                        form.off('submit').submit(); 
                     }
                 });
             });

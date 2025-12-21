@@ -238,25 +238,23 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         $(function () {
-            // Edit modal data population
             $('.edit-master-btn').on('click', function () {
-                var data = $(this).data(); // Get all data-attributes
+                var data = $(this).data();
 
                 $('#edit_master_id').val(data.id);
                 $('#edit_master_category').val(data.category);
                 $('#edit_label_display').val(data.labelDisplay);
                 $('#edit_master_value').val(data.value);
-                $('#edit_input_type').val(data.inputType); // Set value for select
+                $('#edit_input_type').val(data.inputType);
                 $('#edit_field_order').val(data.fieldOrder);
-                $('#edit_is_required').prop('checked', data.isRequired == 1); // For is_required
-                $('#edit_is_active').prop('checked', data.isActive == 1); // For is_active
+                $('#edit_is_required').prop('checked', data.isRequired == 1);
+                $('#edit_is_active').prop('checked', data.isActive == 1); 
 
                 var url = "{{ route('supervisor.master.data.update', ':id') }}";
                 url = url.replace(':id', data.id);
                 $('#updateMasterForm').attr('action', url);
             });
 
-            // Form submission for update (using AJAX)
             $('#updateMasterForm').on('submit', function(e) {
                 e.preventDefault();
                 var form = $(this);
@@ -302,7 +300,6 @@
                 });
             });
 
-            // Form submission for add (using AJAX)
             $('#addMasterDataForm').on('submit', function(e) {
                 e.preventDefault();
                 var form = $(this);
@@ -347,8 +344,7 @@
                     }
                 });
             });
-
-            // LOGIKA KONFIRMASI HAPUS DENGAN SWEETALERT
+            
             $('.delete-item-confirm').on('submit', function(e) {
                 e.preventDefault();
                 var form = $(this);
