@@ -58,6 +58,8 @@ Route::middleware(['api'])->group(function(){
         });
 
         Route::post('/pengajuan-barangs', [StaffDashboardController::class, 'pengajuanBarangs']);
+
+        Route::put('/user/update', [UserController::class, 'update']);
     });
 
     Route::middleware(['auth:sanctum', 'role:supervisor_umum'])->group(function () {
