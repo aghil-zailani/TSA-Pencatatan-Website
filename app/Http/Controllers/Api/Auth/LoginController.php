@@ -28,10 +28,8 @@ class LoginController extends Controller
                 'id' => ['ID Perusahaan atau Password salah.'],
             ]);
         }
-
         
         $token = $user->createToken('api-token-'.$user->id)->plainTextToken;
-
         
         $userData = [
             'id' => $user->id, 
@@ -58,39 +56,36 @@ class LoginController extends Controller
 
     public function loginAndroid(Request $request)
     {
-        
         $request->validate([
-            'username' => 'required|string', 
+            'username' => 'required|string',
             'password' => 'required|string',
         ]);
 
-        
-        $user = User::where('username', $request->username)->first(); 
+        $user = User::where('username', $request->username)->first();
 
-        
         if (! $user || ! Hash::check($request->password, $user->password)) {
-            
             throw ValidationException::withMessages([
                 'username' => ['Username atau Password salah.'],
             ]);
         }
 
-        
-        $token = $user->createToken('api-token-'.$user->id)->plainTextToken;
+        if ($user->role !== 'inspektor') {
+            return response()->json([
+                'message' => 'Akun ini tidak memiliki akses ke aplikasi mobile.'
+            ], 403);
+        }
 
-        
-        $userData = [
-            'id' => $user->id,
-            'username' => $user->username,
-            'email' => $user->email,
-            'role' => $user->role,
-        ];
+        $token = $user->createToken('api-token-'.$user->id)->plainTextToken;
 
         return response()->json([
             'message' => 'Login berhasil',
-            'user' => $userData,
-            'token_type' => 'Bearer',
+            'user' => [
+                'id' => $user->id,
+                'username' => $user->username,
+                'email' => $user->email,
+                'role' => $user->role,
+            ],
             'access_token' => $token,
-        ],200);
+        ], 200);
     }
 }

@@ -79,8 +79,7 @@
                                                         </div>
                                                     </div>
                                                     <div class="text-end">
-                                                        @php
-                                    
+                                                        @php               
                                                             $stockLevel = $item->total_stok;
                                                             $badgeClass = $stockLevel <= 2 ? 'bg-danger' : ($stockLevel <= 5 ? 'bg-warning text-dark' : 'bg-info');
                                                         @endphp
@@ -135,7 +134,7 @@
                                                 Nama Barang
                                             </label>
                                             <label class="form-check mb-2">
-                                                <input class="form-check-input" type="checkbox" name="columns[]" value="tipe_barang" {{ in_array('tipe_barang', $selectedColumns) ? 'checked' : '' }} >
+                                                <input class="form-check-input" type="checkbox" name="columns[]" value="tipe_barang_kategori" {{ in_array('tipe_barang_kategori', $selectedColumns) ? 'checked' : '' }} >
                                                 Jenis Barang
                                             </label>
                                             <label class="form-check mb-2">
@@ -184,7 +183,7 @@
                                             @if(in_array('nama_barang', $selectedColumns))
                                                 <th>Nama Barang</th>
                                             @endif
-                                            @if(in_array('tipe_barang', $selectedColumns))
+                                            @if(in_array('tipe_barang_kategori', $selectedColumns))
                                                 <th>Jenis Barang</th>
                                             @endif
                                             @if(in_array('total_stok', $selectedColumns))
@@ -210,8 +209,8 @@
                                                 @if(in_array('nama_barang', $selectedColumns))
                                                     <td>{{ $item->nama_barang }}</td>
                                                 @endif
-                                                @if(in_array('tipe_barang', $selectedColumns))
-                                                    <td>{{ $item->tipe_barang }}</td>
+                                                @if(in_array('tipe_barang_kategori', $selectedColumns))
+                                                    <td>{{ $item->tipe_barang_kategori }}</td>
                                                 @endif
                                                 @if(in_array('total_stok', $selectedColumns))
                                                     <td>{{ $item->total_stok }}</td>
@@ -235,7 +234,7 @@
                                                         data-berat-barang="{{ $item->berat_barang }}"
                                                         data-harga-beli="{{ $item->harga_beli }}"
                                                         data-harga-jual="{{ $item->harga_jual }}">
-                                                        Edit Harga
+                                                        Edit Harga Beli
                                                     </button>
                                                 </td>
                                             </tr>

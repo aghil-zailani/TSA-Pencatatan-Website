@@ -194,10 +194,6 @@ class SupervisorUmumBarangController extends Controller
         }
     }
 
-
-    /**
-     * Validasi hak akses user terhadap barang
-     */
     private function validateAccess($barang, $user)
     {
         $userRole = strtolower(trim($user->role));

@@ -41,8 +41,6 @@ class LoginController extends Controller
                 return redirect()->intended(route('supervisor_umum.riwayat'));
             }
             
-        
-            return redirect()->intended(route('home'));
         }
 
     

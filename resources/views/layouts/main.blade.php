@@ -20,9 +20,7 @@
     <link rel="stylesheet" href="{{ url('dist/assets/css/main/app-dark.css') }}">
     <link rel="shortcut icon" href="{{ url('logo/tsa.png') }}" type="image/x-icon">
     <link rel="shortcut icon" href="{{ url('logo/tsa.png') }}" type="image/png">
-    <link href="{{ url('/vendor/datatables/dataTables.bootstrap4.min.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
-    <!-- css me -->
 
     <link rel="shortcut icon" href="logo/tsa.png" type="image/png" />
     <link rel="stylesheet" href="{{ url('dist/assets/css/shared/iconly.css') }}" />
@@ -103,7 +101,6 @@
             transform: translate(0, 0);
         }
 
-        /* Image hover effect */
         #foto_preview {
             transition: transform 0.3s ease;
             cursor: pointer;
@@ -111,6 +108,57 @@
 
         #foto_preview:hover {
             transform: scale(1.05);
+        }
+        
+        .qr-card-container {
+            text-align: center;
+            padding: 10px;
+        }
+
+        .qr-product-name {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 5px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .qr-subtitle {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-bottom: 20px;
+        }
+
+        .qr-image-wrapper {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px dashed #cbd5e0;
+            display: inline-block;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease;
+        }
+
+        .qr-image-wrapper:hover {
+            transform: scale(1.02);
+            border-color: #3498db;
+        }
+
+        .qr-img-display {
+            width: 200px;
+            height: 200px;
+            object-fit: contain;
+        }
+
+        .swal2-confirm-custom {
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            font-size: 1rem;
+            transform: scale(0.98) !important;
         }
 </style>
 
@@ -231,13 +279,7 @@
                                 <li class="sidebar-item {{ request()->is('staff-gudang/buat-laporan*') ? 'active' : '' }}">
                                     <a href="{{ route('staff_gudang.buat_laporan') }}" class='sidebar-link'>
                                         <i class="bi bi-box-arrow-in-down"></i>
-                                        <span>Buat Laporan</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item {{ request()->is('staff-gudang/form-pengajuan*') ? 'active' : '' }}">
-                                    <a href="{{ route('staff_gudang.form_pengajuan') }}" class='sidebar-link'>
-                                        <i class="bi bi-box-arrow-up"></i>
-                                        <span>Form Pengajuan</span>
+                                        <span>Laporan Barang Masuk</span>
                                     </a>
                                 </li>
                                 <li class="sidebar-item {{ request()->is('staff-gudang/riwayat-aktivitas*') ? 'active' : '' }}">
@@ -258,9 +300,8 @@
                     @endauth
                 </div>
                 <div class="sidebar-logout">
-                    <form onsubmit="return confirm('Apakah Anda Yakin Ingin Keluar?')" action="{{ route('logout') }}" id="logoutForm" action="{{ route('logout') }}" method="POST" class="d-inline">
+                    <form onsubmit="return confirm('Apakah Anda Yakin Ingin Keluar?')" action="{{ route('logout') }}" id="logoutForm" method="POST" class="d-inline">
                         @csrf
-                        {{-- Tambahkan id pada button --}}
                         <button type="submit" class="btn btn-danger w-100" id="logoutButton" style="cursor: pointer;">
                             <i class="bi bi-power"></i>
                             <span>Logout</span>
@@ -272,7 +313,6 @@
             </div>
         </div>
     </div>
-    <script src="{{ url('js/script.js') }}"></script>
 
     <!-- js me -->
     <script src="{{ url('dist/assets/js/app.js') }}"></script>
@@ -291,10 +331,6 @@
     <script src="{{ url('dist/assets/extensions/jquery/jquery.min.js') }}"></script>
     <script src="https://cdn.datatables.net/v/bs5/dt-1.12.1/datatables.min.js"></script>
     <script src="{{ url('/dist/assets/js/pages/datatables.js') }}"></script>
-    <script src="{{ url('/js/sb-admin-2.min.js') }}"></script>
-    <script src="{{ url('/vendor/datatables/jquery.dataTables.min.js') }}"></script>
-    <script src="{{ url('/vendor/datatables/dataTables.bootstrap4.min.js') }}"></script>
-    <script src="{{ url('/js/demo/datatables-demo.js') }}"></script>
     <!-- datatable -->
 
     <!-- js bootstrap -->

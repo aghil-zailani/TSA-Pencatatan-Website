@@ -26,7 +26,6 @@ class Transaksi extends Model
         'updated_at'
     ];
 
-    // Contoh relasi (jika ada)
     public function barang()
     {
         return $this->belongsTo(Barang::class, 'id_barang');

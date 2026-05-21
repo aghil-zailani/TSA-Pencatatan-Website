@@ -10,164 +10,208 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use App\Models\Barang; 
+use App\Models\LaporanAPK;
 use Illuminate\Support\Facades\Validator; 
 
 class BarangController extends Controller
 {
-    
-
     public function index()
     {
-        $currentUser = Auth::user();
-        if (!$currentUser) {
-            return response()->json(['error' => 'User not authenticated'], 401);
+        $user = Auth::user();
+
+        if ($user->role !== 'inspektor') {
+            return response()->json([
+                'message' => 'Anda tidak memiliki akses ke inventory.'
+            ], 403);
         }
 
-        $barangQuery = Barang::query();
+        $inventory = DB::table('qr_codes')
+            ->join('barangs', 'qr_codes.id_barang', '=', 'barangs.id_barang')
+            ->select(
+                'qr_codes.id_qr_code',
+                'qr_codes.nomor_identifikasi',
+                'qr_codes.qr_code_path',
+                'qr_codes.tanggal_pembuatan',
 
-        
-        switch ($currentUser->role) {
-            case 'supervisor_umum':
-                
-                $barangQuery->where('created_by_role', 'supervisor_umum');
-                break;
-            case 'inspektor':
-                
-                $barangQuery->where('created_by_role', 'supervisor_umum');
-                if (!empty($currentUser->supervisor_id)) {
-                    $barangQuery->where('created_by_id', $currentUser->supervisor_id);
-                }
-                break;
-            case 'staff_gudang':
-                
-                $barangQuery->where('created_by_role', 'staff_gudang')
-                            ->where('created_by_id', $currentUser->id);
-                break;
-            default:
-                
-                return response()->json([
-                    'message' => 'Anda tidak memiliki akses ke data ini.'
-                ], 403);
-        }
-
-        
-        $barangs = $barangQuery->get();
+                'barangs.id_barang',
+                'barangs.nama_barang',
+                'barangs.tipe_barang_kategori',
+                'barangs.kondisi',
+                'barangs.lokasi',
+                'barangs.merek_barang',
+                'barangs.ukuran_barang',
+                'barangs.status'
+            )
+            ->whereIn('barangs.tipe_barang_kategori', ['APAR', 'HYDRANT'])
+            ->orderBy('barangs.tipe_barang_kategori')
+            ->orderBy('barangs.nama_barang')
+            ->get();
 
         return response()->json([
-            'message' => 'List barang berhasil dimuat',
-            'data' => $barangs
+            'message' => 'List inventory (QR based)',
+            'data' => $inventory
         ], 200);
     }
 
+
     public function ringkasan(Request $request)
     {
-        try {$currentUser = Auth::user();
-            if (!$currentUser) {
+        try {
+            $user = Auth::user();
+            if (!$user) {
                 return response()->json(['error' => 'User not authenticated'], 401);
             }
 
-            $barangQuery = Barang::query();
-
-            
-            switch ($currentUser->role) {
-                case 'supervisor_umum':
-                    $barangQuery->where('created_by_role', 'supervisor_umum');
-                    break;
-                case 'inspektor':
-                    $barangQuery->where('created_by_role', 'supervisor_umum');
-                    if (!empty($currentUser->supervisor_id)) {
-                        $barangQuery->where('created_by_id', $currentUser->supervisor_id);
-                    }
-                    break;
-                case 'staff_gudang':
-                    $barangQuery->where('created_by_role', 'staff_gudang')
-                                ->where('created_by_id', $currentUser->id);
-                    break;
-                default:
-                    return response()->json(['total' => 0, 'baik' => 0, 'perlu_cek' => 0]);
-            }
-
-            
             $kondisiBaik = ['baik', 'bagus', 'oke', 'good', 'Baik', 'Bagus', 'Oke', 'Good'];
 
-            $total = $barangQuery->count();
-            $baik = (clone $barangQuery)->whereIn('kondisi', $kondisiBaik)->count();
+            $total = QrCode::count();
+            $baik = QrCode::join('barangs', 'qr_codes.id_barang', '=', 'barangs.id_barang')
+                ->whereIn('barangs.kondisi', $kondisiBaik)
+                ->count();
+
             $perluCek = $total - $baik;
 
-            $response = [
+            $aparTotal = QrCode::join('barangs', 'qr_codes.id_barang', '=', 'barangs.id_barang')
+                ->where('barangs.tipe_barang_kategori', 'apar')
+                ->count();
+
+            $aparBaik = QrCode::join('barangs', 'qr_codes.id_barang', '=', 'barangs.id_barang')
+                ->where('barangs.tipe_barang_kategori', 'apar')
+                ->whereIn('barangs.kondisi', $kondisiBaik)
+                ->count();
+
+
+            $hydrantTotal = QrCode::join('barangs', 'qr_codes.id_barang', '=', 'barangs.id_barang')
+                ->where('barangs.tipe_barang_kategori', 'hydrant')
+                ->count();
+
+            $hydrantBaik = QrCode::join('barangs', 'qr_codes.id_barang', '=', 'barangs.id_barang')
+                ->where('barangs.tipe_barang_kategori', 'hydrant')
+                ->whereIn('barangs.kondisi', $kondisiBaik)
+                ->count();
+
+            return response()->json([
                 'total' => $total,
                 'baik' => $baik,
                 'perlu_cek' => $perluCek,
-                'user_role' => $currentUser->role
-            ];
 
-            
-            if ($currentUser->role === 'staff_gudang') {
-                $aparTotal = (clone $barangQuery)->where('tipe_barang', 'APAR')->count();
-                $aparBaik = (clone $barangQuery)->where('tipe_barang', 'APAR')->whereIn('kondisi', $kondisiBaik)->count();
-
-                $hydrantTotal = (clone $barangQuery)->where('tipe_barang', 'HYDRANT')->count();
-                $hydrantBaik = (clone $barangQuery)->where('tipe_barang', 'HYDRANT')->whereIn('kondisi', $kondisiBaik)->count();
-
-                $response['apar'] = [
+                'apar' => [
                     'total' => $aparTotal,
                     'baik' => $aparBaik,
-                    'perlu_cek' => $aparTotal - $aparBaik
-                ];
+                    'perlu_cek' => $aparTotal - $aparBaik,
+                ],
 
-                $response['hydrant'] = [
+                'hydrant' => [
                     'total' => $hydrantTotal,
                     'baik' => $hydrantBaik,
-                    'perlu_cek' => $hydrantTotal - $hydrantBaik
-                ];
-            }
+                    'perlu_cek' => $hydrantTotal - $hydrantBaik,
+                ],
 
-            return response()->json($response);
+                'user_role' => $user->role
+            ], 200);
 
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Internal server error', 'message' => $e->getMessage()], 500);
+            return response()->json([
+                'error' => 'Internal server error',
+                'message' => $e->getMessage()
+            ], 500);
         }
     }
+
+
 
     public function showByQrCode(Request $request, $qrCodeData)
     {
-        
-        $qrCode = QrCode::with('barang')->where('nomor_identifikasi', $qrCodeData)->first();
+        Log::info("🔍 RAW Scan QR: $qrCodeData");
 
-        Log::info("QR code dicari: $qrCodeData");
+        // ===== Extract Nomor Identifikasi =====
+        $nomorIdentifikasi = null;
 
-        if ($qrCode && $qrCode->barang) {
-            $barang = $qrCode->barang;
+        foreach (explode("\n", $qrCodeData) as $line) {
+            if (stripos($line, 'nomor identifikasi') !== false) {
+                $parts = explode(':', $line);
+                $nomorIdentifikasi = trim(end($parts));
+                break;
+            }
+        }
 
-            
+        if (!$nomorIdentifikasi) {
+            $nomorIdentifikasi = trim($qrCodeData);
+        }
+
+        $nomorIdentifikasi = strtoupper(preg_replace('/\s+/', '', $nomorIdentifikasi));
+        Log::info("✅ CLEAN QR ID: $nomorIdentifikasi");
+
+        // ===== Ambil QR + Barang =====
+        $qrCode = QrCode::with('barang')
+            ->where('nomor_identifikasi', $nomorIdentifikasi)
+            ->first();
+
+        if (!$qrCode || !$qrCode->barang) {
             return response()->json([
-                'status' => 'exists', 
-                'message' => 'Data barang ditemukan',
-                'data' => [
-                    'id_barang' => $barang->id_barang,
-                    'nama_barang' => $barang->nama_barang,
-                    'jenis_barang' => $barang->jenis_barang, 
-                    'lokasi_barang' => $barang->lokasi_barang,
-                    'qr_code_data' => $qrCodeData,
-                    'tipe_barang' => $barang->tipe_barang,
-                    'jumlah_barang' => $barang->jumlah_barang,
-                    'kondisi' => $barang->kondisi,
-                    
-                    'created_by_role' => $barang->created_by_role ?? null,
-                    'created_by_id' => $barang->created_by_id ?? null,
-                ]
-            ], 200);
-        } else {
-            return response()->json([
-                'status' => 'not_found', 
-                'message' => 'QR Code tidak dikenali atau tidak terdaftar.'
+                'status' => 'not_recognized',
+                'message' => 'QR Code atau barang tidak dikenali.'
             ], 404);
         }
+
+        $barang = $qrCode->barang;
+
+        // ===== Validasi kategori =====
+        if (!in_array(strtoupper($barang->tipe_barang_kategori), ['APAR', 'HYDRANT'])) {
+            return response()->json([
+                'status' => 'invalid_type',
+                'message' => 'Barang bukan APAR atau HYDRANT.'
+            ], 400);
+        }
+
+        // ===== Ambil inspeksi terakhir =====
+        $laporan = LaporanAPK::where('id_barang', $barang->id_barang)
+            ->orderBy('tanggal_inspeksi', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        $inspectionStatus = [
+            'is_due' => true,
+            'status_text' => 'Siap inspeksi',
+            'last_inspection' => null,
+            'next_inspection' => null,
+        ];
+
+        if ($laporan) {
+            $lastDate = \Carbon\Carbon::parse($laporan->tanggal_inspeksi);
+            $nextDate = $lastDate->copy()->addMonths(6); // contoh 1 bulan
+
+            $inspectionStatus = [
+                'is_due' => now()->gte($nextDate),
+                'status_text' => now()->gte($nextDate)
+                    ? 'Sudah waktunya inspeksi'
+                    : 'Belum waktunya inspeksi',
+                'last_inspection' => $lastDate->format('d-m-Y'),
+                'next_inspection' => $nextDate->format('d-m-Y'),
+            ];
+        }
+
+        // ===== Response =====
+        return response()->json([
+            'status' => 'valid',
+            'message' => 'Barang valid',
+            'data' => [
+                'id_barang' => $barang->id_barang,
+                'nama_barang' => $barang->nama_barang,
+                'tipe_barang_kategori' => $barang->tipe_barang_kategori,
+                'kondisi' => $barang->kondisi,
+                'lokasi_barang' => $barang->lokasi_barang ?? null,
+                'qr_code' => $qrCode->nomor_identifikasi,
+                'inspection_status' => $inspectionStatus,
+            ]
+        ], 200);
     }
+
+
 
     public function store(Request $request)
     {
-        
+
         $validatedData = $request->validate([
             'nama_barang' => 'required|string|max:255',
             'jumlah_barang' => 'required|integer|min:0',
@@ -179,7 +223,6 @@ class BarangController extends Controller
             'ukuran_barang' => 'nullable|string',
         ]);
 
-        
         $barang = Barang::create($validatedData);
 
         return response()->json([
@@ -187,4 +230,89 @@ class BarangController extends Controller
             'data' => $barang
         ], 201);
     }
+
+    public function show($id)
+    {
+        $barang = Barang::with([
+            'laporanTerakhir.user:id,username'
+        ])->findOrFail($id);
+
+        $laporan = $barang->laporanTerakhir;
+
+        return response()->json([
+            'message' => 'Detail barang',
+            'data' => $barang
+        ]);
+    }
+
+    public function detailByQr($qrCode)
+    {
+        $qr = \DB::table('qr_codes')
+            ->where('nomor_identifikasi', $qrCode)
+            ->first();
+
+        if (!$qr) {
+            return response()->json([
+                'message' => 'QR Code tidak ditemukan'
+            ], 404);
+        }
+
+
+        $barang = \DB::table('barangs')
+            ->where('id_barang', $qr->id_barang)
+            ->first();
+
+        if (!$barang) {
+            return response()->json([
+                'message' => 'Barang tidak ditemukan'
+            ], 404);
+        }
+
+        // 3. Ambil laporan terakhir
+        $lastInspection = \DB::table('laporan_apk as l')
+            ->leftJoin('users as u', 'u.id', '=', 'l.id_user')
+            ->where('l.id_barang', $barang->id_barang)
+            ->orderByDesc('l.tanggal_inspeksi')
+            ->select(
+                'l.tanggal_inspeksi',
+                'l.kondisi_fisik',
+                'l.status',
+                'l.foto',
+                'l.lokasi_alat',
+                'l.tindakan',
+                'u.username',
+                'l.selang',
+                'l.pressure_gauge',
+                'l.safety_pin'
+            )
+            ->first();
+
+        return response()->json([
+            'message' => 'Detail barang',
+            'data' => [
+                'id_barang'   => $barang->id_barang,
+                'qr_code'     => $qr->nomor_identifikasi, 
+                'nama_barang' => $barang->nama_barang,
+                'tipe_barang' => $barang->tipe_barang,
+                'tipe_barang_kategori' => $barang->tipe_barang_kategori,
+                'kondisi'     => $barang->kondisi,
+
+                'laporan_terakhir' => $lastInspection ? [
+                    'tanggal_inspeksi' => $lastInspection->tanggal_inspeksi,
+                    'kondisi_fisik'    => $lastInspection->kondisi_fisik,
+                    'status'           => $lastInspection->status,
+                    'foto'             => $lastInspection->foto,
+                    'lokasi_alat'      => $lastInspection->lokasi_alat,
+                    'tindakan'         => $lastInspection->tindakan,
+                    'username'         => $lastInspection->username,
+                    'selang'           => $lastInspection->selang,
+                    'pressure_gauge'   => $lastInspection->pressure_gauge,
+                    'safety_pin'       => $lastInspection->safety_pin,
+                ] : null
+            ]
+        ]);
+    }
+
+
+
 }

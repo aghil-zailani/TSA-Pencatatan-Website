@@ -98,21 +98,25 @@
                           @php
                               $detailUrl = '';
                               $modalTitle = '';
+                              $type = '';
                               if ($item instanceof \App\Models\Transaksi) {
                                   $reportId = $item->id_transaksi;
                                   $modalTitle = 'Detail Laporan Keluar: ' . $reportId;
                                   $detailUrl = route('supervisor.riwayat.detail_keluar', $reportId);
+                                  $type = 'keluar';
                               } elseif ($item instanceof \App\Models\PengajuanBarang) {
                                   $reportId = $item->report_id;
                                   $modalTitle = 'Detail Laporan Masuk: ' . $reportId;
                                   $detailUrl = route('supervisor.riwayat.detail_masuk', $reportId);
+                                  $type = 'masuk';
                               }
                           @endphp
                           <button type="button" class="btn btn-info btn-sm view-detail-btn" 
                                   data-bs-toggle="modal" 
                                   data-bs-target="#detailLaporanModal"
                                   data-url="{{ $detailUrl }}"
-                                  data-title="{{ $modalTitle }}">
+                                  data-title="{{ $modalTitle }}"
+                                  data-type="{{ $type }}">
                               <i class="bi bi-eye-fill"></i> Detail
                           </button>
                         </td>
@@ -150,14 +154,7 @@
                 <div id="modalContent" class="d-none">
                     <table class="table table-bordered">
                         <thead>
-                            <tr>
-                                <th>No</th>
-                                <th>Nama Barang</th>
-                                <th>Jumlah</th>
-                                <th>Kategori</th>
-                                <th>Catatan Penolakan</th>
-                                {{-- Anda bisa menambahkan header lain di sini jika perlu --}}
-                            </tr>
+                            <tr id="modalHeaderRow"></tr>
                         </thead>
                         <tbody id="detailLaporanTbody">
                             <!-- Konten detail akan dimuat di sini oleh JavaScript -->
@@ -196,54 +193,78 @@
           });
       }).draw();
 
-      // ===== TAMBAHAN: Script untuk Modal Detail Laporan =====
       $('.view-detail-btn').on('click', function() {
-          // Ambil data langsung dari tombol
-          var url = $(this).data('url');
-          var title = $(this).data('title');
-          
-          var modalTitle = $('#detailLaporanModalLabel');
-          var modalLoading = $('#modalLoading');
-          var modalContent = $('#modalContent');
-          var modalTbody = $('#detailLaporanTbody');
-          
-          // Reset tampilan modal
-          modalTbody.empty();
-          modalContent.addClass('d-none');
-          modalLoading.removeClass('d-none');
-          modalTitle.text(title); // Set judul modal
+        var url = $(this).data('url');
+        var title = $(this).data('title');
+        var type = $(this).data('type');
 
-          // Panggil data detail via AJAX menggunakan URL yang sudah jadi
-          $.ajax({
-              url: url,
-              type: 'GET',
-              success: function(response) {
-                  if (response.success && response.data.length > 0) {
-                      var content = '';
-                      $.each(response.data, function(index, item) {
-                          content += '<tr>';
-                          content += '<td>' + (index + 1) + '</td>';
-                          content += '<td>' + (item.nama_barang || '-') + '</td>';
-                          content += '<td>' + (item.jumlah_barang || '-') + '</td>';
-                          content += '<td>' + (item.tipe_barang_kategori || '-') + '</td>';
-                          content += '<td>' + (item.catatan_penolakan || '-') + '</td>';
-                          content += '</tr>';
-                      });
-                      modalTbody.html(content);
-                  } else {
-                      modalTbody.html('<tr><td colspan="3" class="text-center">Data detail tidak ditemukan.</td></tr>');
-                  }
-                  
-                  modalLoading.addClass('d-none');
-                  modalContent.removeClass('d-none');
-              },
-              error: function() {
-                  modalTbody.html('<tr><td colspan="3" class="text-center">Gagal memuat data. Silakan coba lagi.</td></tr>');
-                  modalLoading.addClass('d-none');
-                  modalContent.removeClass('d-none');
-              }
-          });
-      });
+        var modalTitle = $('#detailLaporanModalLabel');
+        var modalLoading = $('#modalLoading');
+        var modalContent = $('#modalContent');
+        var modalTbody = $('#detailLaporanTbody');
+        var modalHeader = $('#modalHeaderRow');
+
+        modalTitle.text(title);
+        modalTbody.empty();
+        modalHeader.empty();
+
+        modalContent.addClass('d-none');
+        modalLoading.removeClass('d-none');
+
+        if (type === 'keluar') {
+            modalHeader.html(`
+                <th>No</th>
+                <th>Nama Barang</th>
+                <th>Jumlah</th>
+                <th>Tujuan</th>
+                <th>Catatan Penolakan</th>
+            `);
+        } else {
+            modalHeader.html(`
+                <th>No</th>
+                <th>Nama Barang</th>
+                <th>Jumlah</th>
+                <th>Kategori</th>
+                <th>Catatan Penolakan</th>
+            `);
+        }
+
+        $.ajax({
+            url: url,
+            type: 'GET',
+            success: function(response) {
+                var content = '';
+
+                $.each(response.data, function(index, item) {
+                    content += '<tr>';
+
+                    if (type === 'keluar') {
+                        content += `
+                            <td>${index + 1}</td>
+                            <td>${item.nama_barang ?? '-'}</td>
+                            <td>${item.jumlah_barang ?? '-'}</td>
+                            <td>${item.keterangan ?? '-'}</td>
+                            <td>${item.catatan_penolakan ?? '-'}</td>
+                        `;
+                    } else {
+                        content += `
+                            <td>${index + 1}</td>
+                            <td>${item.nama_barang ?? '-'}</td>
+                            <td>${item.jumlah_barang ?? '-'}</td>
+                            <td>${item.tipe_barang_kategori ?? '-'}</td>
+                            <td>${item.catatan_penolakan ?? '-'}</td>
+                        `;
+                    }
+
+                    content += '</tr>';
+                });
+
+                modalTbody.html(content);
+                modalLoading.addClass('d-none');
+                modalContent.removeClass('d-none');
+            }
+        });
+    });
     });
   </script>
 </body>

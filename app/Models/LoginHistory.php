@@ -15,12 +15,10 @@ class LoginHistory extends Model
         'user_agent',
         'login_at',
     ];
-
-    // Menonaktifkan updated_at karena kita hanya perlu login_at
+  
     const UPDATED_AT = null;
-    const CREATED_AT = 'login_at'; // Menggunakan login_at sebagai timestamp pembuatan
+    const CREATED_AT = 'login_at'; 
 
-    // Relasi ke model User
     public function user()
     {
         return $this->belongsTo(User::class);

@@ -11,7 +11,7 @@ class UserController extends Controller
 {
     public function update(Request $request)
     {
-        $user = $request->user(); 
+        $user = $request->user();
 
         $rules = [];
 
@@ -24,7 +24,7 @@ class UserController extends Controller
             ];
         }
 
-        $rules['password'] = ['sometimes', 'required', 'min:6'];
+        $rules['password'] = ['sometimes', 'required', 'min:4'];
 
         $validated = $request->validate($rules);
 

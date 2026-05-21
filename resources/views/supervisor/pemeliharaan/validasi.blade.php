@@ -63,7 +63,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="6" class="text-center text-muted">Tidak ada laporan pemeliharaan.</td>
+                                            <td colspan="7" class="text-center text-muted">Tidak ada laporan pemeliharaan.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
@@ -209,7 +209,7 @@
                                                     </button>
                                                 </div>
                                             </div>
-                                        </div>
+                                        </div>  
 
                                         <!-- Validation Section -->
                                         <div>
@@ -234,7 +234,9 @@
                                                     Validasi</label>
                                                 <textarea name="catatan_validasi" id="catatan_validasi" rows="4"
                                                     class="form-control"
-                                                    placeholder="Tambahkan catatan validasi (opsional)..."></textarea>
+                                                    placeholder="Tidak diperlukan jika laporan diterima"
+                                                    disabled></textarea>
+
                                                 <div class="form-text">
                                                     <small class="text-muted">Berikan penjelasan jika diperlukan</small>
                                                 </div>
@@ -279,8 +281,42 @@
     <!-- DataTables CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
 
-    <!-- Custom Styles untuk Modal -->
+    <!-- Custom Styles untuk Modal dan Badge Kondisi -->
     <style>
+        /* Badge Kondisi - Menggunakan !important untuk memastikan style terapply */
+        .kondisi-badge {
+            display: inline-block;
+            font-size: 0.85rem !important;
+            padding: 0.5em 1em !important;
+            border-radius: 0.5rem !important;
+            font-weight: 600 !important;
+            text-transform: capitalize;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        /* Override Bootstrap badge defaults */
+        .badge.bg-success {
+            background-color: #28a745 !important;
+            color: #ffffff !important;
+        }
+
+        .badge.bg-warning {
+            background-color: #ffc107 !important;
+            color: #212529 !important;
+        }
+
+        .badge.bg-danger {
+            background-color: #dc3545 !important;
+            color: #ffffff !important;
+        }
+
+        .badge.bg-secondary {
+            background-color: #6c757d !important;
+            color: #ffffff !important;
+        }
+
+        /* Info Item Styles */
         .info-item {
             margin-bottom: 1rem;
         }
@@ -294,6 +330,7 @@
             color: #495057;
         }
 
+        /* Modal Styles */
         .modal-xl {
             max-width: 1200px;
         }
@@ -326,7 +363,6 @@
             border-right: 2px solid #e9ecef !important;
         }
 
-        /* Smooth transitions */
         .modal.fade .modal-dialog {
             transform: translate(0, -50px);
             transition: all 0.3s ease-out;
@@ -336,7 +372,6 @@
             transform: translate(0, 0);
         }
 
-        /* Image hover effect */
         #foto_preview {
             transition: transform 0.3s ease;
             cursor: pointer;
@@ -344,6 +379,11 @@
 
         #foto_preview:hover {
             transform: scale(1.05);
+        }
+
+        /* Ensure table cell alignment */
+        #pemeliharaanTable tbody td {
+            vertical-align: middle;
         }
     </style>
 @endpush
@@ -361,7 +401,6 @@
 
     <script>
         $(document).ready(function () {
-            // Initialize DataTable
             $('#pemeliharaanTable').DataTable({
                 pageLength: 10,
                 lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Semua"]],
@@ -385,31 +424,26 @@
                 }
             });
 
-            // Modal Validasi Handler
             $('.btnValidasi').on('click', function () {
                 const id = $(this).data('id');
                 console.log('ID yang diklik:', id);
 
                 const modal = new bootstrap.Modal(document.getElementById('modalValidasi'));
 
-                // Validasi ID
                 if (!id) {
                     console.error('ID tidak ditemukan pada button');
                     alert('Error: ID laporan tidak valid');
                     return;
                 }
 
-                // Reset form and show loading
                 $('#formValidasi')[0].reset();
                 $('#formValidasi').attr('action', `/supervisor/pemeliharaan-validasi/${id}`);
                 $('#loadingIndicator').show();
                 $('#laporanDetail').hide();
                 $('#submitBtn').prop('disabled', true);
 
-                // Show modal
                 modal.show();
 
-                // Fetch data via AJAX
                 const ajaxUrl = `/supervisor/laporan/${id}`;
                 console.log('AJAX URL:', ajaxUrl);
 
@@ -424,11 +458,9 @@
                     success: function (data) {
                         console.log('Data berhasil diterima:', data);
 
-                        // Hide loading and show content
                         $('#loadingIndicator').hide();
                         $('#laporanDetail').show();
 
-                        // Populate modal with data
                         $('#nama_barang_text').text(data.nama_barang || '-');
                         $('#tipe_barang_text').text(data.tipe_barang || '-');
                         $('#lokasi_alat_text').text(data.lokasi_alat || '-');
@@ -437,7 +469,6 @@
                         $('#tindakan_text').text(data.tindakan || '-');
                         $('#catatan_tindakan_text').text(data.catatan_tindakan || '-');
 
-                        // Handle foto
                         let fotoSrc = '{{ asset('storage') }}/foto_laporan/default.jpg';
 
                         if (data.foto) {
@@ -447,7 +478,6 @@
                         $('#foto_preview').attr('src', fotoSrc);
                         $('#fullscreenImage').attr('src', fotoSrc);
 
-                        // Show APAR specific fields if needed
                         if (data.tipe_barang && data.tipe_barang.toLowerCase() === 'apar') {
                             $('#tambahan_apar_fields').show();
                             $('#selang_text').text(data.selang || '-');
@@ -508,16 +538,31 @@
                 });
             });
 
-            // Enable submit button when status is selected
-            $('#status').on('change', function () {
-                if ($(this).val()) {
-                    $('#submitBtn').prop('disabled', false);
-                } else {
-                    $('#submitBtn').prop('disabled', true);
+           $('#status').on('change', function () {
+                const status = $(this).val();
+
+                if (status === 'Ditolak') {
+                    $('#catatan_validasi')
+                        .prop('disabled', false)
+                        .prop('required', true)
+                        .attr('placeholder', 'WAJIB diisi jika laporan ditolak');
+                } 
+                else if (status === 'Diterima') {
+                    $('#catatan_validasi')
+                        .val('')
+                        .prop('disabled', true)
+                        .prop('required', false)
+                        .attr('placeholder', 'Tidak diperlukan jika laporan diterima');
+                } 
+                else {
+                    $('#catatan_validasi')
+                        .prop('disabled', true)
+                        .prop('required', false);
                 }
+
+                $('#submitBtn').prop('disabled', !status);
             });
 
-            // Form validation before submit
             $('#formValidasi').on('submit', function (e) {
                 const status = $('#status').val();
                 if (!status) {
@@ -527,13 +572,11 @@
                 }
             });
 
-            // Image click handler untuk foto preview
             $('#foto_preview').on('click', function () {
                 openImageModal();
             });
         });
 
-        // Function untuk membuka modal fullscreen image
         function openImageModal() {
             const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
             imageModal.show();

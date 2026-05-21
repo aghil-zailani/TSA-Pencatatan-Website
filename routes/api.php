@@ -27,9 +27,11 @@ Route::middleware(['api'])->group(function(){
         Route::post('/barang', [BarangController::class, 'store'])->name('barang.store');
         Route::get('/barangs', [BarangController::class, 'index']);
         Route::get('/barang/ringkasan', [BarangController::class, 'ringkasan']);
+        Route::get('/barang/detail/{qr}', [BarangController::class, 'detailByQr']);
         Route::get('/barang/{qrCodeData}', [BarangController::class, 'showByQrCode']);
 
         Route::post('/laporan-apk', [LaporanAPKController::class, 'store']);
+        Route::post('/laporan-apk/terakhir/{qrCode}', [LaporanAPKController::class, 'lastInspection']);
 
         Route::get('/notifikasi', [NotifikasiController::class, 'index']);
         Route::post('/notifikasi/generate', [NotifikasiController::class, 'generateNotifikasi']);
@@ -69,7 +71,7 @@ Route::middleware(['api'])->group(function(){
 
     Route::get('/form-configs/{form_type}', [MasterDataController::class, 'getFormConfigsForMobile']);
     Route::get('/master-data/{category_name}', [MasterDataController::class, 'getMasterDataByCategory']);
-    Route::post('/pengajuan-barangs', [StaffDashboardController::class, 'pengajuanBarangs']);
+    // Route::post('/pengajuan-barangs', [StaffDashboardController::class, 'pengajuanBarangs']);
     Route::post('/transaksi/barang-keluar', [StaffDashboardController::class, 'catatBarangKeluar']);
 
     Route::get('/test', function () {

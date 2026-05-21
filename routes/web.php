@@ -4,21 +4,19 @@ use App\Models\LaporanAPK;
 use App\Exports\LaporanExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Supervisor\Pemeliharaan;
 use App\Http\Controllers\Supervisor\MasterDataController;
 use App\Http\Controllers\Supervisor\DashboardController as SupervisorDashboardController;
 use App\Http\Controllers\StaffGudang\DashboardController as StaffGudangDashboardController;
-use App\Http\Controllers\LoginController as WebLoginController; // Alias untuk kejelasan
+use App\Http\Controllers\LoginController as WebLoginController; 
 use App\Http\Controllers\SupervisorUmum\SupervisorUmumController;
 use App\Http\Controllers\LaporanController;
 
+
 // Route untuk login WEB
 Route::get('/login', [WebLoginController::class, 'showLoginForm'])->name('login')->middleware('guest');
-Route::post('/login', [WebLoginController::class, 'login'])->middleware('guest'); // Akan ditangani oleh WebLoginController
+Route::post('/login', [WebLoginController::class, 'login'])->middleware('guest'); 
 Route::post('/logout', [WebLoginController::class, 'logout'])->name('logout')->middleware('auth');
-
-// Route::get('/home', [HomeController::class, 'index'])->name('home')->middleware('auth');
 
 Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->name('supervisor.')->group(function () {
     Route::get('/dashboard', [SupervisorDashboardController::class, 'index'])->name('dashboard');
@@ -77,6 +75,8 @@ Route::middleware(['auth', 'role:staff_gudang'])->prefix('staff-gudang')->name('
     Route::post('/monitoring-stok/update-harga', [StaffGudangDashboardController::class, 'updateHarga'])->name('updateHarga');
     Route::get('/data-barang', [StaffGudangDashboardController::class, 'barangDiterima'])->name('data-barang');
     Route::get('/generate-qrcode/{id}', [StaffGudangDashboardController::class, 'generateQrCode'])->name('generate_qrcode');
+    Route::get('/preview-qrcode/{id}', [StaffGudangDashboardController::class, 'previewQr'])->name('preview_qrcode');
+    Route::post('/store-qrcode', [StaffGudangDashboardController::class, 'storeQr']);
     Route::get('/buat-laporan', [StaffGudangDashboardController::class, 'buatLaporan'])->name('buat_laporan');
     Route::post('/kirim-laporan-pengajuan', [LaporanController::class, 'kirimLaporanPengajuan'])->name('kirim_laporan_pengajuan');
     Route::post('/kirim-laporan', [LaporanController::class, 'kirimLaporan'])->name('kirim_laporan');

@@ -80,7 +80,7 @@
                                             <th>Tipe Kategori</th>
                                             <th>Tipe Barang</th>
                                             <th>Jumlah</th>
-                                            <th>Satuan</th>
+                                            <th>Berat</th>
                                             <th>Kondisi</th>
                                             <th>Tanggal Masuk</th>
                                         </tr>
@@ -93,7 +93,7 @@
                                                 <td>{{ $item->tipe_barang_kategori }}</td>
                                                 <td>{{ $item->tipe_barang }}</td>
                                                 <td class="text-center">{{ $item->jumlah_barang }}</td>
-                                                <td>{{ $item->satuan ?? 'N/A' }}</td>
+                                                <td>{{ $item->berat ?? 'N/A' }}({{ $item->satuan ?? 'N/A' }})</td>
                                                 <td>{{ $item->kondisi_barang ?? 'N/A' }}</td>
                                                 <td>{{ $item->created_at ? $item->created_at->format('d M Y H:i') : 'N/A' }}</td>
                                             </tr>

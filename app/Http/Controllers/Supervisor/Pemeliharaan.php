@@ -7,13 +7,15 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class Pemeliharaan extends Controller
 {
     public function pemeliharaanRiwayat()
     {
         $riwayat = LaporanAPK::whereIn('status', ['Diterima', 'Ditolak'])
-            ->orderByDesc('updated_at') 
+            ->where('created_by_role', 'inspektor') 
+            ->orderByDesc('updated_at')
             ->get()
             ->map(function ($item) {
                 return (object)[
@@ -35,7 +37,12 @@ class Pemeliharaan extends Controller
     public function pemeliharaanValidasi()
     {
         $pengajuanPending = LaporanAPK::where('status', 'Pending')
-            ->orderBy('created_at', 'desc')
+            ->whereIn('id_laporan_pemeliharaan', function ($query) {
+                $query->selectRaw('MAX(id_laporan_pemeliharaan)')
+                    ->from('laporan_apk')
+                    ->groupBy('id_barang');
+            })
+            ->orderByDesc('created_at')
             ->get();
 
         return view('supervisor.pemeliharaan.validasi', [
@@ -44,14 +51,12 @@ class Pemeliharaan extends Controller
         ]);
     }
 
-    
+
     public function getLaporanDetail($id)
     {
         try {
-            
             Log::info("Mencari laporan dengan ID: " . $id);
 
-            
             if (!is_numeric($id)) {
                 Log::error("ID tidak valid: " . $id);
                 return response()->json([
@@ -59,13 +64,11 @@ class Pemeliharaan extends Controller
                 ], 400);
             }
 
-            
             $laporan = LaporanAPK::where('id_laporan_pemeliharaan', $id)->first();
 
             if (!$laporan) {
                 Log::error("Laporan tidak ditemukan dengan ID: " . $id);
 
-                
                 $allReports = LaporanAPK::select('id_laporan_pemeliharaan', 'nama_barang')->get();
                 Log::info("Data laporan yang tersedia: ", $allReports->toArray());
 
@@ -76,7 +79,6 @@ class Pemeliharaan extends Controller
                 ], 404);
             }
 
-            
             $laporan->tanggal_inspeksi_formatted = Carbon::parse($laporan->tanggal_inspeksi)->format('d M Y');
 
             Log::info("Laporan ditemukan: " . $laporan->nama_barang);
@@ -97,9 +99,15 @@ class Pemeliharaan extends Controller
 
     public function submitValidasi(Request $request, $id)
     {
+
         $request->validate([
             'status' => 'required|in:Diterima,Ditolak',
-            'catatan_validasi' => 'nullable|string|max:255'
+            'catatan_validasi' => [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::requiredIf($request->status === 'Ditolak')
+            ]
         ]);
 
         try {
@@ -108,12 +116,22 @@ class Pemeliharaan extends Controller
             $laporan->catatan_validasi = $request->catatan_validasi;
             $laporan->save();
 
+            \App\Models\Notifikasi::create([
+                'barang_id' => $laporan->id_barang,
+                'judul' => 'Validasi Laporan',
+                'deskripsi' => "Laporan {$laporan->nama_barang} telah divalidasi: {$laporan->status}.",
+                'tipe' => $laporan->status == 'Diterima' ? 'success' : 'danger',
+                'tanggal' => now()->toDateString(),
+                'baru' => true,
+            ]);
+
             return redirect()->route('supervisor.pemeliharaan.validasi')
-                ->with('success', 'Laporan berhasil divalidasi.');
+                ->with('success', 'Laporan berhasil divalidasi dan notifikasi dikirim.');
         } catch (\Exception $e) {
             Log::error("Error dalam submitValidasi: " . $e->getMessage());
             return redirect()->route('pemeliharaan.validasi')
                 ->with('error', 'Terjadi kesalahan saat memvalidasi laporan.');
         }
     }
+
 }

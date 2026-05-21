@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
         apiPrefix: 'api',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->trustProxies(at: '*');
         $middleware->alias([
         'role' => \App\Http\Middleware\RoleMiddleware::class, // Pastikan path ini benar
         // alias lainnya

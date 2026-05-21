@@ -50,45 +50,77 @@
                                         <tr class="text-center">
                                             <th>No</th>
                                             <th>Nama Barang</th>
-                                            <th>Tipe Barang</th>
+                                            <th>Tipe</th>
                                             <th>Kondisi</th>
+                                            <th>Jumlah Barang</th>
+                                            <th>QR Sudah Dibuat</th>
                                             <th>Tanggal Masuk</th>
                                             <th>Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php $i = 1; ?>
-                                        @forelse ($barangDiterima as $item)
-                                            @for ($j = 0; $j < $item->jumlah_barang; $j++)
-                                                <tr>
-                                                    <td><?= $i++ ?></td>
-                                                    <td>{{ $item->nama_barang }}</td>
-                                                    <td>{{ $item->tipe_barang }}</td>
-                                                    <td>{{ $item->kondisi ?? '-' }}</td> {{-- Kolom Kondisi --}}
-                                                    <td>{{ $item->created_at ? $item->created_at->format('d M Y H:i') : '-' }}</td>
-                                                    <td class="text-center">
-                                                        @if ($item->qrCode && $item->qrCode->qr_code_path)
-                                                            <button type="button" class="btn btn-secondary btn-sm" disabled>
-                                                                <i class="bi bi-check-circle"></i> QR Sudah Ada
-                                                            </button>
+                                        @forelse ($barangDiterima as $index => $item)
+                                            @php
+                                                $jumlahQr = $item->qrCodes->count();
+                                            @endphp
+                                            <tr>
+                                                <td>{{ $index + 1 }}</td>
+                                                <td>{{ $item->nama_barang }}</td>
+                                                <td>{{ $item->tipe_barang_kategori }}</td>
+                                                <td>{{ $item->kondisi ?? '-' }}</td>
+                                                <td>{{ $item->jumlah_barang }}</td>
 
-                                                            <br>
-                                                            <img src="{{ asset('storage/' . $item->qrCode->qr_code_path) }}" alt="QR Code" width="80">
-                                                        @else
-                                                            <button type="button" class="btn btn-generate-qr btn-success btn-sm"
-                                                                data-bs-toggle="modal"
-                                                                data-bs-target="#qrCodeModal"
-                                                                data-item-id="{{ $item->id_barang }}"
-                                                                data-item-nama="{{ $item->nama_barang }}">
-                                                                <i class="bi bi-qr-code"></i> Generate QR
-                                                            </button>
-                                                        @endif
-                                                    </td>
-                                                </tr>
-                                            @endfor
+                                                <td class="text-center">
+                                                    @if ($jumlahQr >= $item->jumlah_barang)
+                                                        <span class="badge bg-success">
+                                                            {{ $jumlahQr }} / {{ $item->jumlah_barang }}
+                                                        </span>
+                                                    @elseif ( $item->tipe_barang_kategori == 'Sparepart' )
+                                                        <span class="badge bg-info text-dark">
+                                                            Sparepart
+                                                        </span>
+                                                    @else
+                                                        <span class="badge bg-warning text-dark">
+                                                            {{ $jumlahQr }} / {{ $item->jumlah_barang }}
+                                                        </span>
+                                                    @endif
+                                                </td>
+
+                                                <td>{{ $item->created_at->format('d M Y H:i') }}</td>
+
+                                                <td class="text-center">
+                                                    @if ($jumlahQr >= $item->jumlah_barang)
+                                                        <button type="button"
+                                                                class="btn btn-secondary btn-sm"
+                                                                disabled
+                                                                style="cursor:not-allowed;">
+                                                            <i class="bi bi-check-circle"></i>
+                                                            QR Lengkap
+                                                        </button>
+                                                    @elseif ( $item->tipe_barang_kategori == 'Sparepart' )
+                                                        <button type="button"
+                                                                class="btn btn-secondary btn-sm"
+                                                                disabled
+                                                                style="cursor:not-allowed;">
+                                                            <i class="bi bi-check-circle"></i>
+                                                            Sparepart
+                                                        </button>
+                                                    @else
+                                                        <button type="button"
+                                                                class="btn btn-success btn-sm btn-generate-qr"
+                                                                data-id="{{ $item->id_barang }}"
+                                                                data-nama="{{ $item->nama_barang }}">
+                                                            <i class="bi bi-qr-code"></i>
+                                                            Generate QR
+                                                        </button>
+                                                    @endif
+                                                </td>
+                                            </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="6" class="text-center text-muted">Belum ada barang yang diterima.</td>
+                                                <td colspan="8" class="text-center text-muted">
+                                                    Belum ada barang yang diterima.
+                                                </td>
                                             </tr>
                                         @endforelse
                                     </tbody>
@@ -130,98 +162,99 @@
 
     </html>
 
-    <div class="modal fade" id="qrCodeModal" tabindex="-1" aria-labelledby="qrCodeModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content shadow-sm">
-            <div class="modal-header">
-                <h5 class="modal-title" id="qrCodeModalLabel">
-                <i class="bi bi-qr-code text-primary me-2"></i> QR Code Barang
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
-            </div>
-            <div class="modal-body text-center">
-                <p class="mb-2">Barang: <strong id="qrItemName"></strong></p>
-                <div id="qrCodeContainer" class="my-3">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <a id="downloadQrBtn" href="#" class="btn btn-success">
-                <i class="bi bi-download me-1"></i> Unduh QR Code
-                </a>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                Tutup
-                </button>
-            </div>
-            </div>
-        </div>
-    </div>
-
     {{-- Script JavaScript --}}
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-$(document).ready(function() {
-    $('#dataTable').DataTable({
-        "pageLength": 10,
-        "lengthMenu": [
-            [10, 25, 50, -1],
-            [10, 25, 50, "Semua"]
-        ],
-        "searching": true,
-        "info": true,
-        "paging": true,
-        "ordering": false 
-    });
+    $(document).on('click', '.btn-generate-qr', function () {
 
-    var qrShownHistory = {};
+        var id = $(this).data('id');
+        var nama = $(this).data('nama');
 
-    $('#qrCodeModal').on('show.bs.modal', function (event) {
-        var button = $(event.relatedTarget);
-        var itemId = button.data('item-id');
-        var itemName = button.data('item-nama');
+        $.get("{{ route('staff_gudang.preview_qrcode', ':id') }}".replace(':id', id), function(res){
 
-        var qrCodeUrl = "{{ route('staff_gudang.generate_qrcode', ':id') }}".replace(':id', itemId);
-
-        $('#qrCodeContainer').html(`
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-        `);
-
-        $.ajax({
-            url: qrCodeUrl,
-            type: 'GET',
-            dataType: 'json',
-            success: function(data) {
-                if (data.status === 'exists') {
-                    if (!qrShownHistory[itemId]) {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'QR Sudah Ada',
-                            text: data.message,
-                            timer: 3000,
-                            showConfirmButton: false
-                        });
-                        qrShownHistory[itemId] = true;
-                    }
-                }
-
-                $('#qrItemName').text(itemName);
-                $('#qrCodeContainer').html('<img src="' + data.url + '" alt="QR Code" class="img-fluid">');
-                $('#downloadQrBtn').attr('href', data.url);
-                $('#downloadQrBtn').attr('download', data.fileName);
-            },
-            error: function(xhr) {
-                $('#qrCodeContainer').html('<p class="text-danger">Gagal memuat QR Code.</p>');
+            if(res.status === 'full'){
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Kapasitas Penuh',
+                    text: res.message
+                });
+                return;
             }
+
+            Swal.fire({
+                html: `
+                        <div class="qr-card-container">
+                            <div class="qr-product-name">${nama}</div>
+                            
+                            <div class="qr-image-wrapper">
+                                <img src="${res.qr_image}" alt="QR Code" class="qr-img-display">
+                            </div>
+                            
+                            <div style="font-size: 0.85rem; color: #95a5a6;">
+                                ID Barang: <b>${id}</b>
+                            </div>
+                        </div>
+                        `,
+                        showCloseButton: true,
+                        showCancelButton: true,
+                        focusConfirm: false,
+                        
+                        confirmButtonText: '<i class="fas fa-download"></i> Simpan QR Code',
+                        confirmButtonColor: '#3085d6',
+                        
+                        cancelButtonText: 'Tutup',
+                        cancelButtonColor: '#d33',
+                        
+                        showClass: {
+                            popup: 'animate__animated animate__fadeInDown'
+                        },
+                        hideClass: {
+                            popup: 'animate__animated animate__fadeOutUp'
+                        },
+                        
+                        customClass: {
+                            confirmButton: 'btn btn-primary btn-lg swal2-confirm-custom',
+                            cancelButton: 'btn btn-danger btn-lg'
+                        },
+                        buttonsStyling: false 
+            }).then((result) => {
+
+                if(result.isConfirmed){
+
+                    $.post("{{ url('staff-gudang/store-qrcode') }}", {
+                        _token: '{{ csrf_token() }}',
+                        id: id,
+                        nomor_identifikasi: res.nomor_identifikasi,
+                        image: res.qr_image.split(',')[1]
+                    }, function(storeRes){
+
+                        var a = document.createElement('a');
+                        a.href = storeRes.url;
+                        a.download = storeRes.fileName;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'QR berhasil dibuat',
+                            timer: 1500,
+                            showConfirmButton: false
+                        }).then(() => {
+                            location.reload();
+                        });
+
+                    });
+                }
+            });
         });
+
     });
-});
-</script>
+
+    </script>
+
 
 @endsection

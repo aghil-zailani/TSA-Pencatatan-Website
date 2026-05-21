@@ -37,7 +37,9 @@ class DashboardController extends Controller
     {
         $awalBulan = Carbon::now()->startOfMonth();
         $akhirBulan = Carbon::now()->endOfMonth();
-        $barangMasukCount = Barang::whereBetween('created_at', [$awalBulan, $akhirBulan])->sum('jumlah_barang');
+        $barangMasukCount = PengajuanBarang::where('status', 'diterima')
+            ->whereBetween('created_at', [$awalBulan, $akhirBulan])
+            ->sum('jumlah_barang');
         $barangKeluarCount = Transaksi::where('status', 'diterima') 
             ->whereBetween('created_at', [$awalBulan, $akhirBulan])
             ->sum('jumlah_barang');
@@ -71,10 +73,7 @@ class DashboardController extends Controller
         });
 
         if (!session()->has('lowStockShown')) {
-            
             $lowStockItemsForModal = $lowStockItems->take(6);
-
-            
             session()->flash('lowStockItems', $lowStockItemsForModal);
             session()->put('lowStockShown', true); 
         }
@@ -108,20 +107,21 @@ class DashboardController extends Controller
                                         return $laporan;
                                     });
 
-            $laporanValidasiTerbaru = PengajuanBarang::select(
-                                    'report_id',
-                                    'nama_laporan',
-                                    'status',
-                                    \DB::raw('COUNT(*) as total_items_in_report'),
-                                    \DB::raw('MIN(created_at) as created_at')
-                                )
-                                ->whereIn('status', ['diterima', 'ditolak', 'proses'])
-                                ->groupBy('report_id', 'nama_laporan', 'status')
+            $laporanValidasiTerbaru = PengajuanBarang::query()
+                                ->whereIn('status', ['diterima', 'ditolak', 'proses', 'sent_to_supervisor', '-'])
                                 ->orderBy('created_at', 'desc')
+                                ->take(10) 
+                                ->get() 
+                                ->unique('report_id') 
+                                ->values()
                                 ->take(10)
-                                ->get()
                                 ->map(function($laporan) {
-                                    if ($laporan->status === 'sent_to_supervisor') {
+                                    $laporan->created_at = Carbon::parse($laporan->created_at);
+                                    
+                                    if ($laporan->status === '-') {
+                                        $laporan->display_status = 'Menunggu Validasi';
+                                        $laporan->badge_class = 'badge bg-info';
+                                    } elseif ($laporan->status === 'sent_to_supervisor' || $laporan->status === 'proses') {
                                         $laporan->display_status = 'Proses';
                                         $laporan->badge_class = 'badge bg-warning';
                                     } elseif ($laporan->status === 'diterima') {
@@ -134,6 +134,7 @@ class DashboardController extends Controller
                                         $laporan->display_status = ucfirst($laporan->status);
                                         $laporan->badge_class = 'badge bg-secondary';
                                     }
+                                    
                                     $laporan->title = 'Barang Masuk ID: ' . substr($laporan->report_id, 0, 8) . '...';
                                     $laporan->link_type = 'masuk';
                                     return $laporan;
@@ -141,7 +142,7 @@ class DashboardController extends Controller
 
             $laporanGabungan = $laporanValidasiTerbaru->merge($laporanKeluarTerbaru)
                                             ->sortByDesc('created_at')
-                                            ->take(10); 
+                                            ->take(5); 
 
             $data = array(
                 'judul' => 'Dashboard',
@@ -219,13 +220,11 @@ class DashboardController extends Controller
             'description' => 'Staff melihat daftar barang masuk yang diterima.'
         ]);
 
-        
         $barangDiterima = Barang::with('qrCodes')->orderBy('created_at', 'desc')->get();
         $judul = 'Data Barang';
 
         return view('staff_gudang.data_barang', compact('barangDiterima', 'judul'));
     }
-
     
     public function buatLaporan()
     {
@@ -261,45 +260,39 @@ class DashboardController extends Controller
         return view('input', $data);
     }
 
-    public function generateQrCode(Request $request, $id)
+    public function previewQr($id)
     {
-        $forceGenerate = $request->input('force_generate', false); 
-        $barang = Barang::findOrFail($id);
+        $barang = Barang::where('id_barang', $id)->firstOrFail();
 
-        
-        $existingQr = QrCodeModel::where('id_barang', $id)->first();
-
-        if ($existingQr && Storage::disk('public')->exists($existingQr->qr_code_path)) {
-            if (!$forceGenerate) {
-                
-                return response()->json([
-                    'status' => 'exists',
-                    'message' => 'QR Code untuk barang ini sudah pernah digenerate.',
-                    'url' => asset('storage/' . $existingQr->qr_code_path),
-                    'fileName' => basename($existingQr->qr_code_path),
-                    'id' => $barang->id_barang,
-                    'nama' => $barang->nama_barang,
-                    'qr_status' => $existingQr->status
-                ], 200);
-            }
+        $jumlahSudahAda = QrCodeModel::where('id_barang', $id)->count();
+        if ($jumlahSudahAda >= $barang->jumlah_barang) {
+            return response()->json([
+                'status' => 'full',
+                'message' => 'Semua QR untuk barang ini sudah dibuat.'
+            ]);
         }
 
-        
-        $namaUntukFile = !empty($barang->nama_barang) ? $barang->nama_barang : 'tanpa-nama';
-        $safeNamaBarang = Str::slug($namaUntukFile, '_');
-        $timestamp = now()->format('YmdHis');
-        $fileName = $timestamp . '_' . $barang->id_barang . '_' . $safeNamaBarang . '.png';
-        $path = 'qrcodes/' . $fileName;
+        $prefix = $barang->id_barang;
 
-        $qrContentArray = [
+        $lastQr = QrCodeModel::where('nomor_identifikasi', 'like', $prefix . '-%')
+            ->orderByRaw("
+                CAST(SUBSTRING_INDEX(nomor_identifikasi, '-', -1) AS UNSIGNED) DESC
+            ")
+            ->first();
+
+        $lastNumber = $lastQr
+            ? (int) substr($lastQr->nomor_identifikasi, -3)
+            : 0;
+
+        $nextNumber = str_pad(++$lastNumber, 3, '0', STR_PAD_LEFT);
+        $nomorIdentifikasiBaru = $prefix . '-' . $nextNumber;
+
+        $qrContent = implode("\n", [
             'ID Barang: ' . $barang->id_barang,
-            'Nama Barang: ' . ($barang->nama_barang ?? 'N/A'),
-            'Nomor Identifikasi: ' . 'QR-' . $barang->id_barang,
+            'Nama Barang: ' . $barang->nama_barang,
+            'Nomor Identifikasi: ' . $nomorIdentifikasiBaru,
             'Tanggal Pembuatan: ' . now()->format('d-m-Y H:i:s'),
-        ];
-        $qrContent = implode("\n", $qrContentArray);
-
-        Storage::disk('public')->makeDirectory('qrcodes');
+        ]);
 
         $result = Builder::create()
             ->writer(new PngWriter())
@@ -308,31 +301,44 @@ class DashboardController extends Controller
             ->margin(10)
             ->build();
 
-        Storage::disk('public')->put($path, $result->getString());
+        $base64 = base64_encode($result->getString());
 
-        $qrCode = QrCodeModel::updateOrCreate(
-            ['id_barang' => $id],
-            [
-                'nomor_identifikasi' => 'QR-' . $id,
-                'qr_code_path' => $path,
-                'tanggal_pembuatan' => now(),
-                'status' => 'baru'
-            ]
-        );
+        return response()->json([
+            'status' => 'preview',
+            'qr_image' => 'data:image/png;base64,' . $base64,
+            'nomor_identifikasi' => $nomorIdentifikasiBaru
+        ]);
+    }
 
-        $url = asset('storage/' . $path);
+    public function storeQr(Request $request)
+    {
+        $barang = Barang::where('id_barang', $request->id)->firstOrFail();
+
+        $jumlahSudahAda = QrCodeModel::where('id_barang', $request->id)->count();
+        if ($jumlahSudahAda >= $barang->jumlah_barang) {
+            return response()->json(['status' => 'full']);
+        }
+
+        $timestamp = now()->format('YmdHis');
+        $fileName = $timestamp . '_' . $request->nomor_identifikasi . '.png';
+        $path = 'qrcodes/' . $fileName;
+
+        Storage::disk('public')->put($path, base64_decode($request->image));
+
+        QrCodeModel::create([
+            'id_barang' => $barang->id_barang,
+            'nomor_identifikasi' => $request->nomor_identifikasi,
+            'qr_code_path' => $path,
+            'tanggal_pembuatan' => now(),
+            'status_qr' => 'baru'
+        ]);
 
         return response()->json([
             'status' => 'success',
-            'message' => $forceGenerate ? 'QR Code berhasil diperbarui.' : 'QR Code berhasil dibuat.',
-            'url' => $url,
-            'fileName' => $fileName,
-            'id' => $barang->id_barang,
-            'nama' => $barang->nama_barang,
-            'qr_status' => $qrCode->status
-        ], 200);
+            'url' => asset('storage/' . $path),
+            'fileName' => $fileName
+        ]);
     }
-
 
     public function riwayat(Request $request)
     {
@@ -406,7 +412,6 @@ class DashboardController extends Controller
             $validationRules[$config->value] = implode('|', $rules);
         }
 
-
         $validationRules['tipe_barang_kategori'] = 'required|string';
         
 
@@ -464,7 +469,6 @@ class DashboardController extends Controller
         $dataToSave['status'] = '-';
         $dataToSave['catatan_penolakan'] = '-';
 
-        
         try {
             $pengajuan = PengajuanBarang::create($dataToSave);
             return response()->json(['message' => 'Pengajuan barang berhasil!', 'data' => $pengajuan], 201);
@@ -472,7 +476,6 @@ class DashboardController extends Controller
             return response()->json(['message' => 'Terjadi kesalahan saat menyimpan data.', 'error' => $e->getMessage()], 500);
         }
     }
-
 
     public function catatBarangKeluar(Request $request)
     {

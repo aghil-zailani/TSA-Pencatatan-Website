@@ -11,7 +11,7 @@ class Keluar extends Model
 
     protected $table = 'transaksis';
 
-    protected $primaryKey = 'id_transaksi'; // pakai id_transaksi kalau mau akses detail, TAPI untuk group by, sebaiknya abaikan primaryKey
+    protected $primaryKey = 'id_transaksi'; 
 
     public $incrementing = false;
     protected $keyType = 'string';

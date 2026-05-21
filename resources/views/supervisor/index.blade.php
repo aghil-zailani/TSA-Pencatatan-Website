@@ -304,11 +304,6 @@
                 </section>
             </div>
 
-            <footer>
-                <div class="footer clearfix mb-0 text-muted text-center">
-                    <p>Tunas Siak Anugrah &copy; | 2023</p>
-                </div>
-            </footer>
         </div>
 
         @if(session('lowStockItems') && session('lowStockItems')->count())
@@ -383,6 +378,12 @@
                 </div>
             </div>
         @endif
+
+        <footer>
+            <div class="footer clearfix mb-0 text-muted text-center">
+                <p>&copy; <?php echo date("Y"); ?> Tunas Siak Anugrah</p>
+            </div>
+        </footer>
 
         <!-- line chart css -->
         <style>

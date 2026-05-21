@@ -17,7 +17,7 @@ class LaporanExport implements FromCollection, WithStyles, WithEvents
     {
         // Simpan data tapi jangan return supaya tidak auto-render
         $this->data = LaporanAPK::whereIn('status', ['Diterima', 'Ditolak'])
-            ->where('created_by_role', 'staff_gudang')
+            ->where('created_by_role', 'inspektor')
             ->orderByDesc('updated_at')
             ->get()
             ->map(function ($item, $key) {

@@ -16,5 +16,6 @@ class DatabaseSeeder extends Seeder
         $this->call(UserSeeder::class);
         $this->call(BarangSeeder::class);
         $this->call(QrCodeSeeder::class);
+        $this->call(MasterDataSeeder::class);
     }
 }

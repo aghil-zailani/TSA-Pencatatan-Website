@@ -38,7 +38,9 @@ return new class extends Migration
             $table->string('pressure_gauge')->nullable();
             $table->string('safety_pin')->nullable();
             $table->string('tindakan');
+            $table->string('catatan_tindakan')->nullable();
             $table->string('status')->default('Pending');
+            $table->string('catatan_validasi')->nullable();
 
             $table->timestamps();
         });

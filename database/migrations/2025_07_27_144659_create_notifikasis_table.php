@@ -13,15 +13,15 @@ return new class extends Migration
     {
         Schema::create('notifikasis', function (Blueprint $table) {
             $table->id();
-            $table->string('id_barang', 50);
+            $table->string('barang_id', 50);
             $table->string('judul');
             $table->text('deskripsi');
-            $table->string('tipe')->default('warning'); // success / warning / info
+            $table->string('tipe')->default('warning');
             $table->date('tanggal');
             $table->boolean('baru')->default(true);
             $table->timestamps();
 
-            $table->foreign('id_barang')->references('id_barang')->on('barangs')->onDelete('cascade');
+            $table->foreign('barang_id')->references('id_barang')->on('barangs')->onDelete('cascade');
 
         });
     }

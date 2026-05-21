@@ -117,13 +117,11 @@ class LaporanController extends Controller
         }
 
         $judul = 'Detail Laporan Barang Masuk';
-
         
         $nama_laporan = $itemsInReport->first()->nama_laporan ?? 'Laporan';
 
         return view('supervisor.validasi_laporan_detail', compact('itemsInReport', 'judul', 'reportId', 'nama_laporan'));
     }
-
     
     public function validasiPengajuan(Request $request)
     {
@@ -176,15 +174,16 @@ class LaporanController extends Controller
                     $barangData['created_by_id']   = $pengajuan->created_by_id ?? auth()->id();
                     $barangData['created_by_role'] = $pengajuan->created_by_role ?? (auth()->user()->role ?? '-');
 
-                    
-                    $barangSudahAda = Barang::where('nama_barang', $barangData['nama_barang'] ?? '')
+                    $barang = Barang::where('nama_barang', $barangData['nama_barang'] ?? '')
                         ->where('merek_barang', $barangData['merek_barang'] ?? '')
                         ->where('tipe_barang', $barangData['tipe_barang'] ?? '')
                         ->where('berat_barang', $barangData['berat_barang'] ?? null)
-                        ->exists();
+                        ->first();
 
-                    if (!$barangSudahAda) {
-                        
+                    if ($barang) {
+                        $barang->jumlah_barang += $pengajuan->jumlah_barang;
+                        $barang->save();
+                    } else {
                         $prefix = strtoupper(substr(trim($pengajuan->tipe_barang_kategori), 0, 3));
                         $product = 'GEN';
                         if (!empty(trim($pengajuan->tipe_barang ?? ''))) {
@@ -305,15 +304,14 @@ class LaporanController extends Controller
             if ($pengajuanPending->isEmpty()) {
                 return redirect()->back()->with('error', 'Tidak ada laporan yang bisa dikirim.');
             }
-
             
             $reportId = 'RPT-' . strtoupper(Str::random(8));
-
             
             foreach ($pengajuanPending as $pengajuan) {
                 $pengajuan->update([
                     'report_id' => $reportId,
-                    'status'    => 'Proses'
+                    'status'    => 'Proses',
+                    'stok_status' => 'outofstock'
                 ]);
             }
 
@@ -437,23 +435,32 @@ class LaporanController extends Controller
         }
     }
 
-    public function riwayatKeluarDetail($reportId) 
+    public function riwayatKeluarDetail($reportId)
     {
         try {
-            
+
             $items = Transaksi::where('id_transaksi', $reportId)
-                ->select('nama_barang', 'jumlah_barang', 'tujuan', 'catatan_penolakan') 
-                ->get();
-            
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'nama_barang' => $item->tujuan,
+                        'jumlah_barang' => $item->jumlah_barang, // samakan
+                        'keterangan' => $item->keterangan, // memang tidak ada di keluar
+                        'catatan_penolakan' => $item->catatan_penolakan,
+                    ];
+                });
+
             if ($items->isEmpty()) {
-                
                 return response()->json(['success' => false, 'message' => 'Data tidak ditemukan'], 404);
             }
 
-            return response()->json(['success' => true, 'data' => $items]);
+            return response()->json([
+                'success' => true,
+                'type' => 'keluar',
+                'data' => $items
+            ]);
 
         } catch (\Exception $e) {
-
             return response()->json(['success' => false, 'message' => 'Terjadi kesalahan pada server'], 500);
         }
     }

@@ -5,12 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class LaporanAPK extends Model // Nama model diubah
+class LaporanAPK extends Model 
 {
     use HasFactory;
 
-    protected $table = 'laporan_apk'; // Nama tabel diubah
-    protected $primaryKey = 'id_laporan_pemeliharaan'; // Sesuai ERD Anda
+    protected $table = 'laporan_apk';
+    protected $primaryKey = 'id_laporan_pemeliharaan'; 
     public $incrementing = true;
     protected $keyType = 'int';
 
@@ -41,19 +41,16 @@ class LaporanAPK extends Model // Nama model diubah
         'tanggal_inspeksi' => 'datetime',
     ];
 
-    // Relasi ke model Barang
     public function barang()
     {
         return $this->belongsTo(Barang::class, 'id_barang', 'id_barang');
     }
 
-    // Relasi ke model User
     public function user()
     {
         return $this->belongsTo(User::class, 'id_user', 'id');
     }
 
-    // Relasi ke model QrCode
     public function qrCode()
     {
          return $this->belongsTo(QrCode::class, 'id_qr', 'nomor_identifikasi');

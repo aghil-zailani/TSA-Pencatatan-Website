@@ -17,18 +17,15 @@ class NotifikasiController extends Controller
     {
         $currentUser = Auth::user();
 
-        if ($currentUser->role !== 'staff_gudang') {
+        
+        if ($currentUser->role !== 'inspektor') {
             return response()->json([
-                'message' => 'Fitur Notifikasi Coming Soon yaa!'
+                'message' => 'Anda tidak memiliki akses ke fitur notifikasi.'
             ], 403);
         }
 
         
-         $notifikasis = Notifikasi::with('barang')
-            ->whereHas('barang', function ($query) use ($currentUser) {
-                $query->where('created_by_role', 'staff_gudang')
-                    ->where('created_by_id', $currentUser->id);
-            })
+        $notifikasis = Notifikasi::with('barang')
             ->orderBy('tanggal', 'desc')
             ->get()
             ->map(function ($notif) {
@@ -43,6 +40,7 @@ class NotifikasiController extends Controller
                         'id_barang' => $notif->barang->id_barang ?? null,
                         'nama_barang' => $notif->barang->nama_barang ?? 'Tidak Diketahui',
                         'lokasi' => $notif->barang->lokasi_barang ?? 'Tidak Diketahui',
+                        'tipe_barang' => $notif->barang->tipe_barang ?? '-',
                     ],
                 ];
             });
@@ -50,8 +48,9 @@ class NotifikasiController extends Controller
         return response()->json([
             'message' => 'List notifikasi',
             'data' => $notifikasis
-        ]);
+        ], 200);
     }
+
 
 
     public function generateNotifikasi()
@@ -74,7 +73,7 @@ class NotifikasiController extends Controller
             if (is_null($barang->last_checked)) {
                 
                 Notifikasi::updateOrCreate(
-                    ['barang_id' => $barang->id_barang, 'tanggal' => now()->toDateString()],
+                    ['id_barang' => $barang->id_barang, 'tanggal' => now()->toDateString()],
                     [
                         'judul' => 'Barang Belum Pernah Dicek ❌',
                         'deskripsi' => 'Barang ' . $barang->nama_barang . ' belum pernah dicek sejak didaftarkan.',
@@ -88,7 +87,7 @@ class NotifikasiController extends Controller
                 if ($lastChecked < $cutoff60) {
                     
                     Notifikasi::updateOrCreate(
-                        ['barang_id' => $barang->id_barang, 'tanggal' => now()->toDateString()],
+                        ['id_barang' => $barang->id_barang, 'tanggal' => now()->toDateString()],
                         [
                             'judul' => 'Barang Belum Dicek ⏰',
                             'deskripsi' => 'Barang ' . $barang->nama_barang . ' belum dicek lebih dari 2 bulan.',
@@ -100,7 +99,7 @@ class NotifikasiController extends Controller
                     
                     $selisih = $lastChecked->diffInDays($today);
                     Notifikasi::updateOrCreate(
-                        ['barang_id' => $barang->id_barang, 'tanggal' => now()->toDateString()],
+                        ['id_barang' => $barang->id_barang, 'tanggal' => now()->toDateString()],
                         [
                             'judul' => 'Barang Akan Jatuh Tempo 📅',
                             'deskripsi' => 'Barang ' . $barang->nama_barang . ' terakhir dicek ' . $selisih . ' hari lalu.',
@@ -116,4 +115,3 @@ class NotifikasiController extends Controller
     }
 
 }
-

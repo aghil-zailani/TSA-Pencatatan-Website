@@ -25,7 +25,9 @@ class DashboardController extends Controller
         $awalBulan = Carbon::now()->startOfMonth();
         $akhirBulan = Carbon::now()->endOfMonth();
 
-        $barangMasukCount = Barang::whereBetween('created_at', [$awalBulan, $akhirBulan])->sum('jumlah_barang');
+        $barangMasukCount = PengajuanBarang::where('status', 'diterima')
+            ->whereBetween('created_at', [$awalBulan, $akhirBulan])
+            ->sum('jumlah_barang');
  
         $barangKeluarCount = Transaksi::where('status', 'diterima') 
             ->whereBetween('created_at', [$awalBulan, $akhirBulan])
@@ -65,9 +67,10 @@ class DashboardController extends Controller
                                     'id_transaksi',
                                     'status',
                                     \DB::raw('1 as total_items_in_report'),
-                                    'created_at'
+                                    \DB::raw('MAX(created_at) as created_at')
                                 )
                                 ->whereIn('status', ['diterima', 'ditolak', 'proses'])
+                                ->groupBy('id_transaksi', 'status')
                                 ->orderBy('created_at', 'desc')
                                 ->take(10)
                                 ->get()
@@ -90,39 +93,42 @@ class DashboardController extends Controller
                                     return $laporan;
                                 });
 
-        $laporanValidasiTerbaru = PengajuanBarang::select(
-                                'report_id',
-                                'nama_laporan',
-                                'status',
-                                \DB::raw('COUNT(*) as total_items_in_report'),
-                                \DB::raw('MIN(created_at) as created_at')
-                            )
-                            ->whereIn('status', ['diterima', 'ditolak', 'proses'])
-                            ->groupBy('report_id', 'nama_laporan', 'status')
-                            ->orderBy('created_at', 'desc')
-                            ->take(10)
-                            ->get()
-                            ->map(function($laporan) {
-                                if ($laporan->status === 'sent_to_supervisor') {
-                                    $laporan->display_status = 'Proses';
-                                    $laporan->badge_class = 'badge bg-warning';
-                                } elseif ($laporan->status === 'diterima') {
-                                    $laporan->display_status = 'Diterima';
-                                    $laporan->badge_class = 'badge bg-success';
-                                } elseif ($laporan->status === 'ditolak') {
-                                    $laporan->display_status = 'Ditolak';
-                                    $laporan->badge_class = 'badge bg-danger';
-                                } else {
-                                    $laporan->display_status = ucfirst($laporan->status);
-                                    $laporan->badge_class = 'badge bg-secondary';
-                                }
-                                $laporan->title = 'Barang Masuk ID: ' . substr($laporan->report_id, 0, 8) . '...';
-                                $laporan->link_type = 'masuk';
-                                return $laporan;
-                            });
+        $laporanValidasiTerbaru = PengajuanBarang::query()
+                                ->whereIn('status', ['diterima', 'ditolak', 'proses', 'sent_to_supervisor', '-'])
+                                ->orderBy('created_at', 'desc')
+                                ->take(10) 
+                                ->get() 
+                                ->unique('report_id') 
+                                ->values()
+                                ->take(10)
+                                ->map(function($laporan) {
+                                    $laporan->created_at = Carbon::parse($laporan->created_at);
+                                    
+                                    if ($laporan->status === '-') {
+                                        $laporan->display_status = 'Menunggu Validasi';
+                                        $laporan->badge_class = 'badge bg-info';
+                                    } elseif ($laporan->status === 'sent_to_supervisor' || $laporan->status === 'proses') {
+                                        $laporan->display_status = 'Proses';
+                                        $laporan->badge_class = 'badge bg-warning';
+                                    } elseif ($laporan->status === 'diterima') {
+                                        $laporan->display_status = 'Diterima';
+                                        $laporan->badge_class = 'badge bg-success';
+                                    } elseif ($laporan->status === 'ditolak') {
+                                        $laporan->display_status = 'Ditolak';
+                                        $laporan->badge_class = 'badge bg-danger';
+                                    } else {
+                                        $laporan->display_status = ucfirst($laporan->status);
+                                        $laporan->badge_class = 'badge bg-secondary';
+                                    }
+                                    
+                                    $laporan->title = 'Barang Masuk ID: ' . substr($laporan->report_id, 0, 8) . '...';
+                                    $laporan->link_type = 'masuk';
+                                    return $laporan;
+                                });
 
         $laporanGabungan = $laporanValidasiTerbaru->merge($laporanKeluarTerbaru)
                                           ->sortByDesc('created_at')
+                                          ->values()
                                           ->take(5);              
         
         $lowStockItems = $dataStokBarang->filter(function ($item) {
@@ -132,12 +138,10 @@ class DashboardController extends Controller
         if (!session()->has('lowStockShown')) {
             
             $lowStockItemsForModal = $lowStockItems->take(6);
-
             
             session()->flash('lowStockItems', $lowStockItemsForModal);
             session()->put('lowStockShown', true); 
         }
-
 
         $data = array(
             'judul' => 'Dashboard',
@@ -161,13 +165,13 @@ class DashboardController extends Controller
          
         $barangAggregated = Barang::select(
                 'nama_barang',
-                'tipe_barang',
+                'tipe_barang_kategori',
                 'berat_barang',
                 DB::raw('SUM(jumlah_barang) as total_stok'),
                 DB::raw('AVG(harga_beli) as harga_beli'),
                 DB::raw('AVG(harga_jual) as harga_jual')
             )
-            ->groupBy('nama_barang', 'tipe_barang', 'berat_barang')
+            ->groupBy('nama_barang', 'tipe_barang_kategori', 'berat_barang')
             ->get();
 
         $totalKeseluruhanBarang = $barangAggregated->sum('total_stok');
@@ -180,7 +184,7 @@ class DashboardController extends Controller
         
         $selectedColumns = $request->input('columns', [
             'nama_barang',
-            'tipe_barang',
+            'tipe_barang_kategori',
             'total_stok',
             'berat_barang',
             'harga_beli',
@@ -253,8 +257,6 @@ class DashboardController extends Controller
 
     public function exportExcel()
     {
-        
-        
         $barangToExport = Barang::select(
             'nama_barang',
             'tipe_barang',
@@ -322,9 +324,6 @@ class DashboardController extends Controller
         return $pdf->download($filename);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         $data = array(
@@ -334,29 +333,46 @@ class DashboardController extends Controller
         return view('input', $data);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        $barang = Barang::where('namaBarang', $request->namaBarang)->first();
-        
-        if($barang){
-            return redirect('input')->with('error', 'Barang Berhasil Ditambahkan!');
+        $request->validate([
+            'nama_barang' => 'required|string',
+            'tipe_barang' => 'required|string',
+            'jumlah_barang' => 'required|integer|min:1',
+            'deskripsi' => 'nullable|string',
+            'berat' => 'nullable|string',
+            'harga' => 'nullable|numeric',
+        ]);
+
+        $barang = Barang::where('nama_barang', $request->nama_barang)
+                        ->where('tipe_barang', $request->tipe_barang)
+                        ->first();
+
+        if ($barang) {
+            $barang->jumlah_barang = $barang->jumlah_barang + $request->jumlah_barang;
+            
+            if($request->filled('harga')) {
+                $barang->harga = $request->harga;
+            }
+            
+            $barang->save();
+            return redirect('input')->with('message', 'Barang sudah ada, Stok Berhasil Ditambahkan!');
         }
 
         $data = Barang::create([
-            'namaBarang' => $request->namaBarang,
-            'stokBarang' => $request->stokBarang,
-            'type' => $request->type,
-            'deskripsi' => $request->deskripsi,
-            'berat' => $request->berat,
-            'harga' => $request->harga,
+            'nama_barang'   => $request->nama_barang,   
+            'jumlah_barang' => $request->jumlah_barang, 
+            'tipe_barang'   => $request->tipe_barang,   
+            'deskripsi'     => $request->deskripsi,
+            'berat'         => $request->berat,
+            'harga'         => $request->harga,
         ]);
 
         if ($data) {
-            return redirect('input')->with('message', 'Barang Berhasil Ditambahkan!');
+            return redirect('input')->with('message', 'Barang Baru Berhasil Ditambahkan!');
         } 
+        
+        return redirect('input')->with('error', 'Gagal menambahkan barang.');
     }
 
     public function pemeliharaan()
