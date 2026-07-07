@@ -93,7 +93,7 @@
                             @endif
                         </td>
                         <td>{{ $item->catatan_penolakan ?? '-' }}</td>
-                        <td>{{ $item->created_at ? $item->created_at->format('d M Y H:i') : '-' }}</td>
+                        <td data-order="{{ $item->created_at ? $item->created_at->format('Y-m-d H:i:s') : '' }}">{{ $item->created_at ? $item->created_at->format('d M Y H:i') : '-' }}</td>
                         <td class="text-center">
                           @php
                               $detailUrl = '';

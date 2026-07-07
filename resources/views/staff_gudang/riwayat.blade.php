@@ -103,12 +103,14 @@
                                                     @endif
                                                 </td>
                                                 <td>{{ $item->jumlah_barang ?? '-' }}</td>
-                                                <td>{{ $item->created_at }}</td>
+                                                <td data-order="{{ $item->created_at ? $item->created_at->format('Y-m-d H:i:s') : '' }}">{{ $item->created_at ? $item->created_at->format('d M Y H:i') : '-' }}</td>
                                                 <td>
                                                     @if ($item->status == 'diterima')
                                                         <span class="badge bg-success">Diterima</span>
-                                                    @else
+                                                    @elseif ($item->status == 'ditolak')
                                                         <span class="badge bg-danger">Ditolak</span>
+                                                    @else
+                                                        <span class="badge bg-secondary">{{ $item->status }}</span>
                                                     @endif
                                                 </td>
                                                 <td>{{ $item->catatan_penolakan ?? '-' }}</td>

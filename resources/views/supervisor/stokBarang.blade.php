@@ -216,7 +216,13 @@
                                                     <td>{{ $item->total_stok }}</td>
                                                 @endif
                                                 @if(in_array('berat_barang', $selectedColumns))
-                                                    <td>{{ $item->berat_barang }} kg</td>
+                                                    <td>
+                                                        @if($item->berat_barang == NULL)
+                                                            {{ $item->ukuran_barang ?? 'N/A' }} ({{ $item->satuan ?? 'N/A' }})
+                                                        @else
+                                                            {{ $item->berat_barang }} ({{ $item->satuan ?? 'Kg' }})
+                                                        @endif
+                                                    </td>
                                                 @endif
                                                 @if(in_array('harga_beli', $selectedColumns))
                                                     <td>{{ number_format($item->harga_beli, 2) }}</td>
@@ -229,6 +235,7 @@
                                                         class="btn btn-primary edit-price-btn"
                                                         data-bs-toggle="modal"
                                                         data-bs-target="#editPriceModal"
+                                                        data-id-barang="{{ $item->id_barang }}"
                                                         data-nama-barang="{{ $item->nama_barang }}"
                                                         data-tipe-barang="{{ $item->tipe_barang }}"
                                                         data-berat-barang="{{ $item->berat_barang }}"
@@ -289,6 +296,7 @@
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button> {{-- btn-close-white --}}
                     </div>
                     <div class="modal-body">
+                        <input type="hidden" name="id_barang" id="edit_id_barang">
                         <input type="hidden" name="nama_barang" id="edit_nama_barang">
                         <input type="hidden" name="tipe_barang" id="edit_tipe_barang">
                         <input type="hidden" name="berat_barang" id="edit_berat_barang">
@@ -325,13 +333,33 @@
                 "paging": true
             });
 
+            $('#editPriceModal').on('show.bs.modal', function(e) {
+                var button = e.relatedTarget;
+                var idBarang = $(button).data('id-barang');
+                var namaBarang = $(button).data('nama-barang');
+                var tipeBarang = $(button).data('tipe-barang');
+                var beratBarang = $(button).data('berat-barang');
+                var hargaBeli = $(button).data('harga-beli');
+                var hargaJual = $(button).data('harga-jual');
+
+                console.log('id_barang:', idBarang);
+                $('#edit_id_barang').val(idBarang);
+                $('#edit_nama_barang').val(namaBarang);
+                $('#edit_tipe_barang').val(tipeBarang); 
+                $('#edit_berat_barang').val(beratBarang);
+                $('#edit_harga_beli').val(hargaBeli);
+                $('#edit_harga_jual').val(hargaJual);
+            });
+
             $('.edit-price-btn').on('click', function() {
+                var idBarang = $(this).data('id-barang');
                 var namaBarang = $(this).data('nama-barang');
                 var tipeBarang = $(this).data('tipe-barang');
                 var beratBarang = $(this).data('berat-barang');
                 var hargaBeli = $(this).data('harga-beli');
                 var hargaJual = $(this).data('harga-jual');
 
+                $('#edit_id_barang').val(idBarang);
                 $('#edit_nama_barang').val(namaBarang);
                 $('#edit_tipe_barang').val(tipeBarang); 
                 $('#edit_berat_barang').val(beratBarang);

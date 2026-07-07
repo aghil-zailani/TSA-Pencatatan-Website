@@ -9,6 +9,7 @@ use App\Models\Keluar;
 use App\Models\LoginHistory;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Models\ActivityLog;
 use Carbon\Carbon;     
 use App\Exports\ExcelExport;
@@ -161,17 +162,20 @@ class DashboardController extends Controller
     }
 
     public function tampil(Request $request)
-    {
-         
+    {  
         $barangAggregated = Barang::select(
                 'nama_barang',
                 'tipe_barang_kategori',
+                'tipe_barang',
                 'berat_barang',
+                'ukuran_barang',
+                'satuan',
+                DB::raw('MIN(id_barang) as id_barang'),
                 DB::raw('SUM(jumlah_barang) as total_stok'),
                 DB::raw('AVG(harga_beli) as harga_beli'),
                 DB::raw('AVG(harga_jual) as harga_jual')
             )
-            ->groupBy('nama_barang', 'tipe_barang_kategori', 'berat_barang')
+            ->groupBy('nama_barang', 'tipe_barang_kategori', 'tipe_barang', 'berat_barang', 'ukuran_barang', 'satuan')
             ->get();
 
         $totalKeseluruhanBarang = $barangAggregated->sum('total_stok');
@@ -202,48 +206,40 @@ class DashboardController extends Controller
         ]);
     }
 
-
     public function updateHarga(Request $request){
         $request->validate([
+            'id_barang' => 'nullable|string',
             'nama_barang' => 'required|string',
-            'tipe_barang' => 'required|string',   
-            'berat_barang' => 'nullable|string', 
+            'berat_barang' => 'nullable|numeric',
             'harga_beli' => 'nullable|numeric',
         ]);
 
+        $idBarang = $request->input('id_barang');
         $namaBarang = $request->input('nama_barang');
-        $tipeBarang = $request->input('tipe_barang');   
-        $beratBarang = $request->input('berat_barang'); 
+        $beratBarang = $request->input('berat_barang');
         $hargaBeli = $request->input('harga_beli');
 
-        
         $query = Barang::where('nama_barang', $namaBarang);
 
-        
-        if (!empty($tipeBarang)) {
-            $query->where('tipe_barang', $tipeBarang);
-        }
-
-        
-        
-        if (!empty($beratBarang) && $beratBarang !== 'N/A') {
+        if (!empty($beratBarang)) {
             $query->where('berat_barang', $beratBarang);
         } else {
-            
             $query->where(function($q) {
                 $q->whereNull('berat_barang')->orWhere('berat_barang', '');
             });
         }
 
-        $updatedCount = $query->update([
+        $count = $query->count();
+
+        if ($count === 0) {
+            return response()->json(['success' => false, 'message' => 'Barang tidak ditemukan.'], 404);
+        }
+
+        $query->update([
             'harga_beli' => $hargaBeli
         ]);
 
-        if ($updatedCount > 0) {
-            return response()->json(['success' => true, 'message' => 'Harga barang ' . $namaBarang . ' (Tipe: ' . $tipeBarang . ', Berat: ' . ($beratBarang ?: 'N/A') . ') berhasil diperbarui.'], 200);
-        } else {
-            return response()->json(['success' => false, 'message' => 'Tidak ada barang ' . $namaBarang . ' (Tipe: ' . $tipeBarang . ', Berat: ' . ($beratBarang ?: 'N/A') . ') yang ditemukan atau diperbarui.'], 404);
-        }
+        return response()->json(['success' => true, 'message' => 'Harga barang ' . $namaBarang . ' berhasil diperbarui (' . $count . ' item).'], 200);
     }
 
     public function barangKeluar()
@@ -377,7 +373,7 @@ class DashboardController extends Controller
 
     public function pemeliharaan()
     {
-        $pengajuanPending = PengajuanBarang::select('report_id', 'nama_laporan','status', \DB::raw('COUNT(*) as total_items'), \DB::raw('MIN(created_at) as created_at'))
+        $pengajuanPending = PengajuanBarang::select('report_id', 'nama_laporan','status', \DB::raw('COUNT(*) as total_items'), \DB::raw('MAX(updated_at) as created_at'))
                                           ->where('status', 'proses')
                                           ->groupBy('report_id', 'status', 'nama_laporan')
                                           ->orderBy('created_at', 'desc')
@@ -429,8 +425,7 @@ class DashboardController extends Controller
         $transaksis = $transaksis->get();
         $pengajuans = $pengajuans->get();
 
-        
-        $riwayatGabung = $transaksis->merge($pengajuans)->sortByDesc('created_at');
+        $riwayatGabung = $transaksis->concat($pengajuans)->sortByDesc('created_at')->values();
 
         return view('supervisor.riwayat', compact('judul', 'riwayatGabung'));
     }

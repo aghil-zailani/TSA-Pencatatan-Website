@@ -20,7 +20,7 @@ class LaporanController extends Controller
     
     public function validasiBarangMasuk()
     {
-        $pengajuanPending = PengajuanBarang::select('report_id', 'nama_laporan','status', \DB::raw('COUNT(*) as total_items'), \DB::raw('MIN(created_at) as created_at'))
+        $pengajuanPending = PengajuanBarang::select('report_id', 'nama_laporan','status', \DB::raw('COUNT(*) as total_items'), \DB::raw('MAX(updated_at) as created_at'))
                                           ->where('status', 'proses')
                                           ->groupBy('report_id', 'status', 'nama_laporan')
                                           ->orderBy('created_at', 'desc')
@@ -305,7 +305,7 @@ class LaporanController extends Controller
                 return redirect()->back()->with('error', 'Tidak ada laporan yang bisa dikirim.');
             }
             
-            $reportId = 'RPT-' . strtoupper(Str::random(8));
+            $reportId = PengajuanBarang::generateUniqueReportId();
             
             foreach ($pengajuanPending as $pengajuan) {
                 $pengajuan->update([

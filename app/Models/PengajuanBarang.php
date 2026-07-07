@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class PengajuanBarang extends Model
 {
@@ -35,5 +36,16 @@ class PengajuanBarang extends Model
 
     public function barang() {
         return $this->belongsTo(Barang::class, 'id_barang', 'id_barang');
+    }
+
+    public static function generateUniqueReportId(string $prefix = 'RPT-', int $length = 8, ?callable $candidateGenerator = null): string
+    {
+        do {
+            $candidate = $candidateGenerator
+                ? $candidateGenerator($prefix, $length)
+                : $prefix . strtoupper(Str::random($length));
+        } while (self::where('report_id', $candidate)->exists());
+
+        return $candidate;
     }
 }

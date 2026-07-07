@@ -366,7 +366,7 @@ class DashboardController extends Controller
         $pengajuans = $pengajuans->get();
 
         
-        $riwayatGabung = $transaksis->merge($pengajuans)->sortByDesc('created_at');
+        $riwayatGabung = $transaksis->concat($pengajuans)->sortByDesc('created_at')->values();
         $judul = 'Riwayat';
 
         
@@ -496,7 +496,7 @@ class DashboardController extends Controller
 
         DB::beginTransaction();
         try {
-            $reportId = 'PBK-' . date('ymd') . '-' . strtoupper(Str::random(4)); 
+            $reportId = PengajuanBarang::generateUniqueReportId('PBK-' . date('ymd') . '-', 4);
 
             foreach ($items as $item) {
                 PengajuanBarang::create([
