@@ -12,13 +12,14 @@ use App\Http\Controllers\Supervisor\DashboardController as SupervisorDashboardCo
 use App\Http\Controllers\StaffGudang\DashboardController as StaffDashboardController;
 // use App\Http\Controllers\Api\LaporanAPKController;
 use App\Http\Controllers\Api\SupervisorUmumBarangController;
+use App\Http\Controllers\Api\UserController;
 
 Route::middleware(['api'])->group(function(){
     Route::post('/login', [ApiLoginController::class, 'login']);
+    Route::post('/register', [RegisterController::class, 'register']);
 
     // Punya Zura
     Route::post('/login-android', [ApiLoginController::class, 'loginAndroid']);
-    Route::post('/register', [RegisterController::class, 'register']);
 
     Route::put('/user/update', [ApiLoginController::class, 'update']);
 
@@ -44,14 +45,6 @@ Route::middleware(['api'])->group(function(){
             Route::post('/laporan-apk', [LaporanAPKController::class, 'store']);
             Route::get('/notifikasi', [NotifikasiController::class, 'index']);
             Route::post('/notifikasi/generate', [NotifikasiController::class, 'generateNotifikasi']);
-        });
-
-        Route::middleware('role:inspektor')->prefix('inspektor')->group(function () {
-            //
-        });
-
-        Route::middleware('role:supervisor_umum')->prefix('supervisor')->group(function () {
-            //
         });
 
         Route::post('/logout', [ApiLoginController::class, 'logout']);

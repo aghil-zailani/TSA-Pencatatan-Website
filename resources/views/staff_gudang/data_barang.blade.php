@@ -16,6 +16,42 @@
         .table { --bs-table-bg: #fff; }
         .table thead th { font-family: 'Poppins', sans-serif; font-weight: 600; background-color: #e9ecef; color: #495057; text-align: center; }
         .table tbody td { font-family: 'Poppins', sans-serif; color: #495057; vertical-align: middle; }
+        .status-filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            margin-bottom: 1rem;
+        }
+        .status-filter-btn {
+            border: 1px solid #b983ff;
+            background: #fff;
+            color: #6f42c1;
+            padding: 0.5rem 1rem;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        .status-filter-btn.active,
+        .status-filter-btn:hover {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: #fff;
+            border-color: #7c3aed;
+            box-shadow: 0 0.2rem 0.6rem rgba(124, 58, 237, 0.25);
+        }
+        .action-stack {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            min-width: 170px;
+        }
+        .action-stack .btn {
+            width: 100%;
+            max-width: 170px;
+            white-space: nowrap;
+        }
     </style>
 </head>
 
@@ -44,6 +80,12 @@
                             <h4 class="card-title">Daftar Barang Diterima</h4>
                         </div>
                         <div class="card-body">
+                            <div class="status-filter-bar">
+                                <button type="button" class="status-filter-btn active" data-status="all">Semua</button>
+                                <button type="button" class="status-filter-btn" data-status="ready">QR Lengkap</button>
+                                <button type="button" class="status-filter-btn" data-status="pending">Belum Lengkap</button>
+                                <button type="button" class="status-filter-btn" data-status="sparepart">Sparepart</button>
+                            </div>
                             <div class="table-responsive">
                                 <table class="table table-bordered table-hover" id="dataTable" width="100%" cellspacing="0">
                                     <thead>
@@ -59,12 +101,19 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @forelse ($barangDiterima as $index => $item)
+                                        @forelse ($barangDiterima as $item)
                                             @php
                                                 $jumlahQr = $item->qrCodes->count();
+                                                if ($jumlahQr >= $item->jumlah_barang) {
+                                                    $statusQr = 'ready';
+                                                } elseif ($item->tipe_barang_kategori == 'Sparepart') {
+                                                    $statusQr = 'sparepart';
+                                                } else {
+                                                    $statusQr = 'pending';
+                                                }
                                             @endphp
-                                            <tr>
-                                                <td>{{ $index + 1 }}</td>
+                                            <tr data-status="{{ $statusQr }}">
+                                                <td>{{ $loop->iteration }}</td>
                                                 <td>{{ $item->nama_barang }}</td>
                                                 <td>{{ $item->tipe_barang_kategori }}</td>
                                                 <td>{{ $item->kondisi ?? '-' }}</td>
@@ -89,31 +138,44 @@
                                                 <td>{{ $item->created_at->format('d M Y H:i') }}</td>
 
                                                 <td class="text-center">
-                                                    @if ($jumlahQr >= $item->jumlah_barang)
-                                                        <button type="button"
-                                                                class="btn btn-secondary btn-sm"
-                                                                disabled
-                                                                style="cursor:not-allowed;">
-                                                            <i class="bi bi-check-circle"></i>
-                                                            QR Lengkap
-                                                        </button>
-                                                    @elseif ( $item->tipe_barang_kategori == 'Sparepart' )
-                                                        <button type="button"
-                                                                class="btn btn-secondary btn-sm"
-                                                                disabled
-                                                                style="cursor:not-allowed;">
-                                                            <i class="bi bi-check-circle"></i>
-                                                            Sparepart
-                                                        </button>
-                                                    @else
-                                                        <button type="button"
-                                                                class="btn btn-success btn-sm btn-generate-qr"
-                                                                data-id="{{ $item->id_barang }}"
-                                                                data-nama="{{ $item->nama_barang }}">
-                                                            <i class="bi bi-qr-code"></i>
-                                                            Generate QR
-                                                        </button>
-                                                    @endif
+                                                    <div class="action-stack">
+                                                        @if ($jumlahQr >= $item->jumlah_barang)
+                                                            <button type="button"
+                                                                    class="btn btn-secondary btn-sm"
+                                                                    disabled
+                                                                    style="cursor:not-allowed;">
+                                                                <i class="bi bi-check-circle"></i>
+                                                                QR Lengkap
+                                                            </button>
+                                                        @elseif ( $item->tipe_barang_kategori == 'Sparepart' )
+                                                            <button type="button"
+                                                                    class="btn btn-secondary btn-sm"
+                                                                    disabled
+                                                                    style="cursor:not-allowed;">
+                                                                <i class="bi bi-check-circle"></i>
+                                                                Sparepart
+                                                            </button>
+                                                        @else
+                                                            <button type="button"
+                                                                    class="btn btn-success btn-sm btn-generate-qr"
+                                                                    data-id="{{ $item->id_barang }}"
+                                                                    data-nama="{{ $item->nama_barang }}">
+                                                                <i class="bi bi-qr-code"></i>
+                                                                Generate QR
+                                                            </button>
+                                                        @endif
+
+                                                        @if ($jumlahQr > 0)
+                                                            <button type="button"
+                                                                    class="btn btn-outline-warning btn-sm btn-regenerate-qr"
+                                                                    data-id="{{ $item->id_barang }}"
+                                                                    data-qr-id="{{ $item->qrCodes->last()->id_qr_code ?? '' }}"
+                                                                    data-nama="{{ $item->nama_barang }}">
+                                                                <i class="bi bi-arrow-repeat"></i>
+                                                                Generate Ulang
+                                                            </button>
+                                                        @endif
+                                                    </div>
                                                 </td>
                                             </tr>
                                         @empty
@@ -168,92 +230,154 @@
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-    $(document).on('click', '.btn-generate-qr', function () {
+        var statusFilter = 'all';
 
-        var id = $(this).data('id');
-        var nama = $(this).data('nama');
-
-        $.get("{{ route('staff_gudang.preview_qrcode', ':id') }}".replace(':id', id), function(res){
-
-            if(res.status === 'full'){
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Kapasitas Penuh',
-                    text: res.message
-                });
-                return;
-            }
-
-            Swal.fire({
-                html: `
-                        <div class="qr-card-container">
-                            <div class="qr-product-name">${nama}</div>
-                            
-                            <div class="qr-image-wrapper">
-                                <img src="${res.qr_image}" alt="QR Code" class="qr-img-display">
-                            </div>
-                            
-                            <div style="font-size: 0.85rem; color: #95a5a6;">
-                                ID Barang: <b>${id}</b>
-                            </div>
-                        </div>
-                        `,
-                        showCloseButton: true,
-                        showCancelButton: true,
-                        focusConfirm: false,
-                        
-                        confirmButtonText: '<i class="fas fa-download"></i> Simpan QR Code',
-                        confirmButtonColor: '#3085d6',
-                        
-                        cancelButtonText: 'Tutup',
-                        cancelButtonColor: '#d33',
-                        
-                        showClass: {
-                            popup: 'animate__animated animate__fadeInDown'
-                        },
-                        hideClass: {
-                            popup: 'animate__animated animate__fadeOutUp'
-                        },
-                        
-                        customClass: {
-                            confirmButton: 'btn btn-primary btn-lg swal2-confirm-custom',
-                            cancelButton: 'btn btn-danger btn-lg'
-                        },
-                        buttonsStyling: false 
-            }).then((result) => {
-
-                if(result.isConfirmed){
-
-                    $.post("{{ url('staff-gudang/store-qrcode') }}", {
-                        _token: '{{ csrf_token() }}',
-                        id: id,
-                        nomor_identifikasi: res.nomor_identifikasi,
-                        image: res.qr_image.split(',')[1]
-                    }, function(storeRes){
-
-                        var a = document.createElement('a');
-                        a.href = storeRes.url;
-                        a.download = storeRes.fileName;
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'QR berhasil dibuat',
-                            timer: 1500,
-                            showConfirmButton: false
-                        }).then(() => {
-                            location.reload();
-                        });
-
-                    });
+        $(document).ready(function() {
+            var table = $('#dataTable').DataTable({
+                pageLength: 10,
+                lengthMenu: [
+                    [10, 25, 50, -1],
+                    [10, 25, 50, 'Semua']
+                ],
+                searching: true,
+                info: true,
+                paging: true,
+                ordering: true,
+                language: {
+                    search: 'Cari:',
+                    lengthMenu: 'Tampilkan _MENU_ baris',
+                    info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ data',
+                    paginate: {
+                        previous: 'Sebelumnya',
+                        next: 'Berikutnya'
+                    }
                 }
+            });
+
+            $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+                var row = table.row(dataIndex).node();
+                var rowStatus = $(row).data('status');
+
+                if (statusFilter === 'all') {
+                    return true;
+                }
+
+                return rowStatus === statusFilter;
+            });
+
+            $('.status-filter-btn').on('click', function () {
+                $('.status-filter-btn').removeClass('active');
+                $(this).addClass('active');
+                statusFilter = $(this).data('status');
+                table.draw();
             });
         });
 
-    });
+        function handleQrPreview(id, nama, mode, qrId = null) {
+            var url = "{{ route('staff_gudang.preview_qrcode', ':id') }}".replace(':id', id);
+            var params = {};
 
+            if (mode === 'regenerate') {
+                params.mode = 'regenerate';
+                if (qrId) params.qr_id = qrId;
+            }
+
+            $.get(url, params, function(res){
+                if (res.status === 'full') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Kapasitas Penuh',
+                        text: res.message
+                    });
+                    return;
+                }
+
+                if (res.status === 'empty') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'QR tidak ditemukan',
+                        text: res.message
+                    });
+                    return;
+                }
+
+                Swal.fire({
+                    html: `
+                            <div class="qr-card-container">
+                                <div class="qr-product-name">${nama}</div>
+                                
+                                <div class="qr-image-wrapper">
+                                    <img src="${res.qr_image}" alt="QR Code" class="qr-img-display">
+                                </div>
+                                
+                                <div style="font-size: 0.85rem; color: #95a5a6;">
+                                    ID Barang: <b>${id}</b>
+                                </div>
+                            </div>
+                            `,
+                    showCloseButton: true,
+                    showCancelButton: true,
+                    focusConfirm: false,
+                    confirmButtonText: '<i class="fas fa-download"></i> Simpan QR Code',
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonText: 'Tutup',
+                    cancelButtonColor: '#d33',
+                    showClass: {
+                        popup: 'animate__animated animate__fadeInDown'
+                    },
+                    hideClass: {
+                        popup: 'animate__animated animate__fadeOutUp'
+                    },
+                    customClass: {
+                        confirmButton: 'btn btn-primary btn-lg swal2-confirm-custom',
+                        cancelButton: 'btn btn-danger btn-lg'
+                    },
+                    buttonsStyling: false 
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const qrDownloadUrl = res.qr_image;
+
+                        $.post("{{ url('staff-gudang/store-qrcode') }}", {
+                            _token: '{{ csrf_token() }}',
+                            id: id,
+                            qr_id: res.qr_id || qrId || null,
+                            mode: mode,
+                            nomor_identifikasi: res.nomor_identifikasi,
+                            image: res.qr_image.split(',')[1]
+                        }, function(storeRes) {
+                            var a = document.createElement('a');
+                            a.href = qrDownloadUrl;
+                            a.download = storeRes.fileName;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+
+                            Swal.fire({
+                                icon: 'success',
+                                title: mode === 'regenerate' ? 'QR berhasil di-generate ulang' : 'QR berhasil dibuat',
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => {
+                                location.reload();
+                            });
+                        });
+                    }
+                });
+            });
+        }
+
+        $(document).on('click', '.btn-generate-qr', function () {
+            var id = $(this).data('id');
+            var nama = $(this).data('nama');
+            handleQrPreview(id, nama, 'create');
+        });
+
+        $(document).on('click', '.btn-regenerate-qr', function () {
+            var id = $(this).data('id');
+            var nama = $(this).data('nama');
+            var qrId = $(this).data('qr-id');
+            handleQrPreview(id, nama, 'regenerate', qrId);
+        });
     </script>
 
 

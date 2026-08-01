@@ -83,6 +83,14 @@
             overflow: hidden;
         }
 
+        .modal-backdrop {
+            background-color: rgba(15, 23, 42, 0.20) !important;
+        }
+
+        .modal-backdrop.show {
+            opacity: 1 !important;
+        }
+
         .modal-header {
             padding: 1.5rem;
         }
@@ -236,7 +244,7 @@
                                     </a>
                                     <ul class="submenu {{ request()->is('supervisor/pemeliharaan*') ? 'active' : '' }}">
                                         <li class="submenu-item {{ request()->is('supervisor/pemeliharaan-validasi') ? 'active' : '' }}">
-                                            <a href="{{ route('supervisor.pemeliharaan.validasi') }}">Validasi</a>
+                                            <a href="{{ route('supervisor.pemeliharaan.validasi') }}">Verifikasi</a>
                                         </li>
                                         <li class="submenu-item {{ request()->is('supervisor/pemeliharaan-riwayat') ? 'active' : '' }}">
                                             <a href="{{ route('supervisor.pemeliharaan.riwayat') }}">Riwayat</a>

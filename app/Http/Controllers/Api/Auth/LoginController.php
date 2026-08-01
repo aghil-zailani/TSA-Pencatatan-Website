@@ -17,11 +17,9 @@ class LoginController extends Controller
             'id' => 'required|string',
             'password' => 'required|string',
         ]);
-
         
         $user = User::where('id', $request->id)->first();
-
-        
+       
         if (! $user || ! Hash::check($request->password, $user->password)) {
             
             throw ValidationException::withMessages([

@@ -220,7 +220,9 @@ class DashboardController extends Controller
             'description' => 'Staff melihat daftar barang masuk yang diterima.'
         ]);
 
-        $barangDiterima = Barang::with('qrCodes')->orderBy('created_at', 'desc')->get();
+        $barangDiterima = Barang::with('qrCodes')
+            ->orderBy('created_at', 'desc')
+            ->get();
         $judul = 'Data Barang';
 
         return view('staff_gudang.data_barang', compact('barangDiterima', 'judul'));
@@ -260,32 +262,48 @@ class DashboardController extends Controller
         return view('input', $data);
     }
 
-    public function previewQr($id)
+    public function previewQr($id, Request $request)
     {
         $barang = Barang::where('id_barang', $id)->firstOrFail();
+        $mode = $request->input('mode', 'create');
 
-        $jumlahSudahAda = QrCodeModel::where('id_barang', $id)->count();
-        if ($jumlahSudahAda >= $barang->jumlah_barang) {
-            return response()->json([
-                'status' => 'full',
-                'message' => 'Semua QR untuk barang ini sudah dibuat.'
-            ]);
+        if ($mode === 'regenerate') {
+            $qrRecord = $request->filled('qr_id')
+                ? QrCodeModel::find($request->qr_id)
+                : QrCodeModel::where('id_barang', $id)->latest('tanggal_pembuatan')->first();
+
+            if (!$qrRecord) {
+                return response()->json([
+                    'status' => 'empty',
+                    'message' => 'QR yang akan di-generate ulang tidak ditemukan.'
+                ]);
+            }
+
+            $nomorIdentifikasiBaru = $qrRecord->nomor_identifikasi;
+        } else {
+            $jumlahSudahAda = QrCodeModel::where('id_barang', $id)->count();
+            if ($jumlahSudahAda >= $barang->jumlah_barang) {
+                return response()->json([
+                    'status' => 'full',
+                    'message' => 'Semua QR untuk barang ini sudah dibuat.'
+                ]);
+            }
+
+            $prefix = $barang->id_barang;
+
+            $lastQr = QrCodeModel::where('nomor_identifikasi', 'like', $prefix . '-%')
+                ->orderByRaw("
+                    CAST(SUBSTRING_INDEX(nomor_identifikasi, '-', -1) AS UNSIGNED) DESC
+                ")
+                ->first();
+
+            $lastNumber = $lastQr
+                ? (int) substr($lastQr->nomor_identifikasi, -3)
+                : 0;
+
+            $nextNumber = str_pad(++$lastNumber, 3, '0', STR_PAD_LEFT);
+            $nomorIdentifikasiBaru = $prefix . '-' . $nextNumber;
         }
-
-        $prefix = $barang->id_barang;
-
-        $lastQr = QrCodeModel::where('nomor_identifikasi', 'like', $prefix . '-%')
-            ->orderByRaw("
-                CAST(SUBSTRING_INDEX(nomor_identifikasi, '-', -1) AS UNSIGNED) DESC
-            ")
-            ->first();
-
-        $lastNumber = $lastQr
-            ? (int) substr($lastQr->nomor_identifikasi, -3)
-            : 0;
-
-        $nextNumber = str_pad(++$lastNumber, 3, '0', STR_PAD_LEFT);
-        $nomorIdentifikasiBaru = $prefix . '-' . $nextNumber;
 
         $qrContent = implode("\n", [
             'ID Barang: ' . $barang->id_barang,
@@ -305,6 +323,8 @@ class DashboardController extends Controller
 
         return response()->json([
             'status' => 'preview',
+            'mode' => $mode,
+            'qr_id' => $request->input('qr_id') ?? ($mode === 'regenerate' ? ($qrRecord->id_qr_code ?? null) : null),
             'qr_image' => 'data:image/png;base64,' . $base64,
             'nomor_identifikasi' => $nomorIdentifikasiBaru
         ]);
@@ -313,6 +333,38 @@ class DashboardController extends Controller
     public function storeQr(Request $request)
     {
         $barang = Barang::where('id_barang', $request->id)->firstOrFail();
+        $mode = $request->input('mode', 'create');
+
+        if ($mode === 'regenerate') {
+            $qr = $request->filled('qr_id')
+                ? QrCodeModel::find($request->qr_id)
+                : QrCodeModel::where('id_barang', $request->id)->latest('tanggal_pembuatan')->first();
+
+            if (!$qr) {
+                return response()->json(['status' => 'error', 'message' => 'QR lama tidak ditemukan.']);
+            }
+
+            $timestamp = now()->format('YmdHis');
+            $fileName = $timestamp . '_' . $request->nomor_identifikasi . '.png';
+            $path = 'qrcodes/' . $fileName;
+
+            Storage::disk('public')->delete($qr->qr_code_path);
+            Storage::disk('public')->put($path, base64_decode($request->image));
+
+            $qr->update([
+                'nomor_identifikasi' => $request->nomor_identifikasi,
+                'qr_code_path' => $path,
+                'tanggal_pembuatan' => now(),
+                'status_qr' => 'sudah_generate'
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'url' => Storage::disk('public')->url($path),
+                'fileName' => $fileName,
+                'mode' => 'regenerate'
+            ]);
+        }
 
         $jumlahSudahAda = QrCodeModel::where('id_barang', $request->id)->count();
         if ($jumlahSudahAda >= $barang->jumlah_barang) {
@@ -330,13 +382,14 @@ class DashboardController extends Controller
             'nomor_identifikasi' => $request->nomor_identifikasi,
             'qr_code_path' => $path,
             'tanggal_pembuatan' => now(),
-            'status_qr' => 'baru'
+            'status_qr' => 'sudah_generate'
         ]);
 
         return response()->json([
             'status' => 'success',
-            'url' => asset('storage/' . $path),
-            'fileName' => $fileName
+            'url' => Storage::disk('public')->url($path),
+            'fileName' => $fileName,
+            'mode' => 'create'
         ]);
     }
 
