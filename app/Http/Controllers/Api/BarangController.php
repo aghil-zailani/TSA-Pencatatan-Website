@@ -2,16 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
+use App\Models\Barang;
+use App\Models\LaporanAPK;
 use App\Models\QrCode;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Schema;
-use App\Models\Barang; 
-use App\Models\LaporanAPK;
-use Illuminate\Support\Facades\Validator; 
 
 class BarangController extends Controller
 {
@@ -21,7 +19,7 @@ class BarangController extends Controller
 
         if ($user->role !== 'inspektor') {
             return response()->json([
-                'message' => 'Anda tidak memiliki akses ke inventory.'
+                'message' => 'Anda tidak memiliki akses ke inventory.',
             ], 403);
         }
 
@@ -49,16 +47,15 @@ class BarangController extends Controller
 
         return response()->json([
             'message' => 'List inventory (QR based)',
-            'data' => $inventory
+            'data' => $inventory,
         ], 200);
     }
-
 
     public function ringkasan(Request $request)
     {
         try {
             $user = Auth::user();
-            if (!$user) {
+            if (! $user) {
                 return response()->json(['error' => 'User not authenticated'], 401);
             }
 
@@ -79,7 +76,6 @@ class BarangController extends Controller
                 ->where('barangs.tipe_barang_kategori', 'apar')
                 ->whereIn('barangs.kondisi', $kondisiBaik)
                 ->count();
-
 
             $hydrantTotal = QrCode::join('barangs', 'qr_codes.id_barang', '=', 'barangs.id_barang')
                 ->where('barangs.tipe_barang_kategori', 'hydrant')
@@ -107,18 +103,16 @@ class BarangController extends Controller
                     'perlu_cek' => $hydrantTotal - $hydrantBaik,
                 ],
 
-                'user_role' => $user->role
+                'user_role' => $user->role,
             ], 200);
 
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Internal server error',
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 500);
         }
     }
-
-
 
     public function showByQrCode(Request $request, $qrCodeData)
     {
@@ -135,7 +129,7 @@ class BarangController extends Controller
             }
         }
 
-        if (!$nomorIdentifikasi) {
+        if (! $nomorIdentifikasi) {
             $nomorIdentifikasi = trim($qrCodeData);
         }
 
@@ -147,20 +141,20 @@ class BarangController extends Controller
             ->where('nomor_identifikasi', $nomorIdentifikasi)
             ->first();
 
-        if (!$qrCode || !$qrCode->barang) {
+        if (! $qrCode || ! $qrCode->barang) {
             return response()->json([
                 'status' => 'not_recognized',
-                'message' => 'QR Code atau barang tidak dikenali.'
+                'message' => 'QR Code atau barang tidak dikenali.',
             ], 404);
         }
 
         $barang = $qrCode->barang;
 
         // ===== Validasi kategori =====
-        if (!in_array(strtoupper($barang->tipe_barang_kategori), ['APAR', 'HYDRANT'])) {
+        if (! in_array(strtoupper($barang->tipe_barang_kategori), ['APAR', 'HYDRANT'])) {
             return response()->json([
                 'status' => 'invalid_type',
-                'message' => 'Barang bukan APAR atau HYDRANT.'
+                'message' => 'Barang bukan APAR atau HYDRANT.',
             ], 400);
         }
 
@@ -203,11 +197,9 @@ class BarangController extends Controller
                 'lokasi_barang' => $barang->lokasi_barang ?? null,
                 'qr_code' => $qrCode->nomor_identifikasi,
                 'inspection_status' => $inspectionStatus,
-            ]
+            ],
         ], 200);
     }
-
-
 
     public function store(Request $request)
     {
@@ -215,7 +207,7 @@ class BarangController extends Controller
         $validatedData = $request->validate([
             'nama_barang' => 'required|string|max:255',
             'jumlah_barang' => 'required|integer|min:0',
-            'tipe_barang' => 'required|string', 
+            'tipe_barang' => 'required|string',
             'satuan' => 'required|string',
             'kondisi' => 'required|string',
             'berat_barang' => 'nullable|numeric',
@@ -227,21 +219,21 @@ class BarangController extends Controller
 
         return response()->json([
             'message' => 'Barang berhasil disimpan!',
-            'data' => $barang
+            'data' => $barang,
         ], 201);
     }
 
     public function show($id)
     {
         $barang = Barang::with([
-            'laporanTerakhir.user:id,username'
+            'laporanTerakhir.user:id,username',
         ])->findOrFail($id);
 
         $laporan = $barang->laporanTerakhir;
 
         return response()->json([
             'message' => 'Detail barang',
-            'data' => $barang
+            'data' => $barang,
         ]);
     }
 
@@ -251,20 +243,19 @@ class BarangController extends Controller
             ->where('nomor_identifikasi', $qrCode)
             ->first();
 
-        if (!$qr) {
+        if (! $qr) {
             return response()->json([
-                'message' => 'QR Code tidak ditemukan'
+                'message' => 'QR Code tidak ditemukan',
             ], 404);
         }
-
 
         $barang = \DB::table('barangs')
             ->where('id_barang', $qr->id_barang)
             ->first();
 
-        if (!$barang) {
+        if (! $barang) {
             return response()->json([
-                'message' => 'Barang tidak ditemukan'
+                'message' => 'Barang tidak ditemukan',
             ], 404);
         }
 
@@ -290,29 +281,26 @@ class BarangController extends Controller
         return response()->json([
             'message' => 'Detail barang',
             'data' => [
-                'id_barang'   => $barang->id_barang,
-                'qr_code'     => $qr->nomor_identifikasi, 
+                'id_barang' => $barang->id_barang,
+                'qr_code' => $qr->nomor_identifikasi,
                 'nama_barang' => $barang->nama_barang,
                 'tipe_barang' => $barang->tipe_barang,
                 'tipe_barang_kategori' => $barang->tipe_barang_kategori,
-                'kondisi'     => $barang->kondisi,
+                'kondisi' => $barang->kondisi,
 
                 'laporan_terakhir' => $lastInspection ? [
                     'tanggal_inspeksi' => $lastInspection->tanggal_inspeksi,
-                    'kondisi_fisik'    => $lastInspection->kondisi_fisik,
-                    'status'           => $lastInspection->status,
-                    'foto'             => $lastInspection->foto,
-                    'lokasi_alat'      => $lastInspection->lokasi_alat,
-                    'tindakan'         => $lastInspection->tindakan,
-                    'username'         => $lastInspection->username,
-                    'selang'           => $lastInspection->selang,
-                    'pressure_gauge'   => $lastInspection->pressure_gauge,
-                    'safety_pin'       => $lastInspection->safety_pin,
-                ] : null
-            ]
+                    'kondisi_fisik' => $lastInspection->kondisi_fisik,
+                    'status' => $lastInspection->status,
+                    'foto' => $lastInspection->foto,
+                    'lokasi_alat' => $lastInspection->lokasi_alat,
+                    'tindakan' => $lastInspection->tindakan,
+                    'username' => $lastInspection->username,
+                    'selang' => $lastInspection->selang,
+                    'pressure_gauge' => $lastInspection->pressure_gauge,
+                    'safety_pin' => $lastInspection->safety_pin,
+                ] : null,
+            ],
         ]);
     }
-
-
-
 }

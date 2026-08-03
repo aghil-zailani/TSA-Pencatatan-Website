@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
 use App\Models\Barang;
-use App\Models\QrCode;
 use App\Models\LaporanAPK;
 use App\Models\Notifikasi;
+use App\Models\QrCode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Http\Controllers\Controller;
 
 class LaporanAPKController extends Controller
 {
@@ -17,18 +17,30 @@ class LaporanAPKController extends Controller
     {
         if ($qrCode->barang && $qrCode->barang->tipe_barang_kategori) {
             $tipe = strtoupper(trim($qrCode->barang->tipe_barang_kategori));
-            if (strpos($tipe, 'APAR') !== false) return 'APAR';
-            if (strpos($tipe, 'HYDRANT') !== false) return 'HYDRANT';
+            if (strpos($tipe, 'APAR') !== false) {
+                return 'APAR';
+            }
+            if (strpos($tipe, 'HYDRANT') !== false) {
+                return 'HYDRANT';
+            }
         }
 
         $identifier = strtoupper(trim($qrCode->nomor_identifikasi));
-        if (strpos($identifier, 'APAR') !== false || strpos($identifier, 'APACO') !== false) return 'APAR';
-        if (strpos($identifier, 'HYD') !== false || strpos($identifier, 'HYDRANT') !== false) return 'HYDRANT';
+        if (strpos($identifier, 'APAR') !== false || strpos($identifier, 'APACO') !== false) {
+            return 'APAR';
+        }
+        if (strpos($identifier, 'HYD') !== false || strpos($identifier, 'HYDRANT') !== false) {
+            return 'HYDRANT';
+        }
 
         if ($qrCode->barang && $qrCode->barang->nama_barang) {
             $nama = strtoupper($qrCode->barang->nama_barang);
-            if (strpos($nama, 'APAR') !== false) return 'APAR';
-            if (strpos($nama, 'HYDRANT') !== false) return 'HYDRANT';
+            if (strpos($nama, 'APAR') !== false) {
+                return 'APAR';
+            }
+            if (strpos($nama, 'HYDRANT') !== false) {
+                return 'HYDRANT';
+            }
         }
 
         return $qrCode->barang ? strtoupper($qrCode->barang->tipe_barang_kategori) : 'UNKNOWN';
@@ -43,9 +55,9 @@ class LaporanAPKController extends Controller
             [$qrCodeInput]
         )->first();
 
-        if (!$qr || !$qr->id_barang) {
+        if (! $qr || ! $qr->id_barang) {
             return response()->json([
-                'message' => 'QR Code atau barang tidak ditemukan.'
+                'message' => 'QR Code atau barang tidak ditemukan.',
             ], 404);
         }
 
@@ -54,7 +66,7 @@ class LaporanAPKController extends Controller
             ->orderBy('created_at', 'desc')
             ->first();
 
-        if (!$laporan) {
+        if (! $laporan) {
             return response()->json([
                 'message' => 'Belum ada riwayat inspeksi.',
                 'data' => null,
@@ -80,14 +92,13 @@ class LaporanAPKController extends Controller
         ]);
     }
 
-
     public function store(Request $request)
     {
         Log::info('Authorization Header:', ['header' => request()->header('Authorization')]);
         Log::info('User info:', ['user' => $request->user()]);
 
         $data = $request->all();
-        Log::info("📥 Data diterima: " . json_encode($data));
+        Log::info('📥 Data diterima: '.json_encode($data));
 
         $validator = validator($data, [
             'qr_code_data' => 'required|string',
@@ -99,7 +110,8 @@ class LaporanAPKController extends Controller
         ]);
 
         if ($validator->fails()) {
-            Log::warning("❌ Validasi dasar gagal: " . json_encode($validator->errors()));
+            Log::warning('❌ Validasi dasar gagal: '.json_encode($validator->errors()));
+
             return response()->json(['message' => 'Validasi gagal', 'errors' => $validator->errors()], 422);
         }
 
@@ -108,21 +120,22 @@ class LaporanAPKController extends Controller
 
         $qrCode = QrCode::whereRaw('LOWER(TRIM(nomor_identifikasi)) = ?', [$qrCodeInput])->first();
 
-        if (!$qrCode) {
+        if (! $qrCode) {
             Log::warning("❌ QR Code tidak ditemukan: $qrCodeInput");
             $all = QrCode::pluck('nomor_identifikasi')->toArray();
+
             return response()->json([
                 'message' => 'QR Code tidak ditemukan di sistem.',
                 'debug' => [
                     'searched' => $qrCodeInput,
-                    'tersedia' => $all
-                ]
+                    'tersedia' => $all,
+                ],
             ], 404);
         }
 
         $qrCode->load('barang');
 
-        if (!$qrCode->barang) {
+        if (! $qrCode->barang) {
             return response()->json(['message' => 'Barang terkait QR Code tidak ditemukan.'], 404);
         }
 
@@ -160,7 +173,7 @@ class LaporanAPKController extends Controller
         }
 
         $user = $request->user();
-        if (!$user) {
+        if (! $user) {
             return response()->json(['message' => 'Tidak terautentikasi.'], 401);
         }
 
@@ -200,7 +213,7 @@ class LaporanAPKController extends Controller
             }
 
             $laporan = LaporanAPK::create($laporanData);
-            Log::info("✅ Laporan berhasil disimpan. ID: " . $laporan->id);
+            Log::info('✅ Laporan berhasil disimpan. ID: '.$laporan->id);
 
             $barang = Barang::find($qrCode->id_barang);
 
@@ -228,17 +241,17 @@ class LaporanAPKController extends Controller
                 Log::info("🔄 Kondisi barang '{$barang->nama_barang}' (ID: {$barang->id_barang}) diupdate ke '{$barang->kondisi}'.");
             }
 
-
             Notifikasi::create([
                 'barang_id' => $qrCode->id_barang,
                 'judul' => 'Laporan Baru Dikirim ✉️',
-                'deskripsi' => 'Laporan untuk ' . $qrCode->barang->nama_barang . ' sedang menunggu verifikasi.',
+                'deskripsi' => 'Laporan untuk '.$qrCode->barang->nama_barang.' sedang menunggu verifikasi.',
                 'tipe' => 'info',
                 'tanggal' => now()->toDateString(),
                 'baru' => true,
             ]);
 
             DB::commit();
+
             return response()->json([
                 'message' => 'Laporan berhasil disimpan!',
                 'data' => $laporan,
@@ -246,7 +259,8 @@ class LaporanAPKController extends Controller
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error("❌ Gagal simpan laporan: " . $e->getMessage());
+            Log::error('❌ Gagal simpan laporan: '.$e->getMessage());
+
             return response()->json([
                 'message' => 'Gagal menyimpan laporan.',
                 'error' => $e->getMessage(),
