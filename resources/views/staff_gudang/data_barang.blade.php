@@ -52,6 +52,16 @@
             max-width: 170px;
             white-space: nowrap;
         }
+        .qr-list-modal .modal-dialog {
+            max-width: 920px;
+        }
+        .qr-list-table th,
+        .qr-list-table td {
+            vertical-align: middle;
+        }
+        .qr-list-table .btn {
+            white-space: nowrap;
+        }
     </style>
 </head>
 
@@ -139,15 +149,7 @@
 
                                                 <td class="text-center">
                                                     <div class="action-stack">
-                                                        @if ($jumlahQr >= $item->jumlah_barang)
-                                                            <button type="button"
-                                                                    class="btn btn-secondary btn-sm"
-                                                                    disabled
-                                                                    style="cursor:not-allowed;">
-                                                                <i class="bi bi-check-circle"></i>
-                                                                QR Lengkap
-                                                            </button>
-                                                        @elseif ( $item->tipe_barang_kategori == 'Sparepart' )
+                                                        @if ( $item->tipe_barang_kategori == 'Sparepart' )
                                                             <button type="button"
                                                                     class="btn btn-secondary btn-sm"
                                                                     disabled
@@ -157,22 +159,11 @@
                                                             </button>
                                                         @else
                                                             <button type="button"
-                                                                    class="btn btn-success btn-sm btn-generate-qr"
-                                                                    data-id="{{ $item->id_barang }}"
-                                                                    data-nama="{{ $item->nama_barang }}">
+                                                                    class="btn btn-success btn-sm"
+                                                                    data-bs-toggle="modal"
+                                                                    data-bs-target="#qrListModal{{ md5($item->id_barang) }}">
                                                                 <i class="bi bi-qr-code"></i>
                                                                 Generate QR
-                                                            </button>
-                                                        @endif
-
-                                                        @if ($jumlahQr > 0)
-                                                            <button type="button"
-                                                                    class="btn btn-outline-warning btn-sm btn-regenerate-qr"
-                                                                    data-id="{{ $item->id_barang }}"
-                                                                    data-qr-id="{{ $item->qrCodes->last()->id_qr_code ?? '' }}"
-                                                                    data-nama="{{ $item->nama_barang }}">
-                                                                <i class="bi bi-arrow-repeat"></i>
-                                                                Generate Ulang
                                                             </button>
                                                         @endif
                                                     </div>
@@ -193,6 +184,94 @@
                 </section>
             </div>
         </div>
+
+        @foreach ($barangDiterima as $modalItem)
+            @php
+                $qrCodesModal = $modalItem->qrCodes->sortBy('nomor_identifikasi')->values();
+                $totalUnitModal = max((int) $modalItem->jumlah_barang, $qrCodesModal->count());
+            @endphp
+            @if ($modalItem->tipe_barang_kategori != 'Sparepart')
+                <div class="modal fade qr-list-modal" id="qrListModal{{ md5($modalItem->id_barang) }}" tabindex="-1" aria-labelledby="qrListModalLabel{{ md5($modalItem->id_barang) }}" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <div>
+                                    <h5 class="modal-title" id="qrListModalLabel{{ md5($modalItem->id_barang) }}">
+                                        QR Barang - {{ $modalItem->nama_barang }}
+                                    </h5>
+                                    <small class="text-muted">ID Barang: {{ $modalItem->id_barang }}</small>
+                                </div>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover qr-list-table mb-0">
+                                        <thead>
+                                            <tr class="text-center">
+                                                <th style="width: 80px;">Item</th>
+                                                <th>Nomor Identifikasi</th>
+                                                <th style="width: 150px;">Status QR</th>
+                                                <th style="width: 170px;">Tanggal QR</th>
+                                                <th style="width: 170px;">Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @if ($totalUnitModal > 0)
+                                                @for ($unit = 1; $unit <= $totalUnitModal; $unit++)
+                                                    @php
+                                                        $qrCode = $qrCodesModal->get($unit - 1);
+                                                    @endphp
+                                                    <tr>
+                                                        <td class="text-center">{{ $unit }}</td>
+                                                        <td>{{ $qrCode->nomor_identifikasi ?? '-' }}</td>
+                                                        <td class="text-center">
+                                                            @if ($qrCode)
+                                                                <span class="badge bg-success">Ada QR</span>
+                                                            @else
+                                                                <span class="badge bg-warning text-dark">Belum Ada</span>
+                                                            @endif
+                                                        </td>
+                                                        <td class="text-center">
+                                                            {{ optional($qrCode?->tanggal_pembuatan)->format('d M Y H:i') ?? '-' }}
+                                                        </td>
+                                                        <td class="text-center">
+                                                            @if ($qrCode)
+                                                                <button type="button"
+                                                                        class="btn btn-outline-warning btn-sm btn-regenerate-qr"
+                                                                        data-id="{{ $modalItem->id_barang }}"
+                                                                        data-qr-id="{{ $qrCode->id_qr_code }}"
+                                                                        data-nama="{{ $modalItem->nama_barang }}">
+                                                                    <i class="bi bi-arrow-repeat"></i>
+                                                                    Generate Ulang
+                                                                </button>
+                                                            @else
+                                                                <button type="button"
+                                                                        class="btn btn-success btn-sm btn-generate-qr"
+                                                                        data-id="{{ $modalItem->id_barang }}"
+                                                                        data-nama="{{ $modalItem->nama_barang }}">
+                                                                    <i class="bi bi-qr-code"></i>
+                                                                    Generate
+                                                                </button>
+                                                            @endif
+                                                        </td>
+                                                    </tr>
+                                                @endfor
+                                            @else
+                                                <tr>
+                                                    <td colspan="5" class="text-center text-muted">
+                                                        Jumlah barang belum tersedia.
+                                                    </td>
+                                                </tr>
+                                            @endif
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+        @endforeach
 
         {{-- SweetAlert untuk Notifikasi Sukses/Error --}}
         @if (session('message'))

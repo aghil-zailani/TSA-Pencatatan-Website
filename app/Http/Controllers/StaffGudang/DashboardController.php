@@ -444,8 +444,7 @@ class DashboardController extends Controller
         if (!$user) {
             return response()->json(['message' => 'Unauthorized.'], 401);
         }
-        
-        
+                
         $created_by_role = $user->role;
         $created_by_id = $user->id;
 
