@@ -25,7 +25,8 @@ Route::middleware(['api'])->group(function(){
 
     Route::middleware('auth:sanctum')->group(function () {
 
-        Route::post('/barang', [BarangController::class, 'store'])->name('barang.store');
+        // Route::post('/barang', [BarangController::class, 'store'])->name('barang.store');
+        
         Route::get('/barangs', [BarangController::class, 'index']);
         Route::get('/barang/ringkasan', [BarangController::class, 'ringkasan']);
         Route::get('/barang/detail/{qr}', [BarangController::class, 'detailByQr']);
