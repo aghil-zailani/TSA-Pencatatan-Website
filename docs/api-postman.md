@@ -63,31 +63,28 @@ Body JSON:
 
 ### POST /register
 
-Registrasi user baru. Jika `role` tidak dikirim, default menjadi `inspektor`.
+Mendaftarkan supervisor umum, foto instansi, dan daftar inspektornya.
 
 Auth: tidak perlu token
 
-Body JSON:
-
-```json
-{
-  "username": "inspektor1",
-  "email": "inspektor1@example.com",
-  "password": "password123",
-  "password_confirmation": "password123",
-  "role": "inspektor"
-}
-```
-
-Validasi:
+Gunakan `multipart/form-data` agar foto dapat diunggah. Foto bersifat opsional;
+format yang diterima JPG, PNG, atau WEBP dengan ukuran maksimal 5 MB.
 
 | Field | Rule |
 | --- | --- |
+| `nama_instansi` | required, string, max 255 |
+| `lokasi_instansi` | required, string, max 1000 |
 | `username` | required, string, max 255, unique users |
 | `email` | required, email, max 255, unique users |
 | `password` | required, string, min 8 |
 | `password_confirmation` | required, sama dengan password |
-| `role` | nullable, string |
+| `foto_instansi` | nullable, JPG/PNG/WEBP, max 5 MB |
+| `inspektors` | nullable, array |
+| `inspektors[n][nama]` | required untuk setiap inspektor, string, max 255 |
+
+ID inspektor dibuat oleh server. Data disimpan di tabel `inspektors` dengan
+`id_supervisor` sebagai foreign key ke `users.id`. API mengembalikan ID tersebut
+bersama data supervisor yang baru dibuat.
 
 ### POST /logout
 

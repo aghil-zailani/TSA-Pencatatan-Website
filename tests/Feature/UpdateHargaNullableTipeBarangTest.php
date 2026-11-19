@@ -52,7 +52,7 @@ class UpdateHargaNullableTipeBarangTest extends TestCase
     private function createSupervisor()
     {
         return \App\Models\User::create([
-            'name' => 'Supervisor Test',
+            'username' => 'supervisor-test',
             'email' => 'supervisor@test.com',
             'password' => bcrypt('password'),
             'role' => 'supervisor',

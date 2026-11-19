@@ -1,20 +1,20 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Auth\LoginController as ApiLoginController;
+use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Http\Controllers\Api\BarangController;
 use App\Http\Controllers\Api\LaporanAPKController;
 use App\Http\Controllers\Api\NotifikasiController;
-use App\Http\Controllers\Api\Auth\RegisterController;
-use App\Http\Controllers\Supervisor\MasterDataController;
-use App\Http\Controllers\Supervisor\DashboardController as SupervisorDashboardController;
+use App\Http\Controllers\Api\SupervisorUmumBarangController;
+use App\Http\Controllers\Api\SupervisorUmumInspectorController;
+use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\StaffGudang\DashboardController as StaffDashboardController;
 // use App\Http\Controllers\Api\LaporanAPKController;
-use App\Http\Controllers\Api\SupervisorUmumBarangController;
-use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Supervisor\MasterDataController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
-Route::middleware(['api'])->group(function(){
+Route::middleware(['api'])->group(function () {
     Route::post('/login', [ApiLoginController::class, 'login']);
     Route::post('/register', [RegisterController::class, 'register']);
 
@@ -26,7 +26,7 @@ Route::middleware(['api'])->group(function(){
     Route::middleware('auth:sanctum')->group(function () {
 
         // Route::post('/barang', [BarangController::class, 'store'])->name('barang.store');
-        
+
         Route::get('/barangs', [BarangController::class, 'index']);
         Route::get('/barang/ringkasan', [BarangController::class, 'ringkasan']);
         Route::get('/barang/detail/{qr}', [BarangController::class, 'detailByQr']);
@@ -59,6 +59,12 @@ Route::middleware(['api'])->group(function(){
     });
 
     Route::middleware(['auth:sanctum', 'role:supervisor_umum'])->group(function () {
+        Route::get('/supervisor-umum/inspektor', [SupervisorUmumInspectorController::class, 'index']);
+        Route::post('/supervisor-umum/inspektor', [SupervisorUmumInspectorController::class, 'store']);
+        Route::put('/supervisor-umum/inspektor/{id}', [SupervisorUmumInspectorController::class, 'update']);
+        Route::patch('/supervisor-umum/inspektor/{id}', [SupervisorUmumInspectorController::class, 'update']);
+        Route::delete('/supervisor-umum/inspektor/{id}', [SupervisorUmumInspectorController::class, 'destroy']);
+
         Route::post('/supervisor-umum/barang', [SupervisorUmumBarangController::class, 'store']);
         Route::post('/supervisor-umum/scan-qr', [SupervisorUmumBarangController::class, 'scanQr']);
     });

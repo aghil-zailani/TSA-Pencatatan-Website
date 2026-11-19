@@ -209,7 +209,7 @@ class DashboardController extends Controller
     public function updateHarga(Request $request){
         $request->validate([
             'id_barang' => 'nullable|string',
-            'nama_barang' => 'required|string',
+            'nama_barang' => 'required_without:id_barang|string',
             'berat_barang' => 'nullable|numeric',
             'harga_beli' => 'nullable|numeric',
         ]);
@@ -219,14 +219,20 @@ class DashboardController extends Controller
         $beratBarang = $request->input('berat_barang');
         $hargaBeli = $request->input('harga_beli');
 
-        $query = Barang::where('nama_barang', $namaBarang);
+        $query = Barang::query();
 
-        if (!empty($beratBarang)) {
-            $query->where('berat_barang', $beratBarang);
+        if (!empty($idBarang)) {
+            $query->where('id_barang', $idBarang);
         } else {
-            $query->where(function($q) {
-                $q->whereNull('berat_barang')->orWhere('berat_barang', '');
-            });
+            $query->where('nama_barang', $namaBarang);
+
+            if (!empty($beratBarang)) {
+                $query->where('berat_barang', $beratBarang);
+            } else {
+                $query->where(function($q) {
+                    $q->whereNull('berat_barang')->orWhere('berat_barang', '');
+                });
+            }
         }
 
         $count = $query->count();

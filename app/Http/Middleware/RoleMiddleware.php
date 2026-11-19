@@ -18,7 +18,7 @@ class RoleMiddleware
     {
         // Pengecekan Auth::check() sudah baik, karena middleware 'auth' harusnya dijalankan lebih dulu.
         if (!Auth::check()) {
-            return redirect('login');
+            return redirect('/');
         }
 
         $user = Auth::user();

@@ -25,18 +25,6 @@ class User extends Authenticatable
     protected $primaryKey = 'id';
 
     /**
-     * Memberitahu Laravel bahwa primary key BUKAN auto-incrementing integer.
-     * Ini penting karena ID Anda "220101" bukan angka berurutan.
-     */
-    public $incrementing = false;
-
-    /**
-     * Memberitahu Laravel bahwa tipe data primary key adalah string.
-     * Ini penting karena ID Anda berisi angka yang harus diperlakukan sebagai teks.
-     */
-    protected $keyType = 'string';
-
-    /**
      * Atribut yang diizinkan untuk diisi secara massal.
      */
     protected $fillable = [
@@ -45,6 +33,11 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'nama_instansi',
+        'lokasi_instansi',
+        'foto_instansi',
+        'no_hp',
+        'supervisor_umum_id',
     ];
 
     /**
@@ -62,4 +55,19 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    public function inspectors()
+    {
+        return $this->hasMany(self::class, 'supervisor_umum_id');
+    }
+
+    public function inspektors()
+    {
+        return $this->hasMany(Inspektor::class, 'id_supervisor');
+    }
+
+    public function supervisor()
+    {
+        return $this->belongsTo(self::class, 'supervisor_umum_id');
+    }
 }

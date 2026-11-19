@@ -14,11 +14,13 @@ use App\Http\Controllers\LaporanController;
 
 
 // Route untuk login WEB
-Route::get('/login', [WebLoginController::class, 'showLoginForm'])->name('login')->middleware('guest');
-Route::post('/login', [WebLoginController::class, 'login'])->middleware('guest'); 
-Route::post('/logout', [WebLoginController::class, 'logout'])->name('logout')->middleware('auth');
+Route::get('/', [WebLoginController::class, 'showLoginForm'])->name('login')->middleware('guest');
+Route::post('/login', [WebLoginController::class, 'login'])->name('login.submit')->middleware('guest');
+Route::post('/logout', [WebLoginController::class, 'logout'])->name('logout')->middleware(['auth', 'single-session']);
 
-Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->name('supervisor.')->group(function () {
+Route::middleware(['auth', 'single-session'])->get('/dashboard', [SupervisorDashboardController::class, 'index'])->name('dashboard');
+
+Route::middleware(['auth', 'single-session'])->prefix('supervisor')->name('supervisor.')->group(function () {
     Route::get('/dashboard', [SupervisorDashboardController::class, 'index'])->name('dashboard');
     Route::get('/monitoring-stok', [SupervisorDashboardController::class, 'tampil'])->name('monitoring');
     Route::post('/monitoring-stok/update-harga', [SupervisorDashboardController::class, 'updateHarga'])->name('updateHarga');
@@ -26,14 +28,14 @@ Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->name('supe
     Route::get('/export-pdf', [SupervisorDashboardController::class, 'exportPdf'])->name('exportPdf');
 
     //Master Data
-    Route::get('/master-data', [MasterDataController::class, 'manageMasterData'])->name('master.data');
-    Route::get('/master-data/{form_config_category}', [MasterDataController::class, 'manageSpecificMaster'])->name('master.data.specific');
-    Route::post('/master-data-store', [MasterDataController::class, 'storeMasterData'])->name('master.data.store');
-    Route::put('/master-data/{masterData}', [MasterDataController::class, 'updateMasterData'])->name('master.data.update');
-    Route::delete('/master-data/{masterData}', [MasterDataController::class, 'destroyMasterData'])->name('master.data.destroy');
-    Route::delete('/master-data/category/{category_name}', [MasterDataController::class, 'destroyMasterCategory'])->name('master.data.destroy_category');
-    Route::get('/api/master-data/{category}', [MasterDataController::class, 'getMasterDataByCategory']);
-    Route::delete('/master-data/category/{category_name}', [MasterDataController::class, 'destroyMasterCategory'])->name('master.data.destroy_category');
+    // Route::get('/master-data', [MasterDataController::class, 'manageMasterData'])->name('master.data');
+    // Route::get('/master-data/{form_config_category}', [MasterDataController::class, 'manageSpecificMaster'])->name('master.data.specific');
+    // Route::post('/master-data-store', [MasterDataController::class, 'storeMasterData'])->name('master.data.store');
+    // Route::put('/master-data/{masterData}', [MasterDataController::class, 'updateMasterData'])->name('master.data.update');
+    // Route::delete('/master-data/{masterData}', [MasterDataController::class, 'destroyMasterData'])->name('master.data.destroy');
+    // Route::delete('/master-data/category/{category_name}', [MasterDataController::class, 'destroyMasterCategory'])->name('master.data.destroy_category');
+    // Route::get('/api/master-data/{category}', [MasterDataController::class, 'getMasterDataByCategory']);
+    // Route::delete('/master-data/category/{category_name}', [MasterDataController::class, 'destroyMasterCategory'])->name('master.data.destroy_category');
     //Master Data
 
     Route::get('/validasi-barang-masuk', [LaporanController::class, 'validasiBarangMasuk'])->name('validasi.barang_masuk'); // Halaman Supervisor
@@ -61,7 +63,7 @@ Route::middleware(['auth', 'role:supervisor'])->prefix('supervisor')->name('supe
     
 });
 
-Route::middleware(['auth', 'role:supervisor_umum'])
+Route::middleware(['auth', 'single-session'])
     ->prefix('partner')
     ->name('supervisor_umum.')
     ->group(function () {
@@ -69,17 +71,16 @@ Route::middleware(['auth', 'role:supervisor_umum'])
     });
     
 
-Route::middleware(['auth', 'role:staff_gudang'])->prefix('staff-gudang')->name('staff_gudang.')->group(function () {
-    Route::get('/dashboard', [StaffGudangDashboardController::class, 'index'])->name('dashboard');
-    Route::get('/monitoring-stok', [StaffGudangDashboardController::class, 'tampil'])->name('monitoring');
-    Route::post('/monitoring-stok/update-harga', [StaffGudangDashboardController::class, 'updateHarga'])->name('updateHarga');
+Route::middleware(['auth', 'single-session'])->prefix('staff-gudang')->name('staff_gudang.')->group(function () {
+    Route::get('/input-data', [StaffGudangDashboardController::class, 'inputDataBarang'])->name('input_data');
+    Route::post('/input-data', [StaffGudangDashboardController::class, 'storeInputDataBarang'])->name('input_data.store');
+    Route::get('/catat-barang-keluar', [StaffGudangDashboardController::class, 'formBarangKeluar'])->name('barang_keluar.create');
+    Route::post('/catat-barang-keluar', [StaffGudangDashboardController::class, 'storeBarangKeluar'])->name('barang_keluar.store');
     Route::get('/data-barang', [StaffGudangDashboardController::class, 'barangDiterima'])->name('data-barang');
     Route::get('/generate-qrcode/{id}', [StaffGudangDashboardController::class, 'generateQrCode'])->name('generate_qrcode');
     Route::get('/preview-qrcode/{id}', [StaffGudangDashboardController::class, 'previewQr'])->name('preview_qrcode');
     Route::post('/store-qrcode', [StaffGudangDashboardController::class, 'storeQr']);
-    Route::get('/buat-laporan', [StaffGudangDashboardController::class, 'buatLaporan'])->name('buat_laporan');
     Route::post('/kirim-laporan-pengajuan', [LaporanController::class, 'kirimLaporanPengajuan'])->name('kirim_laporan_pengajuan');
-    Route::post('/kirim-laporan', [LaporanController::class, 'kirimLaporan'])->name('kirim_laporan');
     Route::get('/form-pengajuan', [LaporanController::class, 'formPengajuan'])->name('form_pengajuan');
     Route::get('/riwayat-aktivitas', [StaffGudangDashboardController::class, 'riwayat'])->name('riwayat.aktivitas');
     // Route::get('/laporan/{laporan}', [LaporanController::class, 'show'])->name('laporan.show');

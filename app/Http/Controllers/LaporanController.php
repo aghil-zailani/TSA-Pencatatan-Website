@@ -184,7 +184,11 @@ class LaporanController extends Controller
                         $barang->jumlah_barang += $pengajuan->jumlah_barang;
                         $barang->save();
                     } else {
-                        $prefix = strtoupper(substr(trim($pengajuan->tipe_barang_kategori), 0, 3));
+                        $prefixSource = trim((string) ($pengajuan->tipe_barang_kategori ?? ''));
+                        if ($prefixSource === '') {
+                            $prefixSource = trim((string) ($pengajuan->tipe_barang ?? 'GEN'));
+                        }
+                        $prefix = strtoupper(substr($prefixSource, 0, 3));
                         $product = 'GEN';
                         if (!empty(trim($pengajuan->tipe_barang ?? ''))) {
                             $product = strtoupper(substr(trim($pengajuan->tipe_barang), 0, 3));
@@ -283,45 +287,6 @@ class LaporanController extends Controller
             DB::rollBack();
             Log::error('Validasi Pengajuan Keluar Gagal: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Terjadi kesalahan.');
-        }
-    }
-
-    public function kirimLaporan(Request $request)
-    {
-        ActivityLog::create([
-            'user_id'       => auth()->id(),
-            'page_accessed' => 'Halaman Laporan',
-            'feature_used'  => 'Kirim Laporan',
-            'action'        => 'Update',
-            'description'   => 'Staff mengirim laporan ke supervisor.'
-        ]);
-
-        DB::beginTransaction();
-        try {
-            
-            $pengajuanPending = PengajuanBarang::where('status', '-')->get();
-
-            if ($pengajuanPending->isEmpty()) {
-                return redirect()->back()->with('error', 'Tidak ada laporan yang bisa dikirim.');
-            }
-            
-            $reportId = PengajuanBarang::generateUniqueReportId();
-            
-            foreach ($pengajuanPending as $pengajuan) {
-                $pengajuan->update([
-                    'report_id' => $reportId,
-                    'status'    => 'Proses',
-                    'stok_status' => 'outofstock'
-                ]);
-            }
-
-            DB::commit();
-            return redirect()->back()->with('message', $pengajuanPending->count() . ' laporan berhasil dikirim dengan ID ' . $reportId);
-
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            Log::error('Error saat mengirim laporan: ' . $e->getMessage() . ' di baris ' . $e->getLine());
-            return redirect()->back()->with('error', 'Gagal mengirim laporan. Silakan hubungi administrator.');
         }
     }
 

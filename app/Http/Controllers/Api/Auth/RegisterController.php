@@ -3,62 +3,85 @@
 namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use RuntimeException;
+use Throwable;
 
 class RegisterController extends Controller
 {
     public function register(Request $request)
     {
-        
-        $validator = Validator::make($request->all(), [
-            'username' => 'required|string|max:255|unique:users',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
-            'password_confirmation' => 'required|string|same:password', 
-            'role' => 'nullable|string',
+        $validated = $request->validate([
+            'nama_instansi' => ['required', 'string', 'max:255'],
+            'lokasi_instansi' => ['required', 'string', 'max:1000'],
+            'username' => ['required', 'string', 'max:255', 'unique:users,username'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'foto_instansi' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'inspektors' => ['nullable', 'array'],
+            'inspektors.*.nama' => ['required', 'string', 'max:255'],
         ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
+        $photoPath = null;
+        if ($request->hasFile('foto_instansi')) {
+            $photoPath = $request->file('foto_instansi')->store('foto_instansi', 'public');
+
+            if ($photoPath === false) {
+                throw new RuntimeException('Foto instansi gagal disimpan.');
+            }
         }
 
         try {
-            
-            $user = User::create([
-                'username' => $request->username,
-                'email' => $request->email,
-                'password' => Hash::make($request->password),
-                'role' => $request->role ?? 'inspektor',
-            ]);
+            $user = DB::transaction(function () use ($validated, $photoPath) {
+                $user = User::create([
+                    'nama_instansi' => $validated['nama_instansi'],
+                    'lokasi_instansi' => $validated['lokasi_instansi'],
+                    'foto_instansi' => $photoPath,
+                    'username' => $validated['username'],
+                    'email' => $validated['email'],
+                    'password' => $validated['password'],
+                    'role' => 'supervisor_umum',
+                ]);
 
-            
-            $token = $user->createToken('api-token-'.$user->id)->plainTextToken;
+                foreach ($validated['inspektors'] ?? [] as $inspektor) {
+                    $user->inspektors()->create([
+                        'nama' => $inspektor['nama'],
+                    ]);
+                }
 
-            $userData = [
+                return $user;
+            });
+        } catch (Throwable $exception) {
+            if ($photoPath !== null) {
+                Storage::disk('public')->delete($photoPath);
+            }
+
+            throw $exception;
+        }
+
+        $token = $user->createToken('api-token-'.$user->id)->plainTextToken;
+        $inspektors = $user->inspektors()->get(['id_inspektor', 'nama']);
+
+        return response()->json([
+            'message' => 'Registrasi berhasil',
+            'user' => [
                 'id' => $user->id,
+                'nama_instansi' => $user->nama_instansi,
+                'lokasi_instansi' => $user->lokasi_instansi,
+                'foto_instansi' => $user->foto_instansi,
+                'foto_instansi_url' => $user->foto_instansi
+                    ? Storage::disk('public')->url($user->foto_instansi)
+                    : null,
                 'username' => $user->username,
                 'email' => $user->email,
                 'role' => $user->role,
-            ];
-
-            return response()->json([
-                'message' => 'Registrasi berhasil',
-                'user' => $userData,
-                'token_type' => 'Bearer',
-                'access_token' => $token,
-            ], 201);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Registrasi gagal',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+                'inspektors' => $inspektors,
+            ],
+            'token_type' => 'Bearer',
+            'access_token' => $token,
+        ], 201);
     }
 }

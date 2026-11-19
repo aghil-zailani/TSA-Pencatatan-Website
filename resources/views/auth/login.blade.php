@@ -135,7 +135,7 @@
             </div>
         @endif
 
-        <form action="{{ route('login') }}" method="POST" class="login-form">
+        <form action="{{ route('login.submit') }}" method="POST" class="login-form">
             @csrf
             <div class="form-group">
                 <input type="text" class="form-control" id="login_id" name="login_id" placeholder="ID Perusahaan" value="{{ old('login_id') }}" required>

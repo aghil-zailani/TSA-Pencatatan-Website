@@ -72,11 +72,9 @@ class MasterDataController extends Controller{
         'allUniqueValues' => $allUniqueValues
     ]);
     }
-
     
     public function storeMasterData(Request $request)
-    {
-        
+    {   
         $validator = Validator::make($request->all(), [
             'category' => 'required|string|max:50',
             'value' => 'required|string|max:255',
@@ -115,7 +113,6 @@ class MasterDataController extends Controller{
             return response()->json(['error' => 'Terjadi kesalahan server saat menambahkan data.'], 500);
         }
     }
-
     
     public function updateMasterData(Request $request, MasterData $masterData)
     {
@@ -211,7 +208,6 @@ class MasterDataController extends Controller{
     {
         try {
             if ($category_name === 'category_name') {
-                
                 $categories = MasterData::select('category')->distinct()->pluck('category');
                 return response()->json(['categories' => $categories]);
             }

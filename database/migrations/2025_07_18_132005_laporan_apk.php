@@ -37,8 +37,18 @@ return new class extends Migration
             $table->string('selang')->nullable();
             $table->string('pressure_gauge')->nullable();
             $table->string('safety_pin')->nullable();
+            $table->string('tekanan_air')->nullable();
+            $table->string('katup')->nullable();
+            $table->string('selang_hydrant')->nullable();
             $table->string('tindakan');
             $table->string('catatan_tindakan')->nullable();
+            $table->string('bagian_rusak')->nullable();
+            $table->string('tingkat_kerusakan')->nullable();
+            $table->string('jenis_media_isi_ulang')->nullable();
+            $table->string('jumlah_isi_ulang')->nullable();
+            $table->string('komponen_diganti')->nullable();
+            $table->string('kondisi_komponen_lama')->nullable();
+            $table->text('deskripsi_kerusakan')->nullable();
             $table->string('status')->default('Pending');
             $table->string('catatan_validasi')->nullable();
 

@@ -23,9 +23,6 @@ return new class extends Migration
                 'selesai',
                 'dibatalkan'
             ]);
-            $table->string('snap_token', 255)
-                  ->nullable()
-                  ->after('status');
             $table->timestamps();
         });
     }
