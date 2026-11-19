@@ -67,7 +67,7 @@ class LoginController extends Controller
             ]);
         }
 
-        if ($user->role !== 'inspektor') {
+        if ($user->role !== 'supervisor_umum' && $user->role !== 'inspektor') { // Check if the user has the appropriate role for mobile access
             return response()->json([
                 'message' => 'Akun ini tidak memiliki akses ke aplikasi mobile.'
             ], 403);

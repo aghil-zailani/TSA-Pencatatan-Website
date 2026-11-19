@@ -19,7 +19,7 @@ class RegisterController extends Controller
             'lokasi_instansi' => ['required', 'string', 'max:1000'],
             'username' => ['required', 'string', 'max:255', 'unique:users,username'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password' => ['required', 'string', 'min:6', 'confirmed'],
             'foto_instansi' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'inspektors' => ['nullable', 'array'],
             'inspektors.*.nama' => ['required', 'string', 'max:255'],
